@@ -26,6 +26,13 @@ import (
 	"sigs.k8s.io/release-utils/hash"
 )
 
+func NewDirectory(path string) *Directory {
+	return &Directory{
+		Path:      path,
+		Snapshots: []Snapshot{},
+	}
+}
+
 type Directory struct {
 	Path      string
 	Snapshots []Snapshot
