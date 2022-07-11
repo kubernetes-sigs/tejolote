@@ -72,7 +72,7 @@ func (d *Directory) Snap() error {
 			path = strings.TrimPrefix(path, d.Path+"/")
 
 			// Register the file with the path normalized
-			snap[path] = File{
+			snap[path] = Artifact{
 				Path: path,
 				Hash: sha,
 				Time: info.ModTime(),

@@ -33,13 +33,13 @@ func TestDirectorySnap(t *testing.T) {
 	for _, tc := range []struct {
 		prepare func(path string) error
 		mutate  func(path string) error
-		expect  []File
+		expect  []Artifact
 	}{
 		// Two emtpy directories. No error, no change
 		{
 			func(path string) error { return nil },
 			func(path string) error { return nil },
-			[]File{},
+			[]Artifact{},
 		},
 		// One file, unchanged at mutation time
 		{
@@ -47,7 +47,7 @@ func TestDirectorySnap(t *testing.T) {
 				return os.WriteFile(filepath.Join(path, "test.txt"), []byte("test"), os.FileMode(0o644))
 			},
 			func(path string) error { return nil },
-			[]File{},
+			[]Artifact{},
 		},
 		// One file, rewritten should be reported
 		{
@@ -66,7 +66,7 @@ func TestDirectorySnap(t *testing.T) {
 				}
 				return nil
 			},
-			[]File{
+			[]Artifact{
 				{
 					Path: "test.txt",
 					Time: fixedTime,
@@ -99,7 +99,7 @@ func TestDirectorySnap(t *testing.T) {
 				}
 				return nil
 			},
-			[]File{
+			[]Artifact{
 				{
 					Path: "test.txt",
 					Time: fixedTime,
