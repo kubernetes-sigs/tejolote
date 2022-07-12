@@ -23,18 +23,18 @@ type Watcher interface {
 }
 
 // File abstracts a file with the items we're interested in monitoring
-type File struct {
+type Artifact struct {
 	Path string
 	Hash string
 	Time time.Time
 }
 
-type Snapshot map[string]File
+type Snapshot map[string]Artifact
 
 // Delta takes a snapshot, assumed to be later in time and returns
 // a directed delta, the files which were created or modified.
-func (snap *Snapshot) Delta(post *Snapshot) []File {
-	results := []File{}
+func (snap *Snapshot) Delta(post *Snapshot) []Artifact {
+	results := []Artifact{}
 	for path, f := range *post {
 		// If the file was not there in the first snap, add it
 		if _, ok := (*snap)[path]; !ok {
