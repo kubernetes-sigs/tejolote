@@ -29,23 +29,23 @@ func Execute() error {
 		Short: "A tool for working with SPDX manifests",
 		Long: `tejolote (the handle of a molcajete, where you make salsa)
 	
-	🌶 tejolote is a utility that allows a developer to execute a 
-	process - ideally a builder - and record its inputs and outputs.
-	The main goal is to obtain provenance information of builds
-	and other transformations when building and shipping software.
-	
-	In its simplest form, you can precede your existing build 
-	command with tejolote run and it will make its best to create a
-	meaningful attestation. For example:
-	
-		Change this:
-		make build
-	
-		With this:
-		tejolote run make all
-	
-	Tejolote will try to make sane asumptions but for best results, it
-	allows for full control of the process you run.
+🌶 tejolote is a utility that allows a developer to execute a 
+process - ideally a builder - and record its inputs and outputs.
+The main goal is to obtain provenance information of builds
+and other transformations when building and shipping software.
+
+In its simplest form, you can precede your existing build 
+command with tejolote run and it will make its best to create a
+meaningful attestation. For example:
+
+	If your build command is:
+	make build
+
+	CHange it with:
+	tejolote run make build
+
+Tejolote will try to make sane asumptions but for best results, it
+allows for full control of the process you run.
 	
 	`,
 		Use:               "tejolote",
