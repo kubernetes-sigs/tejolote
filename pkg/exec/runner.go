@@ -41,6 +41,7 @@ type Runner struct {
 
 type Options struct {
 	Verbose         bool
+	CWD             string
 	AttestationPath string
 	Logger          *logrus.Logger
 }

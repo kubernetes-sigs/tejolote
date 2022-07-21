@@ -31,6 +31,7 @@ import (
 
 type runOptions struct {
 	Verbose    bool
+	CWD        string
 	OutputDirs []string
 }
 
@@ -93,6 +94,14 @@ where they came from.
 		"list of directories that tejolote will monitor for output",
 	)
 
+	runCmd.PersistentFlags().StringVarP(
+		&runOpts.CWD,
+		"cwd",
+		"C",
+		"",
+		"directory to change when running the build",
+	)
+
 	runCmd.PersistentFlags().BoolVar(
 		&runOpts.Verbose,
 		"verbose",
@@ -106,6 +115,7 @@ where they came from.
 // buildRunner returns a configured runner
 func buildRunner(opts runOptions) (*exec.Runner, error) {
 	runner := exec.NewRunner()
+	runner.Options.CWD = opts.CWD
 
 	for _, dir := range opts.OutputDirs {
 		logrus.Infof("Watching directory: %s", dir)

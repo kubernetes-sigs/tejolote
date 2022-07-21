@@ -38,10 +38,19 @@ type defaultRunnerImplementation struct{}
 
 // CreateRun
 func (ri *defaultRunnerImplementation) CreateRun(opts *Options, step Step) (*Run, error) {
-	cmd := command.New(
-		step.Command(),
-		step.Params()...,
-	)
+	var cmd *command.Command
+	if opts.CWD != "" {
+		cmd = command.NewWithWorkDir(
+			opts.CWD,
+			step.Command(),
+			step.Params()...,
+		)
+	} else {
+		cmd = command.New(
+			step.Command(),
+			step.Params()...,
+		)
+	}
 
 	run := &Run{
 		Executable: cmd,
