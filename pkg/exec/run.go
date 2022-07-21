@@ -23,24 +23,54 @@ import (
 	"time"
 
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
+	"github.com/puerco/tejolote/pkg/git"
 	"github.com/puerco/tejolote/pkg/watcher"
 	"sigs.k8s.io/release-utils/command"
 )
 
 type Run struct {
-	Executable *command.Command
-	ExitCode   int
-	Artifacts  []watcher.Artifact
-	Output     *command.Stream
-	Status     command.Status
-	Command    string
-	Params     []string
-	StartTime  time.Time
-	EndTime    time.Time
+	Executable  *command.Command
+	ExitCode    int
+	Artifacts   []watcher.Artifact
+	Output      *command.Stream
+	Status      command.Status
+	Command     string
+	Params      []string
+	StartTime   time.Time
+	EndTime     time.Time
+	Environment RunEnvironment
+}
+
+type RunEnvironment struct {
+	Variables map[string]string
+	Directory string
+}
+
+// InvocationData return the invocation of the command in SLSA strcut
+func (r *Run) InvocationData() (slsa.ProvenanceInvocation, error) {
+	// Get the git drector
+	invocation := slsa.ProvenanceInvocation{
+		ConfigSource: slsa.ConfigSource{},
+	}
+	invocation.Parameters = r.Params
+	invocation.Environment = r.Environment.Variables
+
+	// Read the git repo data
+	repo := git.NewRepository(r.Environment.Directory)
+	url, err := repo.SourceURL()
+	if err != nil {
+		return invocation, fmt.Errorf("opening project repository: %w", err)
+	}
+	invocation.ConfigSource.URI = url
+
+	return invocation, nil
 }
 
 func (r *Run) WriteAttestation(path string) error {
-	attestation := r.Attest()
+	attestation, err := r.Attest()
+	if err != nil {
+		return fmt.Errorf("generating attestation: %w", err)
+	}
 
 	// Create the file
 	out, err := os.Create(path)
@@ -59,21 +89,17 @@ func (r *Run) WriteAttestation(path string) error {
 	return nil
 }
 
-func (r *Run) Attest() slsa.ProvenancePredicate {
+func (r *Run) Attest() (*slsa.ProvenancePredicate, error) {
+	invocation, err := r.InvocationData()
+	if err != nil {
+		return nil, fmt.Errorf("reading invocation data: %w", err)
+	}
 	predicate := slsa.ProvenancePredicate{
 		Builder: slsa.ProvenanceBuilder{
-			ID: "",
+			ID: "", // TODO: Read builder from trsuted environment
 		},
-		BuildType: "",
-		Invocation: slsa.ProvenanceInvocation{
-			ConfigSource: slsa.ConfigSource{
-				URI:        "",
-				Digest:     map[string]string{},
-				EntryPoint: "",
-			},
-			Parameters:  nil,
-			Environment: nil,
-		},
+		BuildType:   "",
+		Invocation:  invocation,
 		BuildConfig: nil,
 		Metadata: &slsa.ProvenanceMetadata{
 			BuildInvocationID: "",
@@ -96,5 +122,5 @@ func (r *Run) Attest() slsa.ProvenancePredicate {
 			},
 		})
 	}
-	return predicate
+	return &predicate, nil
 }

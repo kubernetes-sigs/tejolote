@@ -36,23 +36,23 @@ type RunnerImplementation interface {
 
 type defaultRunnerImplementation struct{}
 
-// CreateRun
-func (ri *defaultRunnerImplementation) CreateRun(opts *Options, step Step) (*Run, error) {
+// CreateRun creates a run from the data defined in the step
+func (ri *defaultRunnerImplementation) CreateRun(opts *Options, step Step) (run *Run, err error) {
 	var cmd *command.Command
-	if opts.CWD != "" {
-		cmd = command.NewWithWorkDir(
-			opts.CWD,
-			step.Command(),
-			step.Params()...,
-		)
-	} else {
-		cmd = command.New(
-			step.Command(),
-			step.Params()...,
-		)
+	cwd := opts.CWD
+	if opts.CWD == "" {
+		cwd, err = os.Getwd()
+		if err != nil {
+			return nil, fmt.Errorf("getting current directory: %w", err)
+		}
 	}
+	cmd = command.NewWithWorkDir(
+		cwd,
+		step.Command(),
+		step.Params()...,
+	)
 
-	run := &Run{
+	run = &Run{
 		Executable: cmd,
 		ExitCode:   0,
 		Artifacts:  []watcher.Artifact{},
@@ -60,6 +60,10 @@ func (ri *defaultRunnerImplementation) CreateRun(opts *Options, step Step) (*Run
 		Status:     command.Status{},
 		Command:    step.Command(),
 		Params:     step.Params(),
+		Environment: RunEnvironment{
+			Directory: cwd,
+			Variables: map[string]string{},
+		},
 	} // command.Command
 
 	opts.Logger.Infof(
