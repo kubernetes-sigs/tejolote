@@ -32,7 +32,7 @@ type Repository struct {
 	Options Options
 }
 
-func NewRepo(dir string) *Repository {
+func NewRepository(dir string) *Repository {
 	return &Repository{
 		Options: Options{
 			CWD: dir,
