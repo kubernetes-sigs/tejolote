@@ -52,7 +52,8 @@ func (r *Run) InvocationData() (slsa.ProvenanceInvocation, error) {
 	invocation := slsa.ProvenanceInvocation{
 		ConfigSource: slsa.ConfigSource{},
 	}
-	invocation.Parameters = r.Params
+	invocation.Parameters = []string{r.Command}
+	invocation.Parameters = append(invocation.Parameters.([]string), r.Params...)
 	invocation.Environment = r.Environment.Variables
 
 	// Read the git repo data
