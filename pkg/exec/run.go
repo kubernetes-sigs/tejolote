@@ -60,12 +60,17 @@ func (r *Run) InvocationData() (slsa.ProvenanceInvocation, error) {
 	invocation.Environment = r.Environment.Variables
 
 	// Read the git repo data
-	repo := git.NewRepository(r.Environment.Directory)
-	url, err := repo.SourceURL()
-	if err != nil {
-		return invocation, fmt.Errorf("opening project repository: %w", err)
+	if git.IsRepo(r.Environment.Directory) {
+		repo, err := git.NewRepository(r.Environment.Directory)
+		if err != nil {
+			return invocation, fmt.Errorf("opening build repo: %w", err)
+		}
+		url, err := repo.SourceURL()
+		if err != nil {
+			return invocation, fmt.Errorf("opening project repository: %w", err)
+		}
+		invocation.ConfigSource.URI = url
 	}
-	invocation.ConfigSource.URI = url
 
 	return invocation, nil
 }

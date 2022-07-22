@@ -22,7 +22,6 @@ import (
 	"path/filepath"
 
 	gogit "github.com/go-git/go-git/v5"
-	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/release-utils/util"
 )
 
@@ -33,12 +32,25 @@ type Repository struct {
 	Options Options
 }
 
-func NewRepository(dir string) *Repository {
-	return &Repository{
+// IsRepo return true is a directory is a git repo
+func IsRepo(path string) bool {
+	return util.Exists(filepath.Join(path, "/.git"))
+}
+
+// NewRepository opens a git repository from the specified directory
+func NewRepository(dir string) (*Repository, error) {
+	gorepo, err := gogit.PlainOpen(dir)
+	if err != nil {
+		return nil, fmt.Errorf("opening git repo at %s: %w", dir, err)
+	}
+
+	repo := &Repository{
+		repo: gorepo,
 		Options: Options{
 			CWD: dir,
 		},
 	}
+	return repo, nil
 }
 
 type Options struct {
@@ -47,19 +59,7 @@ type Options struct {
 
 // SourceURL returns the repository URL
 func (r *Repository) SourceURL() (string, error) {
-	if !util.Exists(filepath.Join(r.Options.CWD, "/.git")) {
-		logrus.Debugf("Directory %s is not a git repository", r.Options.CWD)
-		return "", nil
-	}
-
-	repo, err := gogit.PlainOpen(r.Options.CWD)
-	if err != nil {
-		return "", fmt.Errorf("opening git repo at %s: %w", r.Options.CWD, err)
-	}
-
-	r.repo = repo
-
-	remote, err := repo.Remote(defaultRemote)
+	remote, err := r.repo.Remote(defaultRemote)
 	if err != nil {
 		return "", fmt.Errorf("getting repository remote: %w", err)
 	}

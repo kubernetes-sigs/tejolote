@@ -48,7 +48,8 @@ func TestSourceURL(t *testing.T) {
 		filepath.Join(tmpdir, ".git", "HEAD"), []byte("ref: refs/heads/main\n"), os.FileMode(0o644),
 	))
 
-	repo := NewRepository(tmpdir)
+	repo, err := NewRepository(tmpdir)
+	require.NoError(t, err)
 	url, err := repo.SourceURL()
 	require.NoError(t, err)
 	require.Equal(t, url, "git@github.com:kubernetes-sigs/tejolote.git")
