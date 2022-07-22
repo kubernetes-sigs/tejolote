@@ -25,7 +25,7 @@ import (
 )
 
 func Execute() error {
-	var rootCmd = &cobra.Command{
+	rootCmd := &cobra.Command{
 		Short: "A tool for working with SPDX manifests",
 		Long: `tejolote (the handle of a molcajete, where you make salsa)
 	

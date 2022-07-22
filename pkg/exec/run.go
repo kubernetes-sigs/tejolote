@@ -22,6 +22,7 @@ import (
 	"os"
 	"time"
 
+	intoto "github.com/in-toto/in-toto-golang/in_toto"
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
 	"github.com/puerco/tejolote/pkg/git"
 	"github.com/puerco/tejolote/pkg/watcher"
@@ -40,6 +41,8 @@ type Run struct {
 	EndTime     time.Time
 	Environment RunEnvironment
 }
+
+const TejoloteURI = "http://github.com/kubernetes-sigs/tejolote"
 
 type RunEnvironment struct {
 	Variables map[string]string
@@ -68,9 +71,29 @@ func (r *Run) InvocationData() (slsa.ProvenanceInvocation, error) {
 }
 
 func (r *Run) WriteAttestation(path string) error {
-	attestation, err := r.Attest()
+	// Get the predicate
+	predicate, err := r.Predicate()
 	if err != nil {
 		return fmt.Errorf("generating attestation: %w", err)
+	}
+
+	attestation := intoto.Statement{
+		StatementHeader: intoto.StatementHeader{
+			Type:          intoto.StatementInTotoV01,
+			PredicateType: slsa.PredicateSLSAProvenance,
+			Subject:       []intoto.Subject{},
+		},
+		Predicate: predicate,
+	}
+
+	// Add the artifacts to the attestation
+	for _, m := range r.Artifacts {
+		attestation.StatementHeader.Subject = append(attestation.StatementHeader.Subject, intoto.Subject{
+			Name: m.Path,
+			Digest: map[string]string{
+				"sha256": m.Hash,
+			},
+		})
 	}
 
 	// Create the file
@@ -90,7 +113,7 @@ func (r *Run) WriteAttestation(path string) error {
 	return nil
 }
 
-func (r *Run) Attest() (*slsa.ProvenancePredicate, error) {
+func (r *Run) Predicate() (*slsa.ProvenancePredicate, error) {
 	invocation, err := r.InvocationData()
 	if err != nil {
 		return nil, fmt.Errorf("reading invocation data: %w", err)
@@ -99,7 +122,7 @@ func (r *Run) Attest() (*slsa.ProvenancePredicate, error) {
 		Builder: slsa.ProvenanceBuilder{
 			ID: "", // TODO: Read builder from trsuted environment
 		},
-		BuildType:   "",
+		BuildType:   TejoloteURI,
 		Invocation:  invocation,
 		BuildConfig: nil,
 		Metadata: &slsa.ProvenanceMetadata{
@@ -115,13 +138,6 @@ func (r *Run) Attest() (*slsa.ProvenancePredicate, error) {
 		},
 		Materials: []slsa.ProvenanceMaterial{},
 	}
-	for _, m := range r.Artifacts {
-		predicate.Materials = append(predicate.Materials, slsa.ProvenanceMaterial{
-			URI: m.Path,
-			Digest: map[string]string{
-				"sha256": m.Hash,
-			},
-		})
-	}
+
 	return &predicate, nil
 }
