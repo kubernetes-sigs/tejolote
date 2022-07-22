@@ -29,6 +29,7 @@ import (
 const defaultRemote = "origin"
 
 type Repository struct {
+	repo    *gogit.Repository
 	Options Options
 }
 
@@ -55,6 +56,8 @@ func (r *Repository) SourceURL() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("opening git repo at %s: %w", r.Options.CWD, err)
 	}
+
+	r.repo = repo
 
 	remote, err := repo.Remote(defaultRemote)
 	if err != nil {
