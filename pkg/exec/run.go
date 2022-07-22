@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
@@ -57,7 +58,14 @@ func (r *Run) InvocationData() (slsa.ProvenanceInvocation, error) {
 	}
 	invocation.Parameters = []string{r.Command}
 	invocation.Parameters = append(invocation.Parameters.([]string), r.Params...)
-	invocation.Environment = r.Environment.Variables
+	invocation.Environment = map[string]string{}
+
+	for _, e := range os.Environ() {
+		varData := strings.SplitN(e, "=", 2)
+		if len(varData) == 2 {
+			invocation.Environment.(map[string]string)[varData[0]] = varData[1]
+		}
+	}
 
 	// Read the git repo data
 	if git.IsRepo(r.Environment.Directory) {

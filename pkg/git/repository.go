@@ -69,6 +69,7 @@ func (r *Repository) SourceURL() (string, error) {
 		return "", errors.New("repo remote does not have URLs")
 	}
 
+	// TODO(important) sanitize credentials in the URL
 	url := strings.Replace(remote.Config().URLs[0], ":", "/", 1)
 	if strings.Contains(url, "github.com") {
 		url = strings.TrimSuffix(url, ".git")
