@@ -35,7 +35,7 @@ func TestDirectorySnap(t *testing.T) {
 		mutate  func(path string) error
 		expect  []Artifact
 	}{
-		// Two emtpy directories. No error, no change
+		// Two empty directories. No error, no change
 		{
 			func(path string) error { return nil },
 			func(path string) error { return nil },
@@ -71,7 +71,8 @@ func TestDirectorySnap(t *testing.T) {
 					Path: "test.txt",
 					Time: fixedTime,
 					Hash: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
-				}},
+				},
+			},
 		},
 		// One file, with contents changed
 		{
@@ -104,7 +105,8 @@ func TestDirectorySnap(t *testing.T) {
 					Path: "test.txt",
 					Time: fixedTime,
 					Hash: "76aad9c1d52e424d0dd6c6b8e07169d5d5f9001a06fe5343d4bfa13c804788f0",
-				}},
+				},
+			},
 		},
 	} {
 		// Create a temp directory to operate in

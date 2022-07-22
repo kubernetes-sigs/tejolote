@@ -45,7 +45,7 @@ The run subcommand os tejolote executes a process intended to
 transform files. Generally this happens as part of a build, patching
 or cloning repositories.
 
-Tejolote will monitor for changes that ocurred during the command
+Tejolote will monitor for changes that occurred during the command
 execution and will attest to them to generate provenance data of
 where they came from.
 	
