@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	gogit "github.com/go-git/go-git/v5"
 	"sigs.k8s.io/release-utils/util"
@@ -68,5 +69,20 @@ func (r *Repository) SourceURL() (string, error) {
 		return "", errors.New("repo remote does not have URLs")
 	}
 
-	return remote.Config().URLs[0], nil
+	url := strings.Replace(remote.Config().URLs[0], ":", "/", 1)
+	if strings.Contains(url, "github.com") {
+		url = strings.TrimSuffix(url, ".git")
+	}
+	url = fmt.Sprintf("git+ssh://%s", url)
+
+	return url, nil
+}
+
+// Return the SHA of the commita at HEAD
+func (r *Repository) HeadCommitSHA() (string, error) {
+	hash, err := r.repo.ResolveRevision("HEAD")
+	if err != nil {
+		return "", fmt.Errorf("fetching commit at HEAD: %w", err)
+	}
+	return hash.String(), err
 }

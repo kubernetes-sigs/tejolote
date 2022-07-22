@@ -69,7 +69,12 @@ func (r *Run) InvocationData() (slsa.ProvenanceInvocation, error) {
 		if err != nil {
 			return invocation, fmt.Errorf("opening project repository: %w", err)
 		}
-		invocation.ConfigSource.URI = url
+
+		commit, err := repo.HeadCommitSHA()
+		if err != nil {
+			return invocation, fmt.Errorf("fetching build point commit")
+		}
+		invocation.ConfigSource.URI = url + "@" + commit
 	}
 
 	return invocation, nil
