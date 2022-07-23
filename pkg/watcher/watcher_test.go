@@ -24,13 +24,18 @@ import (
 
 func TestDelta(t *testing.T) {
 	testFile := Artifact{
-		"test.txt", "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4", time.Now(),
+		"test.txt",
+		map[string]string{"SHA256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"},
+		time.Now(),
 	}
 	modHashFile := Artifact{
-		"test.txt", "25b89320221dda5abe3df4624d246d22d0c820ee3598e97553611d7c80abbd36", testFile.Time,
+		"test.txt",
+		map[string]string{"SHA256": "25b89320221dda5abe3df4624d246d22d0c820ee3598e97553611d7c80abbd36"},
+		testFile.Time,
 	}
 	modTimeFile := Artifact{
-		"test.txt", "25b89320221dda5abe3df4624d246d22d0c820ee3598e97553611d7c80abbd36",
+		"test.txt",
+		map[string]string{"SHA256": "25b89320221dda5abe3df4624d246d22d0c820ee3598e97553611d7c80abbd36"},
 		time.Date(1976, time.Month(2), 10, 23, 30, 30, 0, time.Local),
 	}
 	for _, tc := range []struct {

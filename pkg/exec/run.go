@@ -88,6 +88,7 @@ func (r *Run) InvocationData() (slsa.ProvenanceInvocation, error) {
 	return invocation, nil
 }
 
+// WriteAttestation writes the provenance attestation describing the build
 func (r *Run) WriteAttestation(path string) error {
 	// Get the predicate
 	predicate, err := r.Predicate()
@@ -107,10 +108,8 @@ func (r *Run) WriteAttestation(path string) error {
 	// Add the artifacts to the attestation
 	for _, m := range r.Artifacts {
 		attestation.StatementHeader.Subject = append(attestation.StatementHeader.Subject, intoto.Subject{
-			Name: m.Path,
-			Digest: map[string]string{
-				"sha256": m.Hash,
-			},
+			Name:   m.Path,
+			Digest: m.Checksum,
 		})
 	}
 

@@ -73,9 +73,9 @@ func (d *Directory) Snap() error {
 
 			// Register the file with the path normalized
 			snap[path] = Artifact{
-				Path: path,
-				Hash: sha,
-				Time: info.ModTime(),
+				Path:     path,
+				Checksum: map[string]string{"SHA256": sha},
+				Time:     info.ModTime(),
 			}
 			return nil
 		}); err != nil {

@@ -68,9 +68,9 @@ func TestDirectorySnap(t *testing.T) {
 			},
 			[]Artifact{
 				{
-					Path: "test.txt",
-					Time: fixedTime,
-					Hash: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+					Path:     "test.txt",
+					Time:     fixedTime,
+					Checksum: map[string]string{"SHA256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"},
 				},
 			},
 		},
@@ -102,9 +102,9 @@ func TestDirectorySnap(t *testing.T) {
 			},
 			[]Artifact{
 				{
-					Path: "test.txt",
-					Time: fixedTime,
-					Hash: "76aad9c1d52e424d0dd6c6b8e07169d5d5f9001a06fe5343d4bfa13c804788f0",
+					Path:     "test.txt",
+					Time:     fixedTime,
+					Checksum: map[string]string{"SHA256": "76aad9c1d52e424d0dd6c6b8e07169d5d5f9001a06fe5343d4bfa13c804788f0"},
 				},
 			},
 		},

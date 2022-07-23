@@ -24,9 +24,9 @@ type Watcher interface {
 
 // File abstracts a file with the items we're interested in monitoring
 type Artifact struct {
-	Path string
-	Hash string
-	Time time.Time
+	Path     string
+	Checksum map[string]string
+	Time     time.Time
 }
 
 type Snapshot map[string]Artifact
@@ -43,8 +43,19 @@ func (snap *Snapshot) Delta(post *Snapshot) []Artifact {
 		}
 
 		// Check the file attributes to if they were changed
-		if (*snap)[path].Hash != f.Hash || (*snap)[path].Time != f.Time {
+		if (*snap)[path].Time != f.Time {
 			results = append(results, f)
+			continue
+		}
+
+		checksum := (*snap)[path].Checksum
+		for algo, val := range checksum {
+			if fv, ok := f.Checksum[algo]; ok {
+				if fv != val {
+					results = append(results, f)
+					break
+				}
+			}
 		}
 	}
 	return results
