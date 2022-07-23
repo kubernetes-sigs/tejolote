@@ -52,5 +52,5 @@ func TestSourceURL(t *testing.T) {
 	require.NoError(t, err)
 	url, err := repo.SourceURL()
 	require.NoError(t, err)
-	require.Equal(t, url, "git@github.com:kubernetes-sigs/tejolote.git")
+	require.Equal(t, url, "git+ssh://git@github.com/kubernetes-sigs/tejolote")
 }
