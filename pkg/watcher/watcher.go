@@ -16,25 +16,64 @@ limitations under the License.
 
 package watcher
 
-import "time"
+import (
+	"fmt"
+	"time"
 
-type Watcher interface {
-	Snap() error
+	"github.com/puerco/tejolote/pkg/builder"
+	"github.com/puerco/tejolote/pkg/run"
+	"github.com/puerco/tejolote/pkg/store"
+)
+
+type Watcher struct {
+	Builder        builder.Builder
+	ArtifactStores []store.Store
 }
 
-// File abstracts a file with the items we're interested in monitoring
-type Artifact struct {
-	Path     string
-	Checksum map[string]string
-	Time     time.Time
+func New(uri string) (w *Watcher, err error) {
+	w = &Watcher{}
+
+	// Get the builder
+	b, err := builder.New(uri)
+	if err != nil {
+		return nil, fmt.Errorf("getting build watcher: %w", err)
+	}
+	w.Builder = b
+
+	return w, nil
 }
 
-type Snapshot map[string]Artifact
+// GetRun returns a run from the build system
+func (w *Watcher) GetRun(specURL string) (*run.Run, error) {
+	r, err := w.Builder.GetRun(specURL)
+	if err != nil {
+		return nil, fmt.Errorf("getting run: %w", err)
+	}
+	return r, nil
+}
+
+func (w *Watcher) Watch(r *run.Run) error {
+	for {
+		if !r.IsRunning {
+			return nil
+		}
+
+		// Sleep to wait for a status change
+		if err := w.Builder.RefreshRun(r); err != nil {
+			return fmt.Errorf("refreshing run data: %w", err)
+		}
+		// Sleep
+		time.Sleep(3 * time.Second)
+	}
+}
+
+// These will go away
+type Snapshot map[string]run.Artifact
 
 // Delta takes a snapshot, assumed to be later in time and returns
 // a directed delta, the files which were created or modified.
-func (snap *Snapshot) Delta(post *Snapshot) []Artifact {
-	results := []Artifact{}
+func (snap *Snapshot) Delta(post *Snapshot) []run.Artifact {
+	results := []run.Artifact{}
 	for path, f := range *post {
 		// If the file was not there in the first snap, add it
 		if _, ok := (*snap)[path]; !ok {
@@ -59,4 +98,14 @@ func (snap *Snapshot) Delta(post *Snapshot) []Artifact {
 		}
 	}
 	return results
+}
+
+// AddArtifactSource adds a new source to look for artifacts
+func (w *Watcher) AddArtifactSource(specURL string) error {
+	s, err := store.New(specURL)
+	if err != nil {
+		return fmt.Errorf("getting artifact store: %w", err)
+	}
+	w.ArtifactStores = append(w.ArtifactStores, s)
+	return nil
 }

@@ -19,59 +19,60 @@ import (
 	"testing"
 	"time"
 
+	"github.com/puerco/tejolote/pkg/run"
 	"github.com/stretchr/testify/require"
 )
 
 func TestDelta(t *testing.T) {
-	testFile := Artifact{
-		"test.txt",
-		map[string]string{"SHA256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"},
-		time.Now(),
+	testFile := run.Artifact{
+		Path:     "test.txt",
+		Checksum: map[string]string{"SHA256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"},
+		Time:     time.Now(),
 	}
-	modHashFile := Artifact{
-		"test.txt",
-		map[string]string{"SHA256": "25b89320221dda5abe3df4624d246d22d0c820ee3598e97553611d7c80abbd36"},
-		testFile.Time,
+	modHashFile := run.Artifact{
+		Path:     "test.txt",
+		Checksum: map[string]string{"SHA256": "25b89320221dda5abe3df4624d246d22d0c820ee3598e97553611d7c80abbd36"},
+		Time:     testFile.Time,
 	}
-	modTimeFile := Artifact{
-		"test.txt",
-		map[string]string{"SHA256": "25b89320221dda5abe3df4624d246d22d0c820ee3598e97553611d7c80abbd36"},
-		time.Date(1976, time.Month(2), 10, 23, 30, 30, 0, time.Local),
+	modTimeFile := run.Artifact{
+		Path:     "test.txt",
+		Checksum: map[string]string{"SHA256": "25b89320221dda5abe3df4624d246d22d0c820ee3598e97553611d7c80abbd36"},
+		Time:     time.Date(1976, time.Month(2), 10, 23, 30, 30, 0, time.Local),
 	}
 	for _, tc := range []struct {
 		preSnap  Snapshot
 		postSnap Snapshot
-		expect   []Artifact
+		expect   []run.Artifact
 	}{
 		{
 			// Empty snapshots, should be an empty list
 			Snapshot{},
 			Snapshot{},
-			[]Artifact{},
+			[]run.Artifact{},
 		},
 		{
 			// One removed file, should be empty list
 			Snapshot{testFile.Path: testFile},
 			Snapshot{},
-			[]Artifact{},
+			[]run.Artifact{},
 		},
 		{
 			// One added file, should be a list with that file
 			Snapshot{},
 			Snapshot{testFile.Path: testFile},
-			[]Artifact{testFile},
+			[]run.Artifact{testFile},
 		},
 		{
 			// One file with time modded, should be a list with that file
 			Snapshot{testFile.Path: testFile},
 			Snapshot{testFile.Path: modTimeFile},
-			[]Artifact{modTimeFile},
+			[]run.Artifact{modTimeFile},
 		},
 		{
 			// One file with hash modded, should be a list with that file
 			Snapshot{testFile.Path: testFile},
 			Snapshot{testFile.Path: modHashFile},
-			[]Artifact{modHashFile},
+			[]run.Artifact{modHashFile},
 		},
 	} {
 		require.Equal(t, tc.expect, tc.preSnap.Delta(&tc.postSnap))
