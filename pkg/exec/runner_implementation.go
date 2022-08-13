@@ -22,13 +22,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/puerco/tejolote/pkg/run"
 	"github.com/puerco/tejolote/pkg/watcher"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/release-utils/command"
 )
 
 type RunnerImplementation interface {
-	CreateRun(*Options, Step) (*Run, error)
+	CreateRun(*Options, run.Step) (*Run, error)
 	Snapshot(*Options, *[]watcher.Watcher) error
 	Execute(*Options, *Run) error
 	WriteAttestation(*Options, *Run) error
@@ -37,7 +38,7 @@ type RunnerImplementation interface {
 type defaultRunnerImplementation struct{}
 
 // CreateRun creates a run from the data defined in the step
-func (ri *defaultRunnerImplementation) CreateRun(opts *Options, step Step) (run *Run, err error) {
+func (ri *defaultRunnerImplementation) CreateRun(opts *Options, step run.Step) (r *Run, err error) {
 	var cmd *command.Command
 	cwd := opts.CWD
 	if opts.CWD == "" {
@@ -48,18 +49,18 @@ func (ri *defaultRunnerImplementation) CreateRun(opts *Options, step Step) (run 
 	}
 	cmd = command.NewWithWorkDir(
 		cwd,
-		step.Command(),
-		step.Params()...,
+		step.Command,
+		step.Params...,
 	)
 
-	run = &Run{
+	r = &Run{
 		Executable: cmd,
 		ExitCode:   0,
-		Artifacts:  []watcher.Artifact{},
+		Artifacts:  []run.Artifact{},
 		Output:     &command.Stream{},
 		Status:     command.Status{},
-		Command:    step.Command(),
-		Params:     step.Params(),
+		Command:    step.Command,
+		Params:     step.Params,
 		Environment: RunEnvironment{
 			Directory: cwd,
 			Variables: map[string]string{},
@@ -67,9 +68,9 @@ func (ri *defaultRunnerImplementation) CreateRun(opts *Options, step Step) (run 
 	} // command.Command
 
 	opts.Logger.Infof(
-		"Executing command: %s %s", step.Command(), strings.Join(step.Params(), " "),
+		"Executing command: %s %s", step.Command, strings.Join(step.Params, " "),
 	)
-	return run, nil
+	return r, nil
 }
 
 func (ri *defaultRunnerImplementation) Execute(opts *Options, run *Run) (err error) {
@@ -96,11 +97,13 @@ func (ri *defaultRunnerImplementation) Execute(opts *Options, run *Run) (err err
 
 func (ri *defaultRunnerImplementation) Snapshot(opts *Options, watchers *[]watcher.Watcher) error {
 	// Take the initial snapshots
-	for i := range *watchers {
-		if err := (*watchers)[i].Snap(); err != nil {
-			return fmt.Errorf("snapshotting watcher: %w", err)
+	/*
+		for i := range *watchers {
+			if err := (*watchers)[i].Snap(); err != nil {
+				return fmt.Errorf("snapshotting watcher: %w", err)
+			}
 		}
-	}
+	*/
 	return nil
 }
 

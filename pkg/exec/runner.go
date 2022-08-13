@@ -19,6 +19,7 @@ package exec
 import (
 	"fmt"
 
+	"github.com/puerco/tejolote/pkg/run"
 	"github.com/puerco/tejolote/pkg/watcher"
 	"github.com/sirupsen/logrus"
 )
@@ -47,7 +48,7 @@ type Options struct {
 }
 
 // RunStep executes a step
-func (r *Runner) RunStep(step Step) (run *Run, err error) {
+func (r *Runner) RunStep(step run.Step) (run *Run, err error) {
 	// Create the command
 	run, err = r.implementation.CreateRun(&r.Options, step)
 	if err != nil {
@@ -67,11 +68,11 @@ func (r *Runner) RunStep(step Step) (run *Run, err error) {
 	if err := r.implementation.Snapshot(&r.Options, &r.Watchers); err != nil {
 		return run, fmt.Errorf("running final snapshots: %w", err)
 	}
-
-	for _, w := range r.Watchers {
-		run.Artifacts = append(run.Artifacts, w.(*watcher.Directory).Snapshots[0].Delta(&w.(*watcher.Directory).Snapshots[1])...)
-	}
-
+	/*
+		for _, w := range r.Watchers {
+			run.Artifacts = append(run.Artifacts, w.(*watcher.Directory).Snapshots[0].Delta(&w.(*watcher.Directory).Snapshots[1])...)
+		}
+	*/
 	if err := r.implementation.WriteAttestation(&r.Options, run); err != nil {
 		return run, fmt.Errorf("writing provenance attestation: %w", err)
 	}

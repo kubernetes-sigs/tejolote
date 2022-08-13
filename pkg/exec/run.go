@@ -26,14 +26,14 @@ import (
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
 	"github.com/puerco/tejolote/pkg/git"
-	"github.com/puerco/tejolote/pkg/watcher"
+	"github.com/puerco/tejolote/pkg/run"
 	"sigs.k8s.io/release-utils/command"
 )
 
 type Run struct {
 	Executable  *command.Command
 	ExitCode    int
-	Artifacts   []watcher.Artifact
+	Artifacts   []run.Artifact
 	Output      *command.Stream
 	Status      command.Status
 	Command     string
