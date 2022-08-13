@@ -15,10 +15,3 @@ limitations under the License.
 */
 
 package exec
-
-// Step is the interface that defines the behaviour of a build step
-// the exec runner can execute
-type Step interface {
-	Command() string
-	Params() []string
-}
