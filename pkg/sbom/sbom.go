@@ -21,7 +21,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/puerco/tejolote/pkg/watcher"
+	"github.com/puerco/tejolote/pkg/run"
 	"sigs.k8s.io/bom/pkg/spdx"
 	"sigs.k8s.io/release-utils/util"
 )
@@ -34,13 +34,13 @@ type Options struct {
 	CWD string
 }
 
-func (parser *Parser) ReadArtifacts(path string) (*[]watcher.Artifact, error) {
+func (parser *Parser) ReadArtifacts(path string) (*[]run.Artifact, error) {
 	doc, err := spdx.OpenDoc(path)
 	if err != nil {
 		return nil, fmt.Errorf("opening doc: %w", err)
 	}
 
-	list := []watcher.Artifact{}
+	list := []run.Artifact{}
 
 	for _, p := range doc.Packages {
 		artifactPath := filepath.Join(parser.Options.CWD, p.FileName)
@@ -51,7 +51,7 @@ func (parser *Parser) ReadArtifacts(path string) (*[]watcher.Artifact, error) {
 
 		// Prefer sha256 to match
 
-		list = append(list, watcher.Artifact{
+		list = append(list, run.Artifact{
 			Path:     p.FileName,
 			Checksum: p.Checksum,
 			Time:     time.Time{},
