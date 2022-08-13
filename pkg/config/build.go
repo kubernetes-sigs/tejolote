@@ -22,18 +22,3 @@ type Step struct {
 	ParamList     []string          `json:"params"`
 	Env           map[string]string `json:"env"`
 }
-
-func NewStep(command string, params ...string) Step {
-	return Step{
-		CommandString: command,
-		ParamList:     params,
-	}
-}
-
-func (step *Step) Command() string {
-	return step.CommandString
-}
-
-func (step *Step) Params() []string {
-	return step.ParamList
-}
