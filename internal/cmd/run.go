@@ -20,13 +20,13 @@ import (
 	"errors"
 	"fmt"
 	gexec "os/exec"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/puerco/tejolote/pkg/config"
 	"github.com/puerco/tejolote/pkg/exec"
-	"github.com/puerco/tejolote/pkg/watcher"
+	"github.com/puerco/tejolote/pkg/run"
 )
 
 type runOptions struct {
@@ -60,7 +60,7 @@ where they came from.
 				return fmt.Errorf("creating runner: %w", err)
 			}
 
-			var step *config.Step
+			var step *run.Step
 			if len(args) > 0 {
 				step, err = syntheticStepFromArgs(args...)
 				if err != nil {
@@ -77,7 +77,7 @@ where they came from.
 			}
 
 			// What do we do with the run?
-			run, err2 := runner.RunStep(step)
+			run, err2 := runner.RunStep(*step)
 			if err2 != nil {
 				return fmt.Errorf("executing step: %w", err)
 			}
@@ -117,10 +117,13 @@ func buildRunner(opts runOptions) (*exec.Runner, error) {
 	runner := exec.NewRunner()
 	runner.Options.CWD = opts.CWD
 
-	for _, dir := range opts.OutputDirs {
-		logrus.Infof("Watching directory: %s", dir)
-		runner.Watchers = append(runner.Watchers, watcher.NewDirectory(dir))
-	}
+	/*
+		for _, dir := range opts.OutputDirs {
+			store, err := store.New(dir)
+			logrus.Infof("Watching directory: %s", dir)
+			runner.Watchers = append(runner.Watchers, store)
+		}
+	*/
 
 	return runner, nil
 }
@@ -128,7 +131,7 @@ func buildRunner(opts runOptions) (*exec.Runner, error) {
 // syntheticStepFromArgs evaluates the arguments passed to see if
 // they correspond to an executable which may be contrued into
 // a tejolote run
-func syntheticStepFromArgs(args ...string) (*config.Step, error) {
+func syntheticStepFromArgs(args ...string) (*run.Step, error) {
 	if len(args) == 0 {
 		return nil, errors.New("no arguments ")
 	}
@@ -142,7 +145,15 @@ func syntheticStepFromArgs(args ...string) (*config.Step, error) {
 	if len(args) > 1 {
 		params = args[1:]
 	}
-	step := config.NewStep(args[0], params...)
+
+	step := run.Step{
+		Command:     args[0],
+		IsSuccess:   false,
+		Params:      params,
+		StartTime:   time.Time{},
+		EndTime:     time.Time{},
+		Environment: map[string]string{},
+	}
 
 	return &step, nil
 }

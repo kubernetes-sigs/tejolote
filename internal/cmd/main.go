@@ -61,6 +61,7 @@ allows for full control of the process you run.
 	)
 
 	addRun(rootCmd)
+	addAttest(rootCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		logrus.Fatal(err)
