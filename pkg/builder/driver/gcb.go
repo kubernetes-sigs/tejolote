@@ -63,6 +63,8 @@ func (gcb *GCB) GetRun(specURL string) (*run.Run, error) {
 	*/
 }
 
+// RefreshRun queries the API from the build system and
+// updates the run metadata.
 func (gcb *GCB) RefreshRun(r *run.Run) error {
 	// Fetch the required data to get the build from the URL
 	u, err := url.Parse(r.SpecURL)
@@ -81,15 +83,70 @@ func (gcb *GCB) RefreshRun(r *run.Run) error {
 	build, err := cloudbuildService.Projects.Builds.Get(project, buildID).Do()
 	if err != nil {
 		return fmt.Errorf("getting build %s from GCB: %w", buildID, err)
+
 	}
 	logrus.Infof("%+v", build)
+	r.Params = []string{}
+	for k, v := range build.Substitutions {
+		r.Params = append(r.Params, fmt.Sprintf("%s=%s", k, v))
+	}
 
 	for i, s := range build.Steps {
 		logrus.Infof("Step #%d %+v", i, s)
+		if len(r.Steps) <= i {
+			r.Steps = append(r.Steps, run.Step{
+				Params:      []string{},
+				Environment: map[string]string{},
+			})
+		}
+		//
+		r.Steps[i].Image = s.Name
+		r.Steps[i].Params = s.Args
+		if s.Timing.StartTime == "" {
+			stime, err := time.Parse(time.RFC3339Nano, s.Timing.StartTime)
+			if s.Timing.EndTime != "" && err != nil {
+				return fmt.Errorf("parsing step start time")
+			}
+			r.Steps[i].StartTime = stime
+		} else {
+			etime, err := time.Parse(time.RFC3339Nano, s.Timing.EndTime)
+			if s.Timing.EndTime != "" && err != nil {
+				return fmt.Errorf("parsing step end time")
+			}
+			r.Steps[i].EndTime = etime
+		}
+
+		if s.Timing.EndTime == "" {
+			r.Steps[i].EndTime = time.Time{}
+		} else {
+			etime, err := time.Parse(time.RFC3339Nano, s.Timing.EndTime)
+			if s.Timing.EndTime != "" && err != nil {
+				return fmt.Errorf("parsing step endtime")
+			}
+			r.Steps[i].EndTime = etime
+		}
 	}
-	// Set the status and the running flag
-	if build.Status == "SUCCESS" {
+	// Set the status and the running flag. Possible values here are
+	// Possible values:
+	//   "STATUS_UNKNOWN" - Status of the build is unknown.
+	//   "PENDING" - Build has been created and is pending execution and queuing. It has not been queued.
+	//   "QUEUED" - Build or step is queued; work has not yet begun.
+	//   "WORKING" - Build or step is being executed.
+	//   "SUCCESS" - Build or step finished successfully.
+	//   "FAILURE" - Build or step failed to complete successfully.
+	//   "INTERNAL_ERROR" - Build or step failed due to an internal cause.
+	//   "TIMEOUT" - Build or step took longer than was allowed.
+	//   "CANCELLED" - Build or step was canceled by a user.
+	//   "EXPIRED" - Build was enqueued for longer than the value of
+	switch build.Status {
+	case "SUCCESS":
 		r.IsSuccess = true
+		r.IsRunning = false
+	case "PENDING", "QUEUED", "WORKING":
+		r.IsSuccess = false
+		r.IsRunning = true
+	case "FAILURE", "INTERNAL_ERROR", "TIMEOUT", "CANCELLED", "EXPIRED":
+		r.IsSuccess = false
 		r.IsRunning = false
 	}
 
