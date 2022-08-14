@@ -30,6 +30,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/puerco/tejolote/pkg/attestation"
 	"github.com/puerco/tejolote/pkg/run"
 
 	"github.com/sirupsen/logrus"
@@ -83,7 +84,6 @@ func (gcb *GCB) RefreshRun(r *run.Run) error {
 	build, err := cloudbuildService.Projects.Builds.Get(project, buildID).Do()
 	if err != nil {
 		return fmt.Errorf("getting build %s from GCB: %w", buildID, err)
-
 	}
 	logrus.Infof("%+v", build)
 	r.Params = []string{}
@@ -153,107 +153,30 @@ func (gcb *GCB) RefreshRun(r *run.Run) error {
 	return nil
 }
 
-/*
-type Options struct {
-	ConfigFile string
-	Step       int
+// BuildPredicate returns a SLSA predicate populated with the GCB
+// run data as recommended by the SLSA 0.2 spec
+func (gcb *GCB) BuildPredicate(r *run.Run) (*attestation.SLSAPredicate, error) {
+	predicate := attestation.NewSLSAPredicate()
+	predicate.BuildType = "https://cloudbuild.googleapis.com/CloudBuildYaml@v1"
+	buildconfig := map[string][]struct {
+		Image     string
+		Arguments []string
+	}{}
+
+	buildconfig["steps"] = []struct {
+		Image     string
+		Arguments []string
+	}{}
+
+	for _, s := range r.Steps {
+		buildconfig["steps"] = append(buildconfig["steps"], struct {
+			Image     string
+			Arguments []string
+		}{
+			Image:     s.Image,
+			Arguments: s.Params,
+		})
+	}
+	predicate.BuildConfig = buildconfig
+	return &predicate, nil
 }
-
-func NewFromConfig()
-
-type GCB struct {
-}
-
-type Config struct {
-	Steps []Step `json:"steps"`
-	Tags []string `json:"tags"`
-}
-
-type Step struct {
-	Name string `json:"name"`
-	Dir string `json:"name"`
-	Args []string `json:"args"`
-	SecretEnv []string `json:"secretEnv"`
-	Environment []string `json:"env"` // these are  LABEL=value strings
-}
-
-
-
-
-secrets:
-- kmsKeyName: projects/k8s-releng-prod/locations/global/keyRings/release/cryptoKeys/encrypt-0
-  secretEnv:
-    GITHUB_TOKEN: CiQAIkW
-    DOCKERHUB_TOKEN: CiQA
-
-steps:
-- name: gcr.io/cloud-builders/git
-  dir: "go/src/k8s.io"
-  args:
-  - "clone"
-  - "https://github.com/${_TOOL_ORG}/${_TOOL_REPO}"
-
-- name: gcr.io/cloud-builders/git
-  entrypoint: "bash"
-  dir: "go/src/k8s.io/release"
-  args:
-  - '-c'
-  - |
-    git fetch
-    echo "Checking out ${_TOOL_REF}"
-    git checkout ${_TOOL_REF}
-- name: gcr.io/k8s-staging-releng/k8s-cloud-builder:${_KUBE_CROSS_VERSION_LATEST}
-  dir: "go/src/k8s.io/release"
-  env:
-  - "GOPATH=/workspace/go"
-  - "GOBIN=/workspace/bin"
-  args:
-  - "./compile-release-tools"
-  - "krel"
-
-- name: gcr.io/k8s-staging-releng/k8s-cloud-builder:${_KUBE_CROSS_VERSION}
-  dir: "/workspace"
-  env:
-  - "TOOL_ORG=${_TOOL_ORG}"
-  - "TOOL_REPO=${_TOOL_REPO}"
-  - "TOOL_REF=${_TOOL_REF}"
-  - "BUILD_ID=${BUILD_ID}"
-  - "K8S_ORG=${_K8S_ORG}"
-  - "K8S_REPO=${_K8S_REPO}"
-  - "K8S_REF=${_K8S_REF}"
-  - GOOGLE_SERVICE_ACCOUNT_NAME=krel-staging@k8s-releng-prod.iam.gserviceaccount.com
-  secretEnv:
-  - GITHUB_TOKEN
-  - DOCKERHUB_TOKEN
-  args:
-  - "bin/krel"
-  - "stage"
-  - "--submit=false"
-  - "${_NOMOCK}"
-  - "--log-level=${_LOG_LEVEL}"
-  - "--type=${_TYPE}"
-  - "--branch=${_RELEASE_BRANCH}"
-  - "--build-version=${_BUILDVERSION}"
-
-tags:
-- ${_GCP_USER_TAG}
-- ${_RELEASE_BRANCH}
-- ${_NOMOCK_TAG}
-- STAGE
-- ${_GIT_TAG}
-- ${_TYPE_TAG}
-- ${_MAJOR_VERSION_TAG}
-- ${_MINOR_VERSION_TAG}
-- ${_PATCH_VERSION_TAG}
-- ${_KUBERNETES_VERSION_TAG}
-
-options:
-  machineType: N1_HIGHCPU_32
-
-substitutions:
-  # _GIT_TAG will be filled with a git-based tag of the form vYYYYMMDD-hash, and
-  # can be used as a substitution
-  _GIT_TAG: '12345'
-
-
-*/
