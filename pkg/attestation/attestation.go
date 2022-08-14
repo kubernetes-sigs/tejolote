@@ -17,12 +17,18 @@ limitations under the License.
 package attestation
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
 )
 
-type Attestation intoto.Statement
-type SLSAPredicate *slsa.ProvenancePredicate
+type (
+	Attestation   intoto.Statement
+	SLSAPredicate *slsa.ProvenancePredicate
+)
 
 func New() *Attestation {
 	attestation := &Attestation{
@@ -40,8 +46,8 @@ func (att *Attestation) SLSA() *Attestation {
 	return att
 }
 
+// NewSLSAPredicate returns a new SLSA predicate fully initialized
 func NewSLSAPredicate() SLSAPredicate {
-	// invocation, err := r.InvocationData()
 	predicate := slsa.ProvenancePredicate{
 		Builder: slsa.ProvenanceBuilder{
 			ID: "", // TODO: Read builder from trusted environment
@@ -72,4 +78,16 @@ func NewSLSAPredicate() SLSAPredicate {
 	}
 
 	return &predicate
+}
+
+func (att *Attestation) ToJSON() ([]byte, error) {
+	var b bytes.Buffer
+	enc := json.NewEncoder(&b)
+	enc.SetIndent("", "  ")
+	enc.SetEscapeHTML(false)
+
+	if err := enc.Encode(att); err != nil {
+		return nil, fmt.Errorf("encoding spdx sbom: %w", err)
+	}
+	return b.Bytes(), nil
 }
