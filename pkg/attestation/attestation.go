@@ -22,6 +22,7 @@ import (
 )
 
 type Attestation intoto.Statement
+type SLSAPredicate *slsa.ProvenancePredicate
 
 func New() *Attestation {
 	attestation := &Attestation{
@@ -39,7 +40,7 @@ func (att *Attestation) SLSA() *Attestation {
 	return att
 }
 
-func NewSLSAPredicate() *slsa.ProvenancePredicate {
+func NewSLSAPredicate() SLSAPredicate {
 	// invocation, err := r.InvocationData()
 	predicate := slsa.ProvenancePredicate{
 		Builder: slsa.ProvenanceBuilder{
