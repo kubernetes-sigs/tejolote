@@ -19,6 +19,7 @@ package builder
 import (
 	"fmt"
 
+	"github.com/puerco/tejolote/pkg/attestation"
 	"github.com/puerco/tejolote/pkg/builder/driver"
 	"github.com/puerco/tejolote/pkg/run"
 )
@@ -56,4 +57,8 @@ func (b *Builder) GetRun(identifier string) (*run.Run, error) {
 // the build system
 func (b *Builder) RefreshRun(r *run.Run) error {
 	return b.driver.RefreshRun(r)
+}
+
+func (b *Builder) BuildPredicate(r *run.Run) (*attestation.SLSAPredicate, error) {
+	return b.driver.BuildPredicate(r)
 }
