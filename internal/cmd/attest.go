@@ -54,12 +54,16 @@ where they came from.
 
 			logrus.Infof("Run produced %d artifacts", len(r.Artifacts))
 
-			attestation, err := r.Attest()
+			attestation, err := w.AttestRun(r)
 			if err != nil {
 				return fmt.Errorf("generating run attestation: %w", err)
 			}
 
-			fmt.Println(attestation)
+			json, err := attestation.ToJSON()
+			if err != nil {
+				return fmt.Errorf("serializing attestation: %w", err)
+			}
+			fmt.Println(string(json))
 			return nil
 		},
 	}
