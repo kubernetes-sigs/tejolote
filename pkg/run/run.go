@@ -18,14 +18,13 @@ package run
 
 import (
 	"time"
-
-	"github.com/puerco/tejolote/pkg/attestation"
 )
 
 type Run struct {
 	SpecURL   string
 	IsSuccess bool
 	IsRunning bool
+	Params    []string
 	Steps     []Step
 	Artifacts []Artifact
 	StartTime time.Time
@@ -42,10 +41,11 @@ type Step interface {
 
 */
 type Step struct {
-	Command     string
+	Command     string // Command run
+	Image       string // Container image used for the step
 	IsSuccess   bool
 	Params      []string
-	StartTime   time.Time
+	StartTime   time.Time // Start time of the step
 	EndTime     time.Time
 	Environment map[string]string
 }
@@ -55,10 +55,4 @@ type Artifact struct {
 	Path     string
 	Checksum map[string]string
 	Time     time.Time
-}
-
-// Attest writes out the data of
-func (r *Run) Attest() (*attestation.Attestation, error) {
-	att := attestation.New().SLSA()
-	return att, nil
 }
