@@ -20,9 +20,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/puerco/tejolote/pkg/attestation"
 	"github.com/puerco/tejolote/pkg/builder"
 	"github.com/puerco/tejolote/pkg/run"
 	"github.com/puerco/tejolote/pkg/store"
+	"github.com/sirupsen/logrus"
 )
 
 type Watcher struct {
@@ -98,6 +100,21 @@ func (snap *Snapshot) Delta(post *Snapshot) []run.Artifact {
 		}
 	}
 	return results
+}
+
+func (w *Watcher) AttestRun(r *run.Run) (*attestation.Attestation, error) {
+	if r.IsRunning {
+		logrus.Warn("run is still running")
+	}
+	att := attestation.New().SLSA()
+
+	predicate, err := w.Builder.BuildPredicate(r)
+	if err != nil {
+		return nil, fmt.Errorf("building predicate: %w", err)
+	}
+
+	att.Predicate = predicate
+	return att, nil
 }
 
 // AddArtifactSource adds a new source to look for artifacts
