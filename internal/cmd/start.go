@@ -17,6 +17,7 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -34,6 +35,17 @@ type startAttestationOptions struct {
 	repo      string
 	repoPath  string
 	workspace string
+}
+
+func (opts startAttestationOptions) Validate() error {
+	if opts.clone && opts.repo == "" {
+		return errors.New("repository clone requested but no repository was specified")
+	}
+
+	if opts.clone && opts.repoPath == "" {
+		return errors.New("repository clone requested but no repository path was specified")
+	}
+	return nil
 }
 
 func addStart(parentCmd *cobra.Command) {
@@ -62,6 +74,9 @@ tejolote once it finished observing a build.
 		SilenceUsage:      false,
 		PersistentPreRunE: initLogging,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			if err := startAttestationOpts.Validate(); err != nil {
+				return fmt.Errorf("validating options: %w", err)
+			}
 			att := attestation.New()
 			predicate := attestation.NewSLSAPredicate()
 
