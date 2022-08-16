@@ -46,6 +46,8 @@ func NewFromMoniker(moniker string) (BuildSystem, error) {
 	switch moniker {
 	case "gcb":
 		driver = &GCB{}
+	case "github":
+		driver = &GitHubWorkflow{}
 	default:
 		return nil, fmt.Errorf("unable to get driver from moniker %s", moniker)
 	}
