@@ -155,28 +155,29 @@ func (gcb *GCB) RefreshRun(r *run.Run) error {
 
 // BuildPredicate returns a SLSA predicate populated with the GCB
 // run data as recommended by the SLSA 0.2 spec
-func (gcb *GCB) BuildPredicate(r *run.Run) (*attestation.SLSAPredicate, error) {
-	predicate := attestation.NewSLSAPredicate()
-	predicate.BuildType = "https://cloudbuild.googleapis.com/CloudBuildYaml@v1"
-	buildconfig := map[string][]struct {
-		Image     string
-		Arguments []string
-	}{}
+func (gcb *GCB) BuildPredicate(r *run.Run, draft *attestation.SLSAPredicate) (predicate *attestation.SLSAPredicate, err error) {
+	type stepData struct {
+		Image     string   `json:"image"`
+		Arguments []string `json:"arguments"`
+	}
 
-	buildconfig["steps"] = []struct {
-		Image     string
-		Arguments []string
-	}{}
+	if draft == nil {
+		pred := attestation.NewSLSAPredicate()
+		predicate = &pred
+	} else {
+		predicate = draft
+	}
+	(*predicate).BuildType = "https://cloudbuild.googleapis.com/CloudBuildYaml@v1"
+	buildconfig := map[string][]stepData{}
+
+	buildconfig["steps"] = []stepData{}
 
 	for _, s := range r.Steps {
-		buildconfig["steps"] = append(buildconfig["steps"], struct {
-			Image     string
-			Arguments []string
-		}{
+		buildconfig["steps"] = append(buildconfig["steps"], stepData{
 			Image:     s.Image,
 			Arguments: s.Params,
 		})
 	}
-	predicate.BuildConfig = buildconfig
-	return &predicate, nil
+	(*predicate).BuildConfig = buildconfig
+	return predicate, nil
 }

@@ -59,6 +59,6 @@ func (b *Builder) RefreshRun(r *run.Run) error {
 	return b.driver.RefreshRun(r)
 }
 
-func (b *Builder) BuildPredicate(r *run.Run) (*attestation.SLSAPredicate, error) {
-	return b.driver.BuildPredicate(r)
+func (b *Builder) BuildPredicate(r *run.Run, draft *attestation.SLSAPredicate) (*attestation.SLSAPredicate, error) {
+	return b.driver.BuildPredicate(r, draft)
 }
