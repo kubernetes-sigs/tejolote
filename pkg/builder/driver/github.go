@@ -24,30 +24,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/puerco/tejolote/pkg/attestation"
 	"github.com/puerco/tejolote/pkg/run"
 	"github.com/sirupsen/logrus"
 )
 
-type GitHubWorkflow struct {
-	Organization string
-	Repository   string
-	RunID        int
-}
-
-func (ghw *GitHubWorkflow) GetRun(specURL string) (*run.Run, error) {
-	r := &run.Run{
-		SpecURL:   specURL,
-		IsSuccess: false,
-		Steps:     []run.Step{},
-		Artifacts: []run.Artifact{},
-		StartTime: time.Time{},
-		EndTime:   time.Time{},
-	}
-	if err := ghw.RefreshRun(r); err != nil {
-		return nil, fmt.Errorf("doing initial refresh of run data: %w", err)
-	}
-	return r, nil
-}
+const ghRunURL string = "https://api.github.com/repos/%s/%s/actions/runs/%d"
 
 type ghAPIResponseActor struct {
 	Login string `json:"login"`
@@ -70,7 +52,26 @@ type ghAPIResponseRun struct {
 	TriggeringActor ghAPIResponseActor `json:"triggering_actor"`
 }
 
-const ghRunURL string = "https://api.github.com/repos/%s/%s/actions/runs/%d"
+type GitHubWorkflow struct {
+	Organization string
+	Repository   string
+	RunID        int
+}
+
+func (ghw *GitHubWorkflow) GetRun(specURL string) (*run.Run, error) {
+	r := &run.Run{
+		SpecURL:   specURL,
+		IsSuccess: false,
+		Steps:     []run.Step{},
+		Artifacts: []run.Artifact{},
+		StartTime: time.Time{},
+		EndTime:   time.Time{},
+	}
+	if err := ghw.RefreshRun(r); err != nil {
+		return nil, fmt.Errorf("doing initial refresh of run data: %w", err)
+	}
+	return r, nil
+}
 
 // RefreshRun queries the github API to get the latest data
 func (ghw *GitHubWorkflow) RefreshRun(r *run.Run) error {
@@ -114,4 +115,22 @@ func gitHubAPIGetRequest(url string) (*http.Response, error) {
 		return nil, fmt.Errorf("executing http requet to GitHub API: %w", err)
 	}
 	return res, nil
+}
+
+// BuildPredicate builds a predicate from the run data
+func (ghw *GitHubWorkflow) BuildPredicate(
+	r *run.Run, draft *attestation.SLSAPredicate,
+) (predicate *attestation.SLSAPredicate, err error) {
+	if draft == nil {
+		pred := attestation.NewSLSAPredicate()
+		predicate = &pred
+	} else {
+		predicate = draft
+	}
+	(*predicate).Builder.ID = "https://github.com/Attestations/GitHubHostedActions@v1"
+	(*predicate).BuildType = "https://github.com/Attestations/GitHubActionsWorkflow@v1"
+	//(*predicate).Invocation.ConfigSource.Digest =
+	//(*predicate).Invocation.ConfigSource.EntryPoint =
+	// (*predicate).Invocation.ConfigSource.URI  =
+	return predicate, nil
 }
