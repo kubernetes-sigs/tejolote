@@ -19,6 +19,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -30,7 +31,6 @@ import (
 )
 
 type startAttestationOptions struct {
-	outputOptions
 	clone     bool
 	repo      string
 	repoPath  string
@@ -50,7 +50,7 @@ func (opts startAttestationOptions) Validate() error {
 
 func addStart(parentCmd *cobra.Command) {
 	startAttestationOpts := startAttestationOptions{}
-
+	var outputOps *outputOptions
 	// Verb
 	startCmd := &cobra.Command{
 		Short:             "Start a partial document",
@@ -108,7 +108,12 @@ tejolote once it finished observing a build.
 			if err != nil {
 				return fmt.Errorf("serializing attestation json: %w", err)
 			}
-			fmt.Println(string(json))
+
+			if outputOps.OutputPath != "" {
+				fmt.Println(string(json))
+			} else {
+				os.WriteFile(outputOps.OutputPath, json, os.FileMode(0o644))
+			}
 
 			return nil
 		},
@@ -142,7 +147,7 @@ tejolote once it finished observing a build.
 		"clone the repository",
 	)
 
-	startAttestationOpts.outputOptions = addOutputFlags(startAttestationCmd)
+	outputOps = addOutputFlags(startAttestationCmd)
 	startCmd.AddCommand(startAttestationCmd)
 	parentCmd.AddCommand(startCmd)
 }

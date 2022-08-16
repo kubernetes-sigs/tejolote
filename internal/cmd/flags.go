@@ -22,8 +22,8 @@ type outputOptions struct {
 	OutputPath string
 }
 
-func addOutputFlags(command *cobra.Command) outputOptions {
-	opts := outputOptions{}
+func addOutputFlags(command *cobra.Command) *outputOptions {
+	opts := &outputOptions{}
 	command.PersistentFlags().StringVar(
 		&opts.OutputPath,
 		"output",

@@ -22,15 +22,18 @@ import (
 	"github.com/puerco/tejolote/pkg/watcher"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"sigs.k8s.io/release-utils/util"
 )
 
 type attestOptions struct {
-	outputOptions
-	artifacts []string
+	continuePrevious bool
+	artifacts        []string
 }
 
 func addAttest(parentCmd *cobra.Command) {
 	attestOpts := attestOptions{}
+	var outputOpts *outputOptions
+
 	attestCmd := &cobra.Command{
 		Short: "Attest to a build system run",
 		Long: `tejolote attest buildsys://build-run/identifier
@@ -70,6 +73,19 @@ where they came from.
 
 			logrus.Infof("Run produced %d artifacts", len(r.Artifacts))
 
+			logrus.Infof("Output goes to %s", outputOpts.OutputPath)
+
+			if outputOpts.OutputPath != "" && util.Exists(outputOpts.OutputPath) {
+				logrus.Info("DOund file")
+				if attestOpts.continuePrevious {
+					if w.LoadAttestation(outputOpts.OutputPath); err != nil {
+						return fmt.Errorf("loading previous attestation")
+					}
+				} else {
+					logrus.Warn("attestation file found, it will be overwritten")
+				}
+			}
+
 			attestation, err := w.AttestRun(r)
 			if err != nil {
 				return fmt.Errorf("generating run attestation: %w", err)
@@ -84,7 +100,14 @@ where they came from.
 		},
 	}
 
-	attestOpts.outputOptions = addOutputFlags(attestCmd)
+	outputOpts = addOutputFlags(attestCmd)
+
+	attestCmd.PersistentFlags().BoolVar(
+		&attestOpts.continuePrevious,
+		"continue",
+		true,
+		"if found, continue a previously started attestation",
+	)
 
 	attestCmd.PersistentFlags().StringSliceVar(
 		&attestOpts.artifacts,
