@@ -24,6 +24,8 @@ import (
 	"os"
 	"time"
 
+	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
+
 	"github.com/puerco/tejolote/pkg/attestation"
 	"github.com/puerco/tejolote/pkg/run"
 	"github.com/sirupsen/logrus"
@@ -39,7 +41,9 @@ type ghAPIResponseActor struct {
 }
 
 type ghAPIResponseRun struct {
-	ID              string             `json:"id"`
+	ID              int64              `json:"id"`
+	Status          string             `json:"status"`
+	Conclusion      string             `json:"conclusion"`
 	HeadBranch      string             `json:"head_branch"`
 	HeadSHA         string             `json:"head_sha"`
 	Path            string             `json:"path"`
@@ -92,6 +96,19 @@ func (ghw *GitHubWorkflow) RefreshRun(r *run.Run) error {
 		return fmt.Errorf("unmarshalling GitHub response: %w", err)
 	}
 
+	if runData.Status == "completed" {
+		r.IsRunning = false
+	}
+
+	switch runData.Conclusion {
+	case "failure", "cancelled":
+		r.IsSuccess = false
+	case "success":
+		r.IsSuccess = true
+	}
+
+	r.SystemData = runData
+
 	// FIXME: Assign data to the run
 
 	return nil
@@ -121,6 +138,17 @@ func gitHubAPIGetRequest(url string) (*http.Response, error) {
 func (ghw *GitHubWorkflow) BuildPredicate(
 	r *run.Run, draft *attestation.SLSAPredicate,
 ) (predicate *attestation.SLSAPredicate, err error) {
+	type githubEnvironment struct {
+		// The architecture of the runner.
+		Arch string            `json:"arch"`
+		Env  map[string]string `json:"env"`
+		// The context values that were referenced in the workflow definition.
+		// Secrets are set to the empty string.
+		Context struct {
+			GitHub map[string]string `json:"github"`
+			Runner map[string]string `json:"runner"`
+		} `json:"context"`
+	}
 	if draft == nil {
 		pred := attestation.NewSLSAPredicate()
 		predicate = &pred
@@ -129,8 +157,26 @@ func (ghw *GitHubWorkflow) BuildPredicate(
 	}
 	(*predicate).Builder.ID = "https://github.com/Attestations/GitHubHostedActions@v1"
 	(*predicate).BuildType = "https://github.com/Attestations/GitHubActionsWorkflow@v1"
-	//(*predicate).Invocation.ConfigSource.Digest =
-	//(*predicate).Invocation.ConfigSource.EntryPoint =
-	// (*predicate).Invocation.ConfigSource.URI  =
+	(*predicate).Invocation.ConfigSource.Digest = slsa.DigestSet{
+		"sha1": r.SystemData.(ghAPIResponseRun).HeadSHA,
+	}
+	(*predicate).Invocation.ConfigSource.EntryPoint = r.SystemData.(ghAPIResponseRun).Path
+	(*predicate).Invocation.ConfigSource.URI = fmt.Sprintf(
+		"git+https://github.com/%s/%s.git",
+		ghw.Organization, ghw.Repository,
+	)
+	// TODO: I think we need to checkout the file from git to fill
+	(*predicate).Invocation.Environment = githubEnvironment{
+		Arch: "",
+		Env:  map[string]string{},
+		Context: struct {
+			GitHub map[string]string `json:"github"`
+			Runner map[string]string `json:"runner"`
+		}{
+			GitHub: map[string]string{
+				"run_id": fmt.Sprintf("%d", r.SystemData.(ghAPIResponseRun).ID),
+			},
+		},
+	}
 	return predicate, nil
 }
