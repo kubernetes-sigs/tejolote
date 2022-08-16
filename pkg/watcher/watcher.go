@@ -17,7 +17,9 @@ limitations under the License.
 package watcher
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/puerco/tejolote/pkg/attestation"
@@ -28,8 +30,9 @@ import (
 )
 
 type Watcher struct {
-	Builder        builder.Builder
-	ArtifactStores []store.Store
+	DraftAttestation *attestation.Attestation
+	Builder          builder.Builder
+	ArtifactStores   []store.Store
 }
 
 func New(uri string) (w *Watcher, err error) {
@@ -54,6 +57,7 @@ func (w *Watcher) GetRun(specURL string) (*run.Run, error) {
 	return r, nil
 }
 
+// Watch watches a run, updating the run data as it runs
 func (w *Watcher) Watch(r *run.Run) error {
 	for {
 		if !r.IsRunning {
@@ -102,13 +106,43 @@ func (snap *Snapshot) Delta(post *Snapshot) []run.Artifact {
 	return results
 }
 
-func (w *Watcher) AttestRun(r *run.Run) (*attestation.Attestation, error) {
-	if r.IsRunning {
-		logrus.Warn("run is still running")
+// LoadAttestation loads a partial attestation to complete
+// when a run finished running
+func (w *Watcher) LoadAttestation(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("loading previous attestation: %w", err)
 	}
+
 	att := attestation.New().SLSA()
 
-	predicate, err := w.Builder.BuildPredicate(r)
+	if err := json.Unmarshal(data, &att); err != nil {
+		return fmt.Errorf("unmarshaling attestation json: %w", err)
+	}
+
+	w.DraftAttestation = att
+	logrus.Info("Loaded draft attestation from %s", path)
+	return nil
+}
+
+// AttestRun generates an attestation from a run tejolote can watch
+func (w *Watcher) AttestRun(r *run.Run) (att *attestation.Attestation, err error) {
+	if r.IsRunning {
+		logrus.Warn("run is still running, attestation may not capture en result")
+	}
+
+	if w.DraftAttestation != nil {
+		att = w.DraftAttestation
+	} else {
+		att = attestation.New().SLSA()
+	}
+
+	var pred *attestation.SLSAPredicate
+	if p, ok := att.Predicate.(attestation.SLSAPredicate); ok {
+		pred = &p
+	}
+
+	predicate, err := w.Builder.BuildPredicate(r, pred)
 	if err != nil {
 		return nil, fmt.Errorf("building predicate: %w", err)
 	}
