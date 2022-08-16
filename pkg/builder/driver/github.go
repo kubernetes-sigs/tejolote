@@ -80,6 +80,7 @@ func (ghw *GitHubWorkflow) GetRun(specURL string) (*run.Run, error) {
 // RefreshRun queries the github API to get the latest data
 func (ghw *GitHubWorkflow) RefreshRun(r *run.Run) error {
 	// https://api.github.com/repos/distroless/static/actions/runs/2858064062
+	// https://api.github.com/repos/distroless/static/actions/runs/7492361110 (failure)
 	res, err := gitHubAPIGetRequest(fmt.Sprintf(ghRunURL, ghw.Organization, ghw.Repository, ghw.RunID))
 	if err != nil {
 		return fmt.Errorf("querying github api: %w", err)
