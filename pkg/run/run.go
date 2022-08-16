@@ -21,25 +21,19 @@ import (
 )
 
 type Run struct {
-	SpecURL   string
-	IsSuccess bool
-	IsRunning bool
-	Params    []string
-	Steps     []Step
-	Artifacts []Artifact
-	StartTime time.Time
-	EndTime   time.Time
+	SpecURL    string
+	IsSuccess  bool
+	IsRunning  bool
+	Params     []string
+	Steps      []Step
+	Artifacts  []Artifact
+	StartTime  time.Time
+	EndTime    time.Time
+	SystemData interface{}
 }
 
 // Step is the interface that defines the behaviour of a build step
 // the exec runner can execute
-/*
-type Step interface {
-	Command() string
-	Params() []string
-}
-
-*/
 type Step struct {
 	Command     string // Command run
 	Image       string // Container image used for the step
