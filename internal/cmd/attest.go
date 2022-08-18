@@ -18,15 +18,15 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/puerco/tejolote/pkg/watcher"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"sigs.k8s.io/release-utils/util"
 )
 
 type attestOptions struct {
-	continuePrevious bool
+	continueExisting string
 	artifacts        []string
 }
 
@@ -56,34 +56,28 @@ where they came from.
 				return fmt.Errorf("building watcher")
 			}
 
-			r, err := w.GetRun(args[0])
-			if err != nil {
-				return fmt.Errorf("fetching run: %w", err)
-			}
-
-			if err := w.Watch(r); err != nil {
-				return fmt.Errorf("generating attestation: %w", err)
-			}
-
+			// Add artifact monitors to the watcher
 			for _, uri := range attestOpts.artifacts {
 				if err := w.AddArtifactSource(uri); err != nil {
 					return fmt.Errorf("adding artifacts source: %w", err)
 				}
 			}
 
+			// Get the run from the build system
+			r, err := w.GetRun(args[0])
+			if err != nil {
+				return fmt.Errorf("fetching run: %w", err)
+			}
+
+			// Watch the run run :)
+			if err := w.Watch(r); err != nil {
+				return fmt.Errorf("generating attestation: %w", err)
+			}
+
 			logrus.Infof("Run produced %d artifacts", len(r.Artifacts))
 
-			logrus.Infof("Output goes to %s", outputOpts.OutputPath)
-
-			if outputOpts.OutputPath != "" && util.Exists(outputOpts.OutputPath) {
-				logrus.Info("DOund file")
-				if attestOpts.continuePrevious {
-					if w.LoadAttestation(outputOpts.OutputPath); err != nil {
-						return fmt.Errorf("loading previous attestation")
-					}
-				} else {
-					logrus.Warn("attestation file found, it will be overwritten")
-				}
+			if w.LoadAttestation(attestOpts.continueExisting); err != nil {
+				return fmt.Errorf("loading previous attestation")
 			}
 
 			attestation, err := w.AttestRun(r)
@@ -95,6 +89,14 @@ where they came from.
 			if err != nil {
 				return fmt.Errorf("serializing attestation: %w", err)
 			}
+
+			if outputOpts.OutputPath != "" {
+				if err := os.WriteFile(outputOpts.OutputPath, json, os.FileMode(0o644)); err != nil {
+					return fmt.Errorf("writing attestation file: %w", err)
+				}
+				return nil
+			}
+
 			fmt.Println(string(json))
 			return nil
 		},
@@ -102,11 +104,11 @@ where they came from.
 
 	outputOpts = addOutputFlags(attestCmd)
 
-	attestCmd.PersistentFlags().BoolVar(
-		&attestOpts.continuePrevious,
+	attestCmd.PersistentFlags().StringVar(
+		&attestOpts.continueExisting,
 		"continue",
-		true,
-		"if found, continue a previously started attestation",
+		"",
+		"path to a previously started attestation to continue",
 	)
 
 	attestCmd.PersistentFlags().StringSliceVar(

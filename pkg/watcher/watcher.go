@@ -109,6 +109,9 @@ func (snap *Snapshot) Delta(post *Snapshot) []run.Artifact {
 // LoadAttestation loads a partial attestation to complete
 // when a run finished running
 func (w *Watcher) LoadAttestation(path string) error {
+	if path == "" {
+		return nil
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("loading previous attestation: %w", err)
@@ -121,7 +124,7 @@ func (w *Watcher) LoadAttestation(path string) error {
 	}
 
 	w.DraftAttestation = att
-	logrus.Info("Loaded draft attestation from %s", path)
+	logrus.Infof("Loaded draft attestation from %s", path)
 	return nil
 }
 
