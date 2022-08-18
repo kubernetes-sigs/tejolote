@@ -163,3 +163,21 @@ func (w *Watcher) AddArtifactSource(specURL string) error {
 	w.ArtifactStores = append(w.ArtifactStores, s)
 	return nil
 }
+
+// CollectArtifacts queries the storage drivers attached to the run and
+// collects any artifacts found after the build is done
+func (w *Watcher) CollectArtifacts(r *run.Run) error {
+	r.Artifacts = nil
+	for _, s := range w.ArtifactStores {
+		artifacts, err := s.ReadArtifacts()
+		if err != nil {
+			return fmt.Errorf("collecting artfiacts from %s: %w", s.SpecURL, err)
+		}
+		r.Artifacts = append(r.Artifacts, artifacts)
+	}
+	logrus.Info(
+		"Run produced %d artifacts collected from %d sources",
+		len(r.Artifacts), len(w.ArtifactStores),
+	)
+	return nil
+}
