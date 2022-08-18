@@ -159,9 +159,9 @@ func (ghw *GitHubWorkflow) BuildPredicate(
 	(*predicate).Builder.ID = "https://github.com/Attestations/GitHubHostedActions@v1"
 	(*predicate).BuildType = "https://github.com/Attestations/GitHubActionsWorkflow@v1"
 	(*predicate).Invocation.ConfigSource.Digest = slsa.DigestSet{
-		"sha1": r.SystemData.(ghAPIResponseRun).HeadSHA,
+		"sha1": r.SystemData.(*ghAPIResponseRun).HeadSHA,
 	}
-	(*predicate).Invocation.ConfigSource.EntryPoint = r.SystemData.(ghAPIResponseRun).Path
+	(*predicate).Invocation.ConfigSource.EntryPoint = r.SystemData.(*ghAPIResponseRun).Path
 	(*predicate).Invocation.ConfigSource.URI = fmt.Sprintf(
 		"git+https://github.com/%s/%s.git",
 		ghw.Organization, ghw.Repository,
@@ -175,7 +175,7 @@ func (ghw *GitHubWorkflow) BuildPredicate(
 			Runner map[string]string `json:"runner"`
 		}{
 			GitHub: map[string]string{
-				"run_id": fmt.Sprintf("%d", r.SystemData.(ghAPIResponseRun).ID),
+				"run_id": fmt.Sprintf("%d", r.SystemData.(*ghAPIResponseRun).ID),
 			},
 		},
 	}
