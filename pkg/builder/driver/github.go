@@ -18,10 +18,14 @@ package driver
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
@@ -60,6 +64,24 @@ type GitHubWorkflow struct {
 	Organization string
 	Repository   string
 	RunID        int
+}
+
+func parseGitHubURL(specURL string) (org, repo string, runID int64, err error) {
+	u, err := url.Parse(specURL)
+	if u.Scheme != "github" {
+		return org, repo, runID, errors.New("URL is not a github URL")
+	}
+	if err != nil {
+		return org, repo, runID, fmt.Errorf("parsing spec url: %w", err)
+	}
+	parts := strings.SplitN(u.Path, "/", 3)
+	rID, err := strconv.Atoi(strings.TrimSuffix(parts[2], "/"))
+	if err != nil {
+		return org, repo, runID, fmt.Errorf("parsing run ID from URL: %w", err)
+	}
+
+	return parts[0], parts[1], int64(rID), nil
+
 }
 
 func (ghw *GitHubWorkflow) GetRun(specURL string) (*run.Run, error) {
@@ -150,6 +172,10 @@ func (ghw *GitHubWorkflow) BuildPredicate(
 			Runner map[string]string `json:"runner"`
 		} `json:"context"`
 	}
+	org, repo, runID, err := parseGitHubURL(r.SpecURL)
+	if err != nil {
+		return nil, fmt.Errorf("parsing run spec URL: %w", nil)
+	}
 	if draft == nil {
 		pred := attestation.NewSLSAPredicate()
 		predicate = &pred
@@ -163,8 +189,7 @@ func (ghw *GitHubWorkflow) BuildPredicate(
 	}
 	(*predicate).Invocation.ConfigSource.EntryPoint = r.SystemData.(*ghAPIResponseRun).Path
 	(*predicate).Invocation.ConfigSource.URI = fmt.Sprintf(
-		"git+https://github.com/%s/%s.git",
-		ghw.Organization, ghw.Repository,
+		"git+https://github.com/%s/%s.git", org, repo,
 	)
 	// TODO: I think we need to checkout the file from git to fill
 	(*predicate).Invocation.Environment = githubEnvironment{
@@ -175,7 +200,7 @@ func (ghw *GitHubWorkflow) BuildPredicate(
 			Runner map[string]string `json:"runner"`
 		}{
 			GitHub: map[string]string{
-				"run_id": fmt.Sprintf("%d", r.SystemData.(*ghAPIResponseRun).ID),
+				"run_id": fmt.Sprintf("%d", runID),
 			},
 		},
 	}
