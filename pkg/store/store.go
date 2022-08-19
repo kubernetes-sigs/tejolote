@@ -20,13 +20,15 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/puerco/tejolote/pkg/run"
 	"github.com/puerco/tejolote/pkg/store/driver"
 	"github.com/puerco/tejolote/pkg/store/snapshot"
 )
 
 type Store struct {
-	Driver Implementation
-	Snaps  []snapshot.Snapshot
+	SpecURL string
+	Driver  Implementation
+	Snaps   []snapshot.Snapshot
 }
 
 type Implementation interface {
@@ -52,4 +54,8 @@ func New(specURL string) (s Store, err error) {
 	s.Driver = impl
 
 	return s, nil
+}
+
+func (s *Store) ReadArtifacts() ([]run.Artifact, error) {
+	return nil, nil
 }

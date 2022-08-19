@@ -173,7 +173,7 @@ func (w *Watcher) CollectArtifacts(r *run.Run) error {
 		if err != nil {
 			return fmt.Errorf("collecting artfiacts from %s: %w", s.SpecURL, err)
 		}
-		r.Artifacts = append(r.Artifacts, artifacts)
+		r.Artifacts = append(r.Artifacts, artifacts...)
 	}
 	logrus.Info(
 		"Run produced %d artifacts collected from %d sources",
