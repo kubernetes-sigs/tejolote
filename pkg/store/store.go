@@ -56,6 +56,16 @@ func New(specURL string) (s Store, err error) {
 	return s, nil
 }
 
+// ReadArtifacts returns the combined list of artifacts from
+// every store attached to the watcher
 func (s *Store) ReadArtifacts() ([]run.Artifact, error) {
-	return nil, nil
+	artifacts := []run.Artifact{}
+	snap, err := s.Driver.Snap()
+	if err != nil {
+		return artifacts, fmt.Errorf("snapshotting storage: %w", err)
+	}
+	for _, a := range *snap {
+		artifacts = append(artifacts, a)
+	}
+	return artifacts, nil
 }
