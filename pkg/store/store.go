@@ -46,7 +46,12 @@ func New(specURL string) (s Store, err error) {
 	case "file://":
 		impl, err = driver.NewDirectory(specURL)
 		if err != nil {
-			return s, fmt.Errorf("generating new directory: %w", err)
+			return s, fmt.Errorf("initializing directory driver: %w", err)
+		}
+	case "gcs://":
+		impl, err = driver.NewGCS(specURL)
+		if err != nil {
+			return s, fmt.Errorf("initializing gcs driver: %w", err)
 		}
 	default:
 		return s, fmt.Errorf("%s is not a storage URL", specURL)
