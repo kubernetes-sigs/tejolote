@@ -22,6 +22,9 @@ import (
 	"os"
 	"time"
 
+	intoto "github.com/in-toto/in-toto-golang/in_toto"
+	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
+
 	"github.com/puerco/tejolote/pkg/attestation"
 	"github.com/puerco/tejolote/pkg/builder"
 	"github.com/puerco/tejolote/pkg/run"
@@ -150,6 +153,18 @@ func (w *Watcher) AttestRun(r *run.Run) (att *attestation.Attestation, err error
 		return nil, fmt.Errorf("building predicate: %w", err)
 	}
 
+	// Add the run artifacts to the attestation
+	for _, a := range r.Artifacts {
+		s := intoto.Subject{
+			Name:   a.Path,
+			Digest: slsa.DigestSet{},
+		}
+		for a, v := range a.Checksum {
+			s.Digest[a] = v
+		}
+		att.Subject = append(att.Subject, s)
+	}
+
 	att.Predicate = predicate
 	return att, nil
 }
@@ -169,6 +184,7 @@ func (w *Watcher) AddArtifactSource(specURL string) error {
 func (w *Watcher) CollectArtifacts(r *run.Run) error {
 	r.Artifacts = nil
 	for _, s := range w.ArtifactStores {
+		logrus.Infof("Collecting artifacts from %s", s.SpecURL)
 		artifacts, err := s.ReadArtifacts()
 		if err != nil {
 			return fmt.Errorf("collecting artfiacts from %s: %w", s.SpecURL, err)

@@ -80,6 +80,10 @@ where they came from.
 				return fmt.Errorf("loading previous attestation")
 			}
 
+			if err := w.CollectArtifacts(r); err != nil {
+				return fmt.Errorf("while collecting run artifacts: %w", err)
+			}
+
 			attestation, err := w.AttestRun(r)
 			if err != nil {
 				return fmt.Errorf("generating run attestation: %w", err)
