@@ -51,8 +51,8 @@ type ghAPIResponseRun struct {
 	HeadBranch      string             `json:"head_branch"`
 	HeadSHA         string             `json:"head_sha"`
 	Path            string             `json:"path"`
-	RunNumber       int                `json:"run_number"`
-	WorkFlowID      string             `json:"workflow_id"`
+	RunNumber       int64              `json:"run_number"`
+	WorkFlowID      int64              `json:"workflow_id"`
 	CreatedAt       string             `json:"created_at"`
 	UpdatedAt       string             `json:"updated_at"`
 	LogsURL         string             `json:"logs_url"`
@@ -148,7 +148,9 @@ func (ghw *GitHubWorkflow) RefreshRun(r *run.Run) error {
 
 	r.SystemData = runData
 
-	// FIXME: Assign data to the run
+	// TODO: Consider pulling the job data if specified and the workflow yaml.
+	// Using those we can populate the entry point better to the job, the label of
+	// the runner
 
 	return nil
 }
