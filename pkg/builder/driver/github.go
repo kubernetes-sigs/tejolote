@@ -126,14 +126,12 @@ func (ghw *GitHubWorkflow) RefreshRun(r *run.Run) error {
 		return fmt.Errorf("reading api response data: %w", err)
 	}
 
-	logrus.Infof("Rawdata: %s", string(rawData))
+	logrus.Debugf("Rawdata: %s", string(rawData))
 
 	runData := &ghAPIResponseRun{}
 	if err := json.Unmarshal(rawData, runData); err != nil {
 		return fmt.Errorf("unmarshalling GitHub response: %w", err)
 	}
-
-	logrus.Infof("%+v", runData)
 
 	if runData.Status == "completed" {
 		r.IsRunning = false

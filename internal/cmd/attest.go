@@ -26,6 +26,7 @@ import (
 )
 
 type attestOptions struct {
+	sign             bool
 	continueExisting string
 	artifacts        []string
 }
@@ -89,7 +90,14 @@ where they came from.
 				return fmt.Errorf("generating run attestation: %w", err)
 			}
 
-			json, err := attestation.ToJSON()
+			var json []byte
+
+			if attestOpts.sign {
+				json, err = attestation.Sign()
+			} else {
+				json, err = attestation.ToJSON()
+			}
+
 			if err != nil {
 				return fmt.Errorf("serializing attestation: %w", err)
 			}
@@ -113,6 +121,13 @@ where they came from.
 		"continue",
 		"",
 		"path to a previously started attestation to continue",
+	)
+
+	attestCmd.PersistentFlags().BoolVar(
+		&attestOpts.sign,
+		"sign",
+		false,
+		"sign the attestation",
 	)
 
 	attestCmd.PersistentFlags().StringSliceVar(
