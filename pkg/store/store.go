@@ -43,12 +43,12 @@ func New(specURL string) (s Store, err error) {
 	}
 	var impl Implementation
 	switch u.Scheme {
-	case "file://":
+	case "file":
 		impl, err = driver.NewDirectory(specURL)
 		if err != nil {
 			return s, fmt.Errorf("initializing directory driver: %w", err)
 		}
-	case "gcs://":
+	case "gs":
 		impl, err = driver.NewGCS(specURL)
 		if err != nil {
 			return s, fmt.Errorf("initializing gcs driver: %w", err)
