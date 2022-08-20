@@ -80,7 +80,7 @@ func parseGitHubURL(specURL string) (org, repo string, runID int64, err error) {
 		return org, repo, runID, fmt.Errorf("parsing run ID from URL: %w", err)
 	}
 
-	return parts[0], parts[1], int64(rID), nil
+	return u.Hostname(), parts[1], int64(rID), nil
 
 }
 
@@ -103,9 +103,21 @@ func (ghw *GitHubWorkflow) GetRun(specURL string) (*run.Run, error) {
 func (ghw *GitHubWorkflow) RefreshRun(r *run.Run) error {
 	// https://api.github.com/repos/distroless/static/actions/runs/2858064062
 	// https://api.github.com/repos/distroless/static/actions/runs/7492361110 (failure)
+	org, repo, id, err := parseGitHubURL(r.SpecURL)
+	if err != nil {
+		return fmt.Errorf("parsing spec url: %w", err)
+	}
+	ghw.Organization = org
+	ghw.Repository = repo
+	ghw.RunID = int(id)
+
 	res, err := gitHubAPIGetRequest(fmt.Sprintf(ghRunURL, ghw.Organization, ghw.Repository, ghw.RunID))
 	if err != nil {
 		return fmt.Errorf("querying github api: %w", err)
+	}
+
+	if res.StatusCode != 200 {
+		return fmt.Errorf("got https error %d from github API", res.StatusCode)
 	}
 
 	rawData, err := io.ReadAll(res.Body)
@@ -114,10 +126,14 @@ func (ghw *GitHubWorkflow) RefreshRun(r *run.Run) error {
 		return fmt.Errorf("reading api response data: %w", err)
 	}
 
+	logrus.Infof("Rawdata: %s", string(rawData))
+
 	runData := &ghAPIResponseRun{}
 	if err := json.Unmarshal(rawData, runData); err != nil {
 		return fmt.Errorf("unmarshalling GitHub response: %w", err)
 	}
+
+	logrus.Infof("%+v", runData)
 
 	if runData.Status == "completed" {
 		r.IsRunning = false
@@ -139,6 +155,7 @@ func (ghw *GitHubWorkflow) RefreshRun(r *run.Run) error {
 
 // Perform an authenticated request to the GitHub api
 func gitHubAPIGetRequest(url string) (*http.Response, error) {
+	logrus.Infof("GHAPI[GET]: %s", url)
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
