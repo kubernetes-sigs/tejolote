@@ -53,6 +53,11 @@ func New(specURL string) (s Store, err error) {
 		if err != nil {
 			return s, fmt.Errorf("initializing gcs driver: %w", err)
 		}
+	case "oci":
+		impl, err = driver.NewOCI(specURL)
+		if err != nil {
+			return s, fmt.Errorf("initializing oci driver: %w", err)
+		}
 	default:
 		return s, fmt.Errorf("%s is not a storage URL", specURL)
 	}
