@@ -76,39 +76,6 @@ func (w *Watcher) Watch(r *run.Run) error {
 	}
 }
 
-// These will go away
-type Snapshot map[string]run.Artifact
-
-// Delta takes a snapshot, assumed to be later in time and returns
-// a directed delta, the files which were created or modified.
-func (snap *Snapshot) Delta(post *Snapshot) []run.Artifact {
-	results := []run.Artifact{}
-	for path, f := range *post {
-		// If the file was not there in the first snap, add it
-		if _, ok := (*snap)[path]; !ok {
-			results = append(results, f)
-			continue
-		}
-
-		// Check the file attributes to if they were changed
-		if (*snap)[path].Time != f.Time {
-			results = append(results, f)
-			continue
-		}
-
-		checksum := (*snap)[path].Checksum
-		for algo, val := range checksum {
-			if fv, ok := f.Checksum[algo]; ok {
-				if fv != val {
-					results = append(results, f)
-					break
-				}
-			}
-		}
-	}
-	return results
-}
-
 // LoadAttestation loads a partial attestation to complete
 // when a run finished running
 func (w *Watcher) LoadAttestation(path string) error {
