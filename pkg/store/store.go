@@ -28,7 +28,6 @@ import (
 type Store struct {
 	SpecURL string
 	Driver  Implementation
-	Snaps   []snapshot.Snapshot
 }
 
 type Implementation interface {
@@ -61,6 +60,7 @@ func New(specURL string) (s Store, err error) {
 	default:
 		return s, fmt.Errorf("%s is not a storage URL", specURL)
 	}
+	s.SpecURL = specURL
 	s.Driver = impl
 
 	return s, nil
@@ -78,4 +78,10 @@ func (s *Store) ReadArtifacts() ([]run.Artifact, error) {
 		artifacts = append(artifacts, a)
 	}
 	return artifacts, nil
+}
+
+// Snap calls the underlying driver's Snap method to capture
+// the current store's state into a snapshot
+func (s *Store) Snap() (*snapshot.Snapshot, error) {
+	return s.Driver.Snap()
 }
