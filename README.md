@@ -72,6 +72,58 @@ artifacts produced after a run, Tejolote sits one level above and
 will expect artifacts to appear in the storage location(s) you
 tell it to monitor.
 
+## Example
+
+Let's say for example you want to attest a Cloud Build job that produces
+a bunch of binaries in a GCS bucket. In this case, the gcb project is
+`example-project` and artifacts are uploaded to the bucket `test-bucket`
+in the directory `/test`:
+
+```bash
+tejolote attest \
+   gcb://kubernetes-release-test/3190d867-f2e5-4969-aafd-0117b6c8ed12 \
+   --artifacts=gs://ulabs-cloud-tests/test/
+```
+
+These are made up examples, but Tejolote would produce an attestation
+similar to this:
+
+```json
+{
+  "_type": "https://in-toto.io/Statement/v0.1",
+  "predicateType": "https://slsa.dev/provenance/v0.2",
+  "subject": [
+    {
+      "name": "gs://ulabs-cloud-tests/test/bom-windows-amd64.exe",
+      "digest": {
+        "SHA256": "c03c50f220b095bf52a0ca496989a6c07f198d03cb8aad19834df143625ee821"
+      }
+    }
+  ],
+  "predicate": {
+    "builder": {
+      "id": ""
+    },
+    "buildType": "https://cloudbuild.googleapis.com/CloudBuildYaml@v1",
+    "invocation": {
+      "configSource": {}
+    },
+    "buildConfig": {
+      "steps": [
+        {
+          "image": "gcr.io/cloud-builders/git",
+          "arguments": [
+            "clone",
+            "https://github.com/kubernetes/release"
+          ]
+        },
+...
+```
+
+Both build system runs and artifact repositories are specified by using
+[spec urls](docs/spec-urls.md) that point to the specific runs and storage
+location. Check out the 
+
 ## What's with the name?
 
 Tejolote /ˌteɪhəˈloʊteɪ/ : From the nahua word _texolotl_. 
