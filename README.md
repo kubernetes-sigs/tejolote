@@ -45,7 +45,8 @@ It will trust the inputs you tell it to consider and the artifacts your
 build produces by looking a the location you instruct it too look for them. 
 
 ```mermaid
-flowchart TB
+```mermaid
+flowchart LR
 
  subgraph Build System
    direction LR
@@ -55,13 +56,15 @@ flowchart TB
    publish --> gcs(GCS Bucket)
    publish --> file(Filesystem)
 end
-tejolote[[ Tejolote ]]
-tejolote-. RECORD .- clone
-tejolote-. RECORD .- fetch
-tejolote-. CONTINOUSLY OBSERVE .- build
-tejolote-. COLLECT .- publish
+subgraph Tejolote
+  direction LR
+  watch(Watch Build System) --> attest(Attest) --> sign(Sign)
+watch-. RECORD .- clone
+watch-. RECORD .- fetch
+watch-. CONTINOUSLY OBSERVE .- build
+watch-. COLLECT .- publish
+end
 
-tejolote --> attest --> sign
 
 ```
 
