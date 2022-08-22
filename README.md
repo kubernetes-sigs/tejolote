@@ -13,8 +13,9 @@ users how software was built, mainly:
 
 What went in → What was done to the source code (and by who) → what came out.
 
-A provenance attestation provides users more transparency allowing them
-to know where the software they are using came from.
+A provenance attestation provides users with full transparency to the
+build process of the software they consume, allowing them to know where
+it came from, how it was built and by who.
 
 ## Key Features
 
