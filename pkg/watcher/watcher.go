@@ -17,7 +17,9 @@ limitations under the License.
 package watcher
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -29,6 +31,7 @@ import (
 	"github.com/puerco/tejolote/pkg/builder"
 	"github.com/puerco/tejolote/pkg/run"
 	"github.com/puerco/tejolote/pkg/store"
+	"github.com/puerco/tejolote/pkg/store/snapshot"
 	"github.com/sirupsen/logrus"
 )
 
@@ -36,6 +39,7 @@ type Watcher struct {
 	DraftAttestation *attestation.Attestation
 	Builder          builder.Builder
 	ArtifactStores   []store.Store
+	Snapshots        []map[string]*snapshot.Snapshot
 }
 
 func New(uri string) (w *Watcher, err error) {
@@ -162,5 +166,58 @@ func (w *Watcher) CollectArtifacts(r *run.Run) error {
 		"Run produced %d artifacts collected from %d sources",
 		len(r.Artifacts), len(w.ArtifactStores),
 	)
+	return nil
+}
+
+// Snap adds a new snapshot set to the watcher by querying
+// each of the storage drivers
+func (w *Watcher) Snap() error {
+	snaps := map[string]*snapshot.Snapshot{}
+	for _, s := range w.ArtifactStores {
+		if s.SpecURL == "" {
+			return errors.New("artifact store has no spec url defined")
+		}
+		snap, err := s.Snap()
+		if err != nil {
+			return fmt.Errorf("snapshotting storage: %w", err)
+		}
+		snaps[s.SpecURL] = snap
+	}
+	// TODO: Add some metrics to measure snapshot time
+	w.Snapshots = append(w.Snapshots, snaps)
+	return nil
+}
+
+// SaveSnapshots stores the current state of the storage locations
+// to a file which can be reused when continuing an attestation
+func (w *Watcher) SaveSnapshots(path string) error {
+	var b bytes.Buffer
+	enc := json.NewEncoder(&b)
+	enc.SetIndent("", "  ")
+	enc.SetEscapeHTML(false)
+
+	if err := enc.Encode(w.Snapshots); err != nil {
+		return fmt.Errorf("encoding snapshot data sbom: %w", err)
+	}
+
+	if err := os.WriteFile(path, b.Bytes(), os.FileMode(0o644)); err != nil {
+		return fmt.Errorf("writing file store state: %w", err)
+	}
+	return nil
+}
+
+// LoadSnapshots loads saved snapshot state from a file to continue
+func (w *Watcher) LoadSnapshots(path string) error {
+	rawData, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("opening saved snapshot data: %w", err)
+	}
+	snapData := []map[string]*snapshot.Snapshot{}
+	if err := json.Unmarshal(rawData, &snapData); err != nil {
+		return fmt.Errorf("unmarshaling snapshot data: %w", err)
+	}
+	w.Snapshots = snapData
+	logrus.Info("loaded %d snapshot sets from disk", len(w.Snapshots))
+
 	return nil
 }
