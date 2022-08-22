@@ -58,10 +58,10 @@ end
 subgraph Tejolote
   direction LR
   watch(Watch Build System) --> attest(Attest) --> sign(Sign)
-watch-. RECORD .- clone
-watch-. RECORD .- fetch
-watch-. CONTINOUSLY OBSERVE .- build
-watch-. COLLECT .- publish
+watch-. RECORD .-o clone
+watch-. RECORD .-o fetch
+watch-. CONTINOUSLY OBSERVE .-o build
+watch-. COLLECT .-o publish
 end
 
 ```
