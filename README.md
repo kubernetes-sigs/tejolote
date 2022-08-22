@@ -45,7 +45,6 @@ It will trust the inputs you tell it to consider and the artifacts your
 build produces by looking a the location you instruct it too look for them. 
 
 ```mermaid
-```mermaid
 flowchart LR
 
  subgraph Build System
@@ -64,7 +63,6 @@ watch-. RECORD .- fetch
 watch-. CONTINOUSLY OBSERVE .- build
 watch-. COLLECT .- publish
 end
-
 
 ```
 
