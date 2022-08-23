@@ -216,8 +216,40 @@ func (w *Watcher) LoadSnapshots(path string) error {
 	if err := json.Unmarshal(rawData, &snapData); err != nil {
 		return fmt.Errorf("unmarshaling snapshot data: %w", err)
 	}
+
+	// Check the loaded snapshots
+	for i, snapset := range snapData {
+		if err := w.checkSnapshotMatch(snapset); err != nil {
+			return fmt.Errorf("checking restored storage state #%d: %w", i, err)
+		}
+	}
 	w.Snapshots = snapData
 	logrus.Info("loaded %d snapshot sets from disk", len(w.Snapshots))
 
+	return nil
+}
+
+// checkSnapshotMatch checks that a snapshot set matches the configured
+// storage backends in the watcher. The snapshots need to match in order
+// and in the SpecURL
+func (w *Watcher) checkSnapshotMatch(snapset map[string]*snapshot.Snapshot) error {
+	if len(snapset) != len(w.ArtifactStores) {
+		return fmt.Errorf(
+			"the number of artifact stores in the watcher (%d) does not match the number in the stored set (%d)",
+			len(w.ArtifactStores), len(snapset),
+		)
+	}
+
+	// Check that the SpecURLs match those in the configured stores:
+	i := 0
+	for specurl := range snapset {
+		if w.ArtifactStores[i].SpecURL != specurl {
+			return fmt.Errorf(
+				"spec url #%d in stored state, does not match storage %s",
+				i, w.ArtifactStores[i].SpecURL,
+			)
+		}
+		i++
+	}
 	return nil
 }
