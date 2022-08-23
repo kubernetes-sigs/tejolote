@@ -3,7 +3,7 @@
 A highly configurable build executor and observer designed to generate 
 signed [SLSA](https://slsa.dev/) provenance attestations about build runs.
 
-## WTF Does That Mean?
+## What Does That Mean!?
 
 ![SLSA Logo](docs/slsa-logo.png)
 
