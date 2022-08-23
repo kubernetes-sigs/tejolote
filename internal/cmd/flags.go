@@ -16,10 +16,28 @@ limitations under the License.
 
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"strings"
+
+	"github.com/spf13/cobra"
+)
 
 type outputOptions struct {
-	OutputPath string
+	OutputPath        string
+	SnapshotStatePath string
+	Workspace         string
+}
+
+// FinalSnapshotStatePath returns the final path to store the
+// storage snapshots. The default mode is to store it by
+// appending '.storage-snap.json' to the defaultSeed filename
+// Blank means do not store the data.
+func (oo *outputOptions) FinalSnapshotStatePath(defaultSeed string) string {
+	snapshotState := oo.SnapshotStatePath
+	if oo.SnapshotStatePath == "default" {
+		snapshotState = strings.TrimSuffix(defaultSeed, ".json") + ".storage-snap.json"
+	}
+	return snapshotState
 }
 
 func addOutputFlags(command *cobra.Command) *outputOptions {
@@ -29,6 +47,12 @@ func addOutputFlags(command *cobra.Command) *outputOptions {
 		"output",
 		"",
 		"file to store the partial attestation (instead of STDOUT)",
+	)
+	command.PersistentFlags().StringVar(
+		&opts.SnapshotStatePath,
+		"snapshots",
+		"default",
+		"path to store the storage snapshots state",
 	)
 	return opts
 }

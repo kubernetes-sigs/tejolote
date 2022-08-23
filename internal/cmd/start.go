@@ -25,8 +25,10 @@ import (
 
 	"chainguard.dev/apko/pkg/vcs"
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
+	"github.com/sirupsen/logrus"
 
 	"github.com/puerco/tejolote/pkg/attestation"
+	"github.com/puerco/tejolote/pkg/watcher"
 	"github.com/spf13/cobra"
 )
 
@@ -34,7 +36,7 @@ type startAttestationOptions struct {
 	clone     bool
 	repo      string
 	repoPath  string
-	workspace string
+	artifacts []string
 }
 
 func (opts startAttestationOptions) Validate() error {
@@ -51,6 +53,7 @@ func (opts startAttestationOptions) Validate() error {
 func addStart(parentCmd *cobra.Command) {
 	startAttestationOpts := startAttestationOptions{}
 	var outputOps *outputOptions
+
 	// Verb
 	startCmd := &cobra.Command{
 		Short:             "Start a partial document",
@@ -67,7 +70,14 @@ func addStart(parentCmd *cobra.Command) {
 The start command of tejolte writes a partial attestation 
 containing initial data that can be observed before launching a
 build. The partial attestation is meant to be completed by
-tejolote once it finished observing a build.
+tejolote once it has finished observing a build run.
+
+Whe starting an attestation, tejolote will snapshot the artifact
+storage locations and retake them when finishing building the
+provenance metadata. This allows it to "remember" the storage
+states to notice new artifacts. By default tejolote will store the
+storage state in a file with the same name as the partial
+attestation but with ".storage-snap.json" appended.
 	
 	`,
 		Use:               "attestation",
@@ -77,6 +87,33 @@ tejolote once it finished observing a build.
 			if err := startAttestationOpts.Validate(); err != nil {
 				return fmt.Errorf("validating options: %w", err)
 			}
+
+			w, err := watcher.New(args[0])
+			if err != nil {
+				return fmt.Errorf("building watcher")
+			}
+
+			// Add artifact monitors to the watcher
+			for _, uri := range startAttestationOpts.artifacts {
+				if err := w.AddArtifactSource(uri); err != nil {
+					return fmt.Errorf("adding artifacts source: %w", err)
+				}
+			}
+
+			if err := w.Snap(); err != nil {
+				return fmt.Errorf("snapshotting the artifact repositories: %w", err)
+			}
+
+			if outputOps.FinalSnapshotStatePath(outputOps.OutputPath) == "" {
+				if len(w.Snapshots) > 0 {
+					logrus.Warning("Not saving storage state but artifact sources defined")
+				}
+			} else {
+				if err := w.SaveSnapshots(outputOps.FinalSnapshotStatePath(outputOps.OutputPath)); err != nil {
+					return fmt.Errorf("saving storage snapshots: %w", err)
+				}
+			}
+
 			att := attestation.New()
 			predicate := attestation.NewSLSAPredicate()
 
@@ -85,7 +122,7 @@ tejolote once it finished observing a build.
 				return fmt.Errorf("repository cloning not yet implemented")
 			}
 
-			vcsURL, err := readVCSURL(startAttestationOpts)
+			vcsURL, err := readVCSURL(*outputOps, startAttestationOpts)
 			if err != nil {
 				return fmt.Errorf("fetching VCS URL: %w", err)
 			}
@@ -109,7 +146,7 @@ tejolote once it finished observing a build.
 				return fmt.Errorf("serializing attestation json: %w", err)
 			}
 
-			if outputOps.OutputPath != "" {
+			if outputOps.OutputPath == "" {
 				fmt.Println(string(json))
 			} else {
 				os.WriteFile(outputOps.OutputPath, json, os.FileMode(0o644))
@@ -118,6 +155,8 @@ tejolote once it finished observing a build.
 			return nil
 		},
 	}
+
+	outputOps = addOutputFlags(startAttestationCmd)
 
 	startAttestationCmd.PersistentFlags().StringVar(
 		&startAttestationOpts.repo,
@@ -133,13 +172,6 @@ tejolote once it finished observing a build.
 		"path to the main code repository (relative to workspace)",
 	)
 
-	startAttestationCmd.PersistentFlags().StringVar(
-		&startAttestationOpts.workspace,
-		"workspace",
-		"",
-		"path to the workspace where the build runs",
-	)
-
 	startAttestationCmd.PersistentFlags().BoolVar(
 		&startAttestationOpts.clone,
 		"clone",
@@ -147,14 +179,20 @@ tejolote once it finished observing a build.
 		"clone the repository",
 	)
 
-	outputOps = addOutputFlags(startAttestationCmd)
+	startAttestationCmd.PersistentFlags().StringSliceVar(
+		&startAttestationOpts.artifacts,
+		"artifacts",
+		[]string{},
+		"artifact storage locations",
+	)
+
 	startCmd.AddCommand(startAttestationCmd)
 	parentCmd.AddCommand(startCmd)
 }
 
 // readVCSURL checks the repository path to get the VCS url for the
 // materials
-func readVCSURL(opts startAttestationOptions) (string, error) {
+func readVCSURL(outputOpts outputOptions, opts startAttestationOptions) (string, error) {
 	if opts.repoPath == "" {
 		return "", nil
 	}
@@ -163,7 +201,7 @@ func readVCSURL(opts startAttestationOptions) (string, error) {
 
 	// If its a relative URL, append the workspace
 	if !strings.HasPrefix(opts.repoPath, string(filepath.Separator)) {
-		repoPath = filepath.Join(opts.workspace, opts.repoPath)
+		repoPath = filepath.Join(outputOpts.Workspace, opts.repoPath)
 	}
 
 	repoPath, err := filepath.Abs(repoPath)

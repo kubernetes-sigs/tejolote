@@ -23,6 +23,7 @@ import (
 	"github.com/puerco/tejolote/pkg/watcher"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"sigs.k8s.io/release-utils/util"
 )
 
 type attestOptions struct {
@@ -79,6 +80,14 @@ where they came from.
 
 			if w.LoadAttestation(attestOpts.continueExisting); err != nil {
 				return fmt.Errorf("loading previous attestation")
+			}
+
+			if util.Exists(outputOpts.FinalSnapshotStatePath(attestOpts.continueExisting)) {
+				if err := w.LoadSnapshots(
+					outputOpts.FinalSnapshotStatePath(attestOpts.continueExisting),
+				); err != nil {
+					return fmt.Errorf("loading storage snapshots: %w", err)
+				}
 			}
 
 			if err := w.CollectArtifacts(r); err != nil {
