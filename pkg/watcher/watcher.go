@@ -162,7 +162,7 @@ func (w *Watcher) CollectArtifacts(r *run.Run) error {
 		}
 		r.Artifacts = append(r.Artifacts, artifacts...)
 	}
-	logrus.Info(
+	logrus.Infof(
 		"Run produced %d artifacts collected from %d sources",
 		len(r.Artifacts), len(w.ArtifactStores),
 	)
