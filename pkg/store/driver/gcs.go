@@ -68,7 +68,7 @@ type GCS struct {
 // syncGCSPrefix synchs a prefix in the bucket (a directory) and
 // calls itself recursively for internal prefixes
 func (gcs *GCS) syncGCSPrefix(ctx context.Context, prefix string, seen map[string]struct{}) error {
-	logrus.Infof("Synching prefix %s", prefix)
+	logrus.WithField("driver", "gcs").Debugf("Synching bucket prefix %s", prefix)
 	it := gcs.client.Bucket(gcs.Bucket).Objects(ctx, &storage.Query{
 		Delimiter: "/",
 		Prefix:    strings.TrimPrefix(prefix, "/"),
@@ -78,7 +78,7 @@ func (gcs *GCS) syncGCSPrefix(ctx context.Context, prefix string, seen map[strin
 	for {
 		attrs, err := it.Next()
 		if err == iterator.Done {
-			logrus.Infof("Done listing %s", gcs.Bucket)
+			logrus.WithField("driver", "gcs").Debugf("Done listing %s", gcs.Bucket)
 			break
 		}
 		if err != nil {
@@ -112,7 +112,6 @@ func (gcs *GCS) syncGCSPrefix(ctx context.Context, prefix string, seen map[strin
 
 		// If there is a name, it is a file
 		if attrs.Name != "" {
-			logrus.Infof("%+v", attrs)
 			// TODO: Check file md5 to see if it needs sync
 			filesToSync = append(filesToSync, attrs.Prefix+attrs.Name)
 		}
@@ -129,7 +128,7 @@ func (gcs *GCS) syncGCSPrefix(ctx context.Context, prefix string, seen map[strin
 
 // syncGSFile copies a file from the bucket to local workdir
 func (gcs *GCS) syncGSFile(ctx context.Context, filePath string) error {
-	logrus.Infof("Copying file from bucket: %s", filePath)
+	logrus.WithField("driver", "gcs").Debugf("Copying file from bucket: %s", filePath)
 	localpath := filepath.Join(gcs.WorkDir, filePath)
 	// Ensure the directory exists
 	os.MkdirAll(filepath.Dir(localpath), os.FileMode(0o755))
@@ -191,6 +190,5 @@ func (gcs *GCS) Snap() (*snapshot.Snapshot, error) {
 		// Perhaps we should null the artifact dates
 		snap[path] = a
 	}
-	logrus.Infof("%+v", snap)
 	return &snap, nil
 }
