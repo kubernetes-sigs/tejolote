@@ -27,11 +27,11 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/release-utils/hash"
 
+	"github.com/puerco/tejolote/pkg/github"
 	"github.com/puerco/tejolote/pkg/run"
 	"github.com/puerco/tejolote/pkg/store/snapshot"
 )
@@ -72,15 +72,6 @@ func NewActions(specURL string) (*Actions, error) {
 	return a, nil
 }
 
-type actionsArtifactAPI struct {
-	ID        int       `json:"id"`
-	Name      string    `json:"name"`
-	Size      int       `json:"size_in_bytes"`
-	URL       string    `json:"archive_download_url"`
-	Expired   bool      `json:"expired"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
 // readArtifacts gets the artiofacts from the run
 func (a *Actions) readArtifacts() ([]run.Artifact, error) {
 	runUrl := fmt.Sprintf(
@@ -88,7 +79,7 @@ func (a *Actions) readArtifacts() ([]run.Artifact, error) {
 		a.Organization, a.Repository, a.RunID,
 	)
 
-	res, err := gitHubAPIGetRequest(runUrl)
+	res, err := github.APIGetRequest(runUrl)
 	if err != nil {
 		return nil, fmt.Errorf("querying GitHub api for artifacts: %w", err)
 	}
@@ -100,9 +91,9 @@ func (a *Actions) readArtifacts() ([]run.Artifact, error) {
 	}
 
 	artifacts := struct {
-		Artifacts []actionsArtifactAPI `json:"artifacts"`
+		Artifacts []github.Artifact `json:"artifacts"`
 	}{
-		Artifacts: []actionsArtifactAPI{},
+		Artifacts: []github.Artifact{},
 	}
 
 	if err := json.Unmarshal(rawData, &artifacts); err != nil {
@@ -164,29 +155,6 @@ func httpDownload(url string, f io.Writer) error {
 	}
 	logrus.Infof("%d MB downloaded from %s", (numBytes / 1024 / 1024), url)
 	return nil
-}
-
-// Perform an authenticated request to the GitHub api
-// NOTE: We should move this function to a common location
-// to share with the github builder
-func gitHubAPIGetRequest(url string) (*http.Response, error) {
-	logrus.Infof("GHAPI[GET]: %s", url)
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("creating http request: %w", err)
-	}
-	req.Header.Set("Accept", "application/vnd.github+json")
-	if os.Getenv("GITHUB_TOKEN") != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("token %s", os.Getenv("GITHUB_TOKEN")))
-	} else {
-		logrus.Warn("making unauthenticated request to github")
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("executing http requet to GitHub API: %w", err)
-	}
-	return res, nil
 }
 
 // Snap returns a snapshot of the current state

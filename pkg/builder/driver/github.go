@@ -21,9 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -31,34 +29,12 @@ import (
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
 
 	"github.com/puerco/tejolote/pkg/attestation"
+	"github.com/puerco/tejolote/pkg/github"
 	"github.com/puerco/tejolote/pkg/run"
 	"github.com/sirupsen/logrus"
 )
 
 const ghRunURL string = "https://api.github.com/repos/%s/%s/actions/runs/%d"
-
-type ghAPIResponseActor struct {
-	Login string `json:"login"`
-	ID    int64  `json:"id"`
-	Type  string `json:"type"`
-	URL   string `json:"url"`
-}
-
-type ghAPIResponseRun struct {
-	ID              int64              `json:"id"`
-	Status          string             `json:"status"`
-	Conclusion      string             `json:"conclusion"`
-	HeadBranch      string             `json:"head_branch"`
-	HeadSHA         string             `json:"head_sha"`
-	Path            string             `json:"path"`
-	RunNumber       int64              `json:"run_number"`
-	WorkFlowID      int64              `json:"workflow_id"`
-	CreatedAt       string             `json:"created_at"`
-	UpdatedAt       string             `json:"updated_at"`
-	LogsURL         string             `json:"logs_url"`
-	Actor           ghAPIResponseActor `json:"actor"`
-	TriggeringActor ghAPIResponseActor `json:"triggering_actor"`
-}
 
 type GitHubWorkflow struct {
 	Organization string
@@ -111,7 +87,7 @@ func (ghw *GitHubWorkflow) RefreshRun(r *run.Run) error {
 	ghw.Repository = repo
 	ghw.RunID = int(id)
 
-	res, err := gitHubAPIGetRequest(fmt.Sprintf(ghRunURL, ghw.Organization, ghw.Repository, ghw.RunID))
+	res, err := github.APIGetRequest(fmt.Sprintf(ghRunURL, ghw.Organization, ghw.Repository, ghw.RunID))
 	if err != nil {
 		return fmt.Errorf("querying github api: %w", err)
 	}
@@ -128,7 +104,7 @@ func (ghw *GitHubWorkflow) RefreshRun(r *run.Run) error {
 
 	logrus.Debugf("Rawdata: %s", string(rawData))
 
-	runData := &ghAPIResponseRun{}
+	runData := &github.Run{}
 	if err := json.Unmarshal(rawData, runData); err != nil {
 		return fmt.Errorf("unmarshalling GitHub response: %w", err)
 	}
@@ -151,27 +127,6 @@ func (ghw *GitHubWorkflow) RefreshRun(r *run.Run) error {
 	// the runner
 
 	return nil
-}
-
-// Perform an authenticated request to the GitHub api
-func gitHubAPIGetRequest(url string) (*http.Response, error) {
-	logrus.Infof("GHAPI[GET]: %s", url)
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("creating http request: %w", err)
-	}
-	req.Header.Set("Accept", "application/vnd.github+json")
-	if os.Getenv("GITHUB_TOKEN") != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("token %s", os.Getenv("GITHUB_TOKEN")))
-	} else {
-		logrus.Warn("making unauthenticated request to github")
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("executing http requet to GitHub API: %w", err)
-	}
-	return res, nil
 }
 
 // BuildPredicate builds a predicate from the run data
@@ -202,9 +157,9 @@ func (ghw *GitHubWorkflow) BuildPredicate(
 	(*predicate).Builder.ID = "https://github.com/Attestations/GitHubHostedActions@v1"
 	(*predicate).BuildType = "https://github.com/Attestations/GitHubActionsWorkflow@v1"
 	(*predicate).Invocation.ConfigSource.Digest = slsa.DigestSet{
-		"sha1": r.SystemData.(*ghAPIResponseRun).HeadSHA,
+		"sha1": r.SystemData.(*github.Run).HeadSHA,
 	}
-	(*predicate).Invocation.ConfigSource.EntryPoint = r.SystemData.(*ghAPIResponseRun).Path
+	(*predicate).Invocation.ConfigSource.EntryPoint = r.SystemData.(*github.Run).Path
 	(*predicate).Invocation.ConfigSource.URI = fmt.Sprintf(
 		"git+https://github.com/%s/%s.git", org, repo,
 	)
