@@ -20,12 +20,24 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
 
+// TokenScopes returns the scopes of token in the eviroment
+func TokenScopes() ([]string, error) {
+	res, err := APIGetRequest("https://api.github.com/user")
+	if err != nil {
+		return nil, fmt.Errorf("making request to API: %w", err)
+	}
+	header := res.Header.Get("x-oauth-scopes")
+	scopes := strings.Split(header, ", ")
+	return scopes, nil
+}
+
 func APIGetRequest(url string) (*http.Response, error) {
-	logrus.Infof("GHAPI[GET]: %s", url)
+	logrus.Infof("GitHubAPI[GET]: %s", url)
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
