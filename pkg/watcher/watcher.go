@@ -155,9 +155,8 @@ func (w *Watcher) AddArtifactSource(specURL string) error {
 func (w *Watcher) CollectArtifacts(r *run.Run) error {
 	r.Artifacts = nil
 	artifactStores := w.ArtifactStores
-	if len(artifactStores) == 0 {
-		artifactStores = w.Builder.ArtifactStores()
-	}
+	// TODO: Support disabling the native driver
+	artifactStores = append(artifactStores, w.Builder.ArtifactStores()...)
 	for _, s := range artifactStores {
 		logrus.Infof("Collecting artifacts from %s", s.SpecURL)
 		artifacts, err := s.ReadArtifacts()
