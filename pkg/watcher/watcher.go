@@ -154,7 +154,11 @@ func (w *Watcher) AddArtifactSource(specURL string) error {
 // collects any artifacts found after the build is done
 func (w *Watcher) CollectArtifacts(r *run.Run) error {
 	r.Artifacts = nil
-	for _, s := range w.ArtifactStores {
+	artifactStores := w.ArtifactStores
+	if len(artifactStores) == 0 {
+		artifactStores = w.Builder.ArtifactStores()
+	}
+	for _, s := range artifactStores {
 		logrus.Infof("Collecting artifacts from %s", s.SpecURL)
 		artifacts, err := s.ReadArtifacts()
 		if err != nil {

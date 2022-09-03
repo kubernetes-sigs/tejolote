@@ -22,6 +22,7 @@ import (
 	"github.com/puerco/tejolote/pkg/attestation"
 	"github.com/puerco/tejolote/pkg/builder/driver"
 	"github.com/puerco/tejolote/pkg/run"
+	"github.com/puerco/tejolote/pkg/store"
 )
 
 type Builder struct {
@@ -61,4 +62,8 @@ func (b *Builder) RefreshRun(r *run.Run) error {
 
 func (b *Builder) BuildPredicate(r *run.Run, draft *attestation.SLSAPredicate) (*attestation.SLSAPredicate, error) {
 	return b.driver.BuildPredicate(r, draft)
+}
+
+func (b *Builder) ArtifactStores() []store.Store {
+	return b.driver.ArtifactStores()
 }

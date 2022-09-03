@@ -22,6 +22,7 @@ import (
 
 	"github.com/puerco/tejolote/pkg/attestation"
 	"github.com/puerco/tejolote/pkg/run"
+	"github.com/puerco/tejolote/pkg/store"
 )
 
 // BuildSystemDriver is an interface to a type that can query a buildsystem
@@ -30,6 +31,7 @@ type BuildSystem interface {
 	GetRun(string) (*run.Run, error)
 	RefreshRun(*run.Run) error
 	BuildPredicate(*run.Run, *attestation.SLSAPredicate) (*attestation.SLSAPredicate, error)
+	ArtifactStores() []store.Store
 }
 
 func NewFromSpecURL(specURL string) (BuildSystem, error) {

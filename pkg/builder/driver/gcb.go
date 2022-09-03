@@ -32,6 +32,7 @@ import (
 
 	"github.com/puerco/tejolote/pkg/attestation"
 	"github.com/puerco/tejolote/pkg/run"
+	"github.com/puerco/tejolote/pkg/store"
 
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/cloudbuild/v1"
@@ -180,4 +181,9 @@ func (gcb *GCB) BuildPredicate(r *run.Run, draft *attestation.SLSAPredicate) (pr
 	}
 	(*predicate).BuildConfig = buildconfig
 	return predicate, nil
+}
+
+// ArtifactStores returns the native artifact store of cloud build
+func (gcb *GCB) ArtifactStores() []store.Store {
+	return []store.Store{}
 }

@@ -31,6 +31,7 @@ import (
 	"github.com/puerco/tejolote/pkg/attestation"
 	"github.com/puerco/tejolote/pkg/github"
 	"github.com/puerco/tejolote/pkg/run"
+	"github.com/puerco/tejolote/pkg/store"
 	"github.com/sirupsen/logrus"
 )
 
@@ -177,4 +178,19 @@ func (ghw *GitHubWorkflow) BuildPredicate(
 		},
 	}
 	return predicate, nil
+}
+
+// ArtifactStores returns the native artifact store of github actions
+func (ghw *GitHubWorkflow) ArtifactStores() []store.Store {
+	d, err := store.New(
+		fmt.Sprintf(
+			"actions://%s/%s/%d",
+			ghw.Organization, ghw.Repository, ghw.RunID,
+		),
+	)
+	if err != nil {
+		logrus.Error(err)
+		return []store.Store{}
+	}
+	return []store.Store{d}
 }
