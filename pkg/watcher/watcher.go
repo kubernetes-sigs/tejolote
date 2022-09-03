@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"time"
 
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
@@ -66,18 +65,19 @@ func (w *Watcher) GetRun(specURL string) (*run.Run, error) {
 
 // Watch watches a run, updating the run data as it runs
 func (w *Watcher) Watch(r *run.Run) error {
-	for {
-		if !r.IsRunning {
-			return nil
-		}
+	//for {
+	//if !r.IsRunning {
+	//		return nil
+	//	}
 
-		// Sleep to wait for a status change
-		if err := w.Builder.RefreshRun(r); err != nil {
-			return fmt.Errorf("refreshing run data: %w", err)
-		}
-		// Sleep
-		time.Sleep(3 * time.Second)
+	// Sleep to wait for a status change
+	if err := w.Builder.RefreshRun(r); err != nil {
+		return fmt.Errorf("refreshing run data: %w", err)
 	}
+	return nil
+	// Sleep
+	//	time.Sleep(3 * time.Second)
+	//}
 }
 
 // LoadAttestation loads a partial attestation to complete
