@@ -57,6 +57,11 @@ func New(specURL string) (s Store, err error) {
 		if err != nil {
 			return s, fmt.Errorf("initializing oci driver: %w", err)
 		}
+	case "actions":
+		impl, err = driver.NewActions(specURL)
+		if err != nil {
+			return s, fmt.Errorf("initializing actions artifacts driver: %w", err)
+		}
 	default:
 		return s, fmt.Errorf("%s is not a storage URL", specURL)
 	}
