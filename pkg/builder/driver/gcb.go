@@ -187,5 +187,9 @@ func (gcb *GCB) BuildPredicate(r *run.Run, draft *attestation.SLSAPredicate) (pr
 
 // ArtifactStores returns the native artifact store of cloud build
 func (gcb *GCB) ArtifactStores() []store.Store {
-	return []store.Store{}
+	d, err := store.New(fmt.Sprintf("gcb://%s/%s", gcb.ProjectID, gcb.BuildID))
+	if err != nil {
+		logrus.Error(err)
+	}
+	return []store.Store{d}
 }
