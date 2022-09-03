@@ -37,6 +37,20 @@ func TokenScopes() ([]string, error) {
 	return scopes, nil
 }
 
+// TokenHas returns a bool if the token in use has the scope passed
+func TokenHas(scope string) (bool, error) {
+	scopes, err := TokenScopes()
+	if err != nil {
+		return false, fmt.Errorf("reading scopes: %w", err)
+	}
+	for _, s := range scopes {
+		if s == scope {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func APIGetRequest(url string) (*http.Response, error) {
 	logrus.Infof("GitHubAPI[GET]: %s", url)
 	client := &http.Client{}

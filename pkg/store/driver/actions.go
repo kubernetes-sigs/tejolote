@@ -45,20 +45,15 @@ type Actions struct {
 	RunID        int
 }
 
+var ErrNoWorkflowToken error = errors.New("token does not have workflow scope")
+
 func NewActions(specURL string) (*Actions, error) {
-	scopes, err := github.TokenScopes()
+	ok, err := github.TokenHas("workflow")
 	if err != nil {
 		return nil, fmt.Errorf("getting github token scopes: %w", err)
 	}
-	found := false
-	for _, s := range scopes {
-		if s == "workflow" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		return nil, errors.New("github token does not have actions token")
+	if !ok {
+		return nil, ErrNoWorkflowToken
 	}
 
 	u, err := url.Parse(specURL)
