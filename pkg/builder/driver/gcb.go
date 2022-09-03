@@ -103,28 +103,30 @@ func (gcb *GCB) RefreshRun(r *run.Run) error {
 		//
 		r.Steps[i].Image = s.Name
 		r.Steps[i].Params = s.Args
-		if s.Timing.StartTime == "" {
-			stime, err := time.Parse(time.RFC3339Nano, s.Timing.StartTime)
-			if s.Timing.EndTime != "" && err != nil {
-				return fmt.Errorf("parsing step start time")
+		if s.Timing != nil {
+			if s.Timing.StartTime == "" {
+				stime, err := time.Parse(time.RFC3339Nano, s.Timing.StartTime)
+				if s.Timing.EndTime != "" && err != nil {
+					return fmt.Errorf("parsing step start time")
+				}
+				r.Steps[i].StartTime = stime
+			} else {
+				etime, err := time.Parse(time.RFC3339Nano, s.Timing.EndTime)
+				if s.Timing.EndTime != "" && err != nil {
+					return fmt.Errorf("parsing step end time")
+				}
+				r.Steps[i].EndTime = etime
 			}
-			r.Steps[i].StartTime = stime
-		} else {
-			etime, err := time.Parse(time.RFC3339Nano, s.Timing.EndTime)
-			if s.Timing.EndTime != "" && err != nil {
-				return fmt.Errorf("parsing step end time")
-			}
-			r.Steps[i].EndTime = etime
-		}
 
-		if s.Timing.EndTime == "" {
-			r.Steps[i].EndTime = time.Time{}
-		} else {
-			etime, err := time.Parse(time.RFC3339Nano, s.Timing.EndTime)
-			if s.Timing.EndTime != "" && err != nil {
-				return fmt.Errorf("parsing step endtime")
+			if s.Timing.EndTime == "" {
+				r.Steps[i].EndTime = time.Time{}
+			} else {
+				etime, err := time.Parse(time.RFC3339Nano, s.Timing.EndTime)
+				if s.Timing.EndTime != "" && err != nil {
+					return fmt.Errorf("parsing step endtime")
+				}
+				r.Steps[i].EndTime = etime
 			}
-			r.Steps[i].EndTime = etime
 		}
 	}
 	// Set the status and the running flag. Possible values here are
