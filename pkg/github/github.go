@@ -18,6 +18,7 @@ package github
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -51,7 +52,46 @@ func APIGetRequest(url string) (*http.Response, error) {
 	}
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("executing http requet to GitHub API: %w", err)
+		return nil, fmt.Errorf("executing http request to GitHub API: %w", err)
+	}
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf(
+			"http error %d making request to GitHub API", res.StatusCode,
+		)
 	}
 	return res, nil
+}
+
+func Download(url string, f io.Writer) error {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return fmt.Errorf("creating http request: %w", err)
+	}
+
+	if os.Getenv("GITHUB_TOKEN") != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("token %s", os.Getenv("GITHUB_TOKEN")))
+	} else {
+		logrus.Warn("making unauthenticated request to github")
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("executing http request to GitHub API: %w", err)
+	}
+
+	// Check server response
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("http error when downloading: %s", resp.Status)
+	}
+
+	defer resp.Body.Close()
+
+	// Writer the body to file
+	numBytes, err := io.Copy(f, resp.Body)
+	if err != nil {
+		return fmt.Errorf("writing http response to disk: %w", err)
+	}
+	logrus.Infof("%d MB downloaded from %s", (numBytes / 1024 / 1024), url)
+	return nil
 }

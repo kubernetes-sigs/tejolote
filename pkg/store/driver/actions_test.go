@@ -24,6 +24,7 @@ import (
 
 func TestActions(t *testing.T) {
 	a, err := NewActions("actions://puerco/tejolote-test/2969514606")
+	// a, err := NewActions("actions://puerco/tejolote-test/348751771")
 	require.NoError(t, err)
 	snap, err := a.Snap()
 	require.NoError(t, err)

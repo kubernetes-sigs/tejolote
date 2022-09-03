@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -38,6 +37,8 @@ import (
 
 const actionsArtifactsURL = "https://api.github.com/repos/%s/%s/actions/runs/%d/artifacts"
 
+// const actionsArtifactsURL =    "https://api.github.com/repos/%s/%s/actions/artifacts/%d"
+
 type Actions struct {
 	Organization string
 	Repository   string
@@ -45,12 +46,21 @@ type Actions struct {
 }
 
 func NewActions(specURL string) (*Actions, error) {
-	// TODO: We need to check the scopes of the token to ensure we
-	// have the actions scope:
-	// https://docs.github.com/rest/reference/actions#download-an-artifact
-	// Issue a request to get the user identity and check this header
-	// in the response:
-	// x-oauth-scopes: read:discussion, read:gpg_key, read:org, read:public_key, read:user, repo, workflow, write:packages
+	scopes, err := github.TokenScopes()
+	if err != nil {
+		return nil, fmt.Errorf("getting github token scopes: %w", err)
+	}
+	found := false
+	for _, s := range scopes {
+		if s == "workflow" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return nil, errors.New("github token does not have actions token")
+	}
+
 	u, err := url.Parse(specURL)
 	if err != nil {
 		return nil, fmt.Errorf("parsing SpecURL %s: %w", specURL, err)
@@ -114,7 +124,7 @@ func (a *Actions) readArtifacts() ([]run.Artifact, error) {
 			return nil, fmt.Errorf("creating artifact file: %w", err)
 		}
 		defer f.Close()
-		if err := httpDownload(a.URL, f); err != nil {
+		if err := github.Download(a.URL, f); err != nil {
 			return nil, fmt.Errorf(
 				"downloading artifact from %s: %w", a.URL, err,
 			)
@@ -133,28 +143,6 @@ func (a *Actions) readArtifacts() ([]run.Artifact, error) {
 	}
 	logrus.Infof("%d artifacts collected from run %d", len(ret), a.RunID)
 	return ret, nil
-}
-
-func httpDownload(url string, f io.Writer) error {
-	// Get the data
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	// Check server response
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("http error when downloading: %s", resp.Status)
-	}
-
-	// Writer the body to file
-	numBytes, err := io.Copy(f, resp.Body)
-	if err != nil {
-		return fmt.Errorf("writing http response to disk: %w", err)
-	}
-	logrus.Infof("%d MB downloaded from %s", (numBytes / 1024 / 1024), url)
-	return nil
 }
 
 // Snap returns a snapshot of the current state
