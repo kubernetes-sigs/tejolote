@@ -19,14 +19,15 @@ package driver
 import (
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"cloud.google.com/go/storage"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/api/iterator"
 
 	"github.com/puerco/tejolote/pkg/store/snapshot"
@@ -117,11 +118,18 @@ func (gcs *GCS) syncGCSPrefix(ctx context.Context, prefix string, seen map[strin
 		}
 	}
 
-	// TODO: Paralellize copies here
+	var wg errgroup.Group
 	for _, filename := range filesToSync {
-		if err := gcs.syncGSFile(ctx, filename); err != nil {
-			return fmt.Errorf("synching file: %w", err)
-		}
+		filename := filename
+		wg.Go(func() error {
+			if err := gcs.syncGSFile(ctx, filename); err != nil {
+				return fmt.Errorf("synching file: %w", err)
+			}
+			return nil
+		})
+	}
+	if err := wg.Wait(); err != nil {
+		return fmt.Errorf("synching files: %w", err)
 	}
 	return nil
 }
@@ -140,19 +148,21 @@ func (gcs *GCS) syncGSFile(ctx context.Context, filePath string) error {
 	}
 	defer f.Close()
 
-	// Create the reader to copy data
-	rc, err := gcs.client.Bucket(gcs.Bucket).Object(filePath).NewReader(ctx)
-	if err != nil {
-		return fmt.Errorf("creating bucket reader: %w", err)
+	objectURL := fmt.Sprintf("gs://%s/%s", gcs.Bucket, filePath)
+	if err := downloadGCSObject(gcs.client, objectURL, f); err != nil {
+		return fmt.Errorf("downloading object: %w", err)
 	}
 
-	// Copy the file
-	if _, err := io.Copy(f, rc); err != nil {
-		return fmt.Errorf("copying data: %w", err)
+	attrs, err := readGCSObjectAttributes(gcs.client, objectURL)
+	if err != nil {
+		return fmt.Errorf("reading file attributes: %w", err)
 	}
-	if err := rc.Close(); err != nil {
-		return fmt.Errorf("closing bucket reader")
+
+	// Set the local file time to match
+	if err := os.Chtimes(f.Name(), time.Now(), attrs.Updated); err != nil {
+		return fmt.Errorf("updating local file modification time: %w", err)
 	}
+
 	return nil
 }
 
