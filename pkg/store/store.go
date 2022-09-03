@@ -62,6 +62,11 @@ func New(specURL string) (s Store, err error) {
 		if err != nil {
 			return s, fmt.Errorf("initializing actions artifacts driver: %w", err)
 		}
+	case "gcb":
+		impl, err = driver.NewGCB(specURL)
+		if err != nil {
+			return s, fmt.Errorf("initializing cloud build artifacts driver: %w", err)
+		}
 	default:
 		return s, fmt.Errorf("%s is not a storage URL", specURL)
 	}
