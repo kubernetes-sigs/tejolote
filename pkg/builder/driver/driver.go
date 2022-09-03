@@ -40,7 +40,19 @@ func NewFromSpecURL(specURL string) (BuildSystem, error) {
 		return nil, fmt.Errorf("parsing run spec URL: %w", err)
 	}
 
-	return NewFromMoniker(u.Scheme)
+	var driver BuildSystem
+	switch u.Scheme {
+	case "gcb":
+		driver, err = NewGCB(specURL)
+		if err != nil {
+			return nil, fmt.Errorf("creating GCB driver: %w", err)
+		}
+	case "github":
+		driver = &GitHubWorkflow{}
+	default:
+		return nil, fmt.Errorf("unable to get driver from url %s", specURL)
+	}
+	return driver, nil
 }
 
 func NewFromMoniker(moniker string) (BuildSystem, error) {

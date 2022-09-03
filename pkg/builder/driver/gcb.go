@@ -43,6 +43,18 @@ type GCB struct {
 	BuildID   string
 }
 
+func NewGCB(specURL string) (*GCB, error) {
+	project, build, err := parseGCBURL(specURL)
+	if err != nil {
+		return nil, fmt.Errorf("parsing gcb url: %w", err)
+	}
+
+	return &GCB{
+		ProjectID: project,
+		BuildID:   build,
+	}, nil
+}
+
 func (gcb *GCB) GetRun(specURL string) (*run.Run, error) {
 	r := &run.Run{
 		SpecURL:   specURL,
@@ -65,17 +77,22 @@ func (gcb *GCB) GetRun(specURL string) (*run.Run, error) {
 	*/
 }
 
+func parseGCBURL(gcbURL string) (string, string, error) {
+	// Fetch the required data to get the build from the URL
+	u, err := url.Parse(gcbURL)
+	if err != nil {
+		return "", "", fmt.Errorf("parsing GCB spec URL: %w", err)
+	}
+	return u.Hostname(), strings.TrimPrefix(u.Path, "/"), nil
+}
+
 // RefreshRun queries the API from the build system and
 // updates the run metadata.
 func (gcb *GCB) RefreshRun(r *run.Run) error {
-	// Fetch the required data to get the build from the URL
-	u, err := url.Parse(r.SpecURL)
+	project, buildID, err := parseGCBURL(r.SpecURL)
 	if err != nil {
 		return fmt.Errorf("parsing GCB spec URL: %w", err)
 	}
-
-	project := u.Hostname()
-	buildID := strings.TrimPrefix(u.Path, "/")
 
 	ctx := context.Background()
 	cloudbuildService, err := cloudbuild.NewService(ctx)
@@ -187,6 +204,10 @@ func (gcb *GCB) BuildPredicate(r *run.Run, draft *attestation.SLSAPredicate) (pr
 
 // ArtifactStores returns the native artifact store of cloud build
 func (gcb *GCB) ArtifactStores() []store.Store {
+	if gcb.ProjectID == "" && gcb.BuildID == "" {
+		logrus.Error("incomplete build data to create artifact store")
+		return []store.Store{}
+	}
 	d, err := store.New(fmt.Sprintf("gcb://%s/%s", gcb.ProjectID, gcb.BuildID))
 	if err != nil {
 		logrus.Error(err)
