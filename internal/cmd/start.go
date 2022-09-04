@@ -36,6 +36,7 @@ type startAttestationOptions struct {
 	clone     bool
 	repo      string
 	repoPath  string
+	pubsub    string
 	artifacts []string
 }
 
@@ -152,6 +153,16 @@ attestation but with ".storage-snap.json" appended.
 				os.WriteFile(outputOps.OutputPath, json, os.FileMode(0o644))
 			}
 
+			if startAttestationOpts.pubsub != "" {
+				message := watcher.StartMessage{
+					SpecURL: w.Builder.SpecURL,
+					VCSURL:  vcsURL,
+				}
+				if err := w.PublishToTopic(startAttestationOpts.pubsub, message); err != nil {
+					return fmt.Errorf("publishing message to pubsub topic: %w", err)
+				}
+			}
+
 			return nil
 		},
 	}
@@ -184,6 +195,13 @@ attestation but with ".storage-snap.json" appended.
 		"artifacts",
 		[]string{},
 		"artifact storage locations",
+	)
+
+	startAttestationCmd.PersistentFlags().StringVar(
+		&startAttestationOpts.pubsub,
+		"pubsub",
+		"",
+		"publish event to a pubsub topic",
 	)
 
 	startCmd.AddCommand(startAttestationCmd)

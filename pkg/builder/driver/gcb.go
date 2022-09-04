@@ -219,15 +219,15 @@ func (gcb *GCB) BuildPredicate(r *run.Run, draft *attestation.SLSAPredicate) (pr
 				)
 			}
 		}
-	}
 
-	// Check if we can extract the opriginal repo from the trigger
-	if build.BuildTriggerId != "" {
-		repo, err := gcb.TriggerDetails(build.BuildTriggerId)
-		if err == nil {
-			(*predicate).Invocation.ConfigSource.URI = repo
-		} else {
-			logrus.Error(fmt.Errorf("fetching trigger details: %w", err))
+		// Check if we can extract the original repository from the trigger
+		if build.BuildTriggerId != "" {
+			repo, err := gcb.TriggerDetails(build.BuildTriggerId)
+			if err == nil {
+				(*predicate).Invocation.ConfigSource.URI = repo
+			} else {
+				logrus.Error(fmt.Errorf("fetching trigger details: %w", err))
+			}
 		}
 	}
 	// (*predicate).Invocation.ConfigSource.Digest = build.Substitutions["COMMI"]

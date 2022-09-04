@@ -18,11 +18,15 @@ package watcher
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
+	"strings"
 
+	"cloud.google.com/go/pubsub"
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
 
@@ -254,5 +258,54 @@ func (w *Watcher) checkSnapshotMatch(snapset map[string]*snapshot.Snapshot) erro
 		}
 		i++
 	}
+	return nil
+}
+
+type StartMessage struct {
+	SpecURL string `json:"spec"`
+	VCSURL  string `json:"vcs"`
+}
+
+// PublishToTopic sends the data of a partial attestation to a Pub/Sub
+// topic.
+func (w *Watcher) PublishToTopic(topicString string, message interface{}) (err error) {
+	// projects/puerco-chainguard/topics/slsa
+	parts := strings.Split(topicString, "/")
+	if len(parts) != 4 {
+		return errors.New("invalid topic specifier, format: projects/PROJECTID/topics/TOPICNAME")
+	}
+
+	ctx := context.Background()
+
+	client, err := pubsub.NewClient(ctx, parts[1])
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Close()
+
+	topic := client.Topic(parts[3])
+	exists, err := topic.Exists(ctx)
+	if err != nil {
+		return fmt.Errorf("checking pubsub topic: %w", err)
+	}
+	if !exists {
+		return errors.New("pubsub topic does not exist")
+	}
+
+	var data []byte
+	if m, ok := message.(StartMessage); ok {
+		data, err = json.Marshal(m)
+	} else {
+		return errors.New("unkown message format")
+	}
+
+	if err != nil {
+		return fmt.Errorf("marshalling message into json: %w", err)
+	}
+	logrus.Info("Message: " + string(data))
+	if _, err := topic.Publish(ctx, &pubsub.Message{Data: data}).Get(ctx); err != nil {
+		return fmt.Errorf("publishing to pubsub topic: %w", err)
+	}
+	logrus.Infof("pushed build data to topic %s", topicString)
 	return nil
 }
