@@ -296,16 +296,17 @@ func (w *Watcher) PublishToTopic(topicString string, message interface{}) (err e
 		log.Fatal(err)
 	}
 	defer client.Close()
-
 	topic := client.Topic(parts[3])
-	exists, err := topic.Exists(ctx)
-	if err != nil {
-		return fmt.Errorf("checking pubsub topic: %w", err)
-	}
-	if !exists {
-		return errors.New("pubsub topic does not exist")
-	}
 
+	/*
+		exists, err := topic.Exists(ctx)
+		if err != nil {
+			return fmt.Errorf("checking pubsub topic: %w", err)
+		}
+		if !exists {
+			return errors.New("pubsub topic does not exist")
+		}
+	*/
 	var data []byte
 	if m, ok := message.(StartMessage); ok {
 		data, err = json.Marshal(m)
