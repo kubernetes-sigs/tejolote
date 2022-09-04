@@ -85,8 +85,6 @@ where they came from.
 				return fmt.Errorf("generating attestation: %w", err)
 			}
 
-			logrus.Infof("Run produced %d artifacts", len(r.Artifacts))
-
 			if w.LoadAttestation(attestOpts.continueExisting); err != nil {
 				return fmt.Errorf("loading previous attestation")
 			}

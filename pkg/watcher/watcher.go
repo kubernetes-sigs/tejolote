@@ -245,7 +245,7 @@ func (w *Watcher) LoadSnapshots(path string) error {
 		}
 	}
 	w.Snapshots = snapData
-	logrus.Info("loaded %d snapshot sets from disk", len(w.Snapshots))
+	logrus.Infof("loaded %d snapshot sets from %s", len(w.Snapshots), path)
 
 	return nil
 }

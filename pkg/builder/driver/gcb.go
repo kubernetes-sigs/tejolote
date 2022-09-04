@@ -103,14 +103,14 @@ func (gcb *GCB) RefreshRun(r *run.Run) error {
 	if err != nil {
 		return fmt.Errorf("getting build %s from GCB: %w", buildID, err)
 	}
-	logrus.Infof("%+v", build)
+	logrus.Debugf("%+v", build)
 	r.Params = []string{}
 	for k, v := range build.Substitutions {
 		r.Params = append(r.Params, fmt.Sprintf("%s=%s", k, v))
 	}
 
 	for i, s := range build.Steps {
-		logrus.Infof("Step #%d %+v", i, s)
+		logrus.Debugf("Step #%d %+v", i, s)
 		if len(r.Steps) <= i {
 			r.Steps = append(r.Steps, run.Step{
 				Params:      []string{},
