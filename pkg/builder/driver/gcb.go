@@ -170,6 +170,8 @@ func (gcb *GCB) RefreshRun(r *run.Run) error {
 		r.IsRunning = false
 	}
 
+	r.SystemData = build
+
 	return nil
 }
 
@@ -199,7 +201,56 @@ func (gcb *GCB) BuildPredicate(r *run.Run, draft *attestation.SLSAPredicate) (pr
 		})
 	}
 	(*predicate).BuildConfig = buildconfig
+
+	// Get the platform specific data
+	build, ok := r.SystemData.(*cloudbuild.Build)
+	if ok {
+		if build.Substitutions != nil {
+			if c, ok := build.Substitutions["COMMIT_SHA"]; ok {
+				(*predicate).Invocation.ConfigSource.Digest["sha1"] = c
+			}
+			if t, ok := build.Substitutions["TRIGGER_BUILD_CONFIG_PATH"]; ok {
+				(*predicate).Invocation.ConfigSource.EntryPoint = t
+			}
+			if _, ok := build.Substitutions["REPO_NAME"]; ok {
+				(*predicate).Invocation.ConfigSource.URI = fmt.Sprintf(
+					"git+https://source.developers.google.com/p/%s/r/%s",
+					gcb.ProjectID, build.Substitutions["REPO_NAME"],
+				)
+			}
+		}
+	}
+
+	// Check if we can extract the opriginal repo from the trigger
+	if build.BuildTriggerId != "" {
+		repo, err := gcb.TriggerDetails(build.BuildTriggerId)
+		if err == nil {
+			(*predicate).Invocation.ConfigSource.URI = repo
+		} else {
+			logrus.Error(fmt.Errorf("fetching trigger details: %w", err))
+		}
+	}
+	// (*predicate).Invocation.ConfigSource.Digest = build.Substitutions["COMMI"]
 	return predicate, nil
+}
+
+// TriggerDetails
+func (gcb *GCB) TriggerDetails(triggerID string) (repoURL string, err error) {
+	cloudbuildService, err := cloudbuild.NewService(context.Background())
+	if err != nil {
+		return repoURL, fmt.Errorf("creating cloudbuild client: %w", err)
+	}
+	trigger, err := cloudbuildService.Projects.Triggers.Get(gcb.ProjectID, triggerID).Do()
+	if err != nil {
+		return repoURL, fmt.Errorf("getting trigger %s from GCB: %w", triggerID, err)
+	}
+
+	// If it's a GitHub repository,return the repo URL
+	if trigger.Github != nil {
+		return fmt.Sprintf("git+https://github.com/%s/%s", trigger.Github.Owner, trigger.Github.Name), nil
+	}
+
+	return "", fmt.Errorf("repository not found in trigger")
 }
 
 // ArtifactStores returns the native artifact store of cloud build
