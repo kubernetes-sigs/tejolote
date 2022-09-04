@@ -19,6 +19,7 @@ package store
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/puerco/tejolote/pkg/run"
 	"github.com/puerco/tejolote/pkg/store/driver"
@@ -68,7 +69,15 @@ func New(specURL string) (s Store, err error) {
 			return s, fmt.Errorf("initializing cloud build artifacts driver: %w", err)
 		}
 	default:
-		return s, fmt.Errorf("%s is not a storage URL", specURL)
+		// Attestation use a composed scheme
+		if strings.HasPrefix(u.Scheme, "intoto") {
+			impl, err = driver.NewAttestation(specURL)
+			if err != nil {
+				return s, fmt.Errorf("initializing attestation backend: %w", err)
+			}
+		} else {
+			return s, fmt.Errorf("%s is not a storage URL", specURL)
+		}
 	}
 	s.SpecURL = specURL
 	s.Driver = impl
