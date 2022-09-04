@@ -27,6 +27,7 @@ import (
 )
 
 type attestOptions struct {
+	waitForBuild     bool
 	sign             bool
 	continueExisting string
 	artifacts        []string
@@ -56,6 +57,11 @@ where they came from.
 			w, err := watcher.New(args[0])
 			if err != nil {
 				return fmt.Errorf("building watcher")
+			}
+
+			w.Options.WaitForBuild = attestOpts.waitForBuild
+			if !attestOpts.waitForBuild {
+				logrus.Warn("watcher will not wait for build, data may be incomplete")
 			}
 
 			// Add artifact monitors to the watcher
@@ -144,6 +150,12 @@ where they came from.
 		"artifacts",
 		[]string{},
 		"a storage URL to monitor for files",
+	)
+	attestCmd.PersistentFlags().BoolVar(
+		&attestOpts.waitForBuild,
+		"wait",
+		true,
+		"when watrching the run, wait for the build to finish",
 	)
 
 	parentCmd.AddCommand(attestCmd)

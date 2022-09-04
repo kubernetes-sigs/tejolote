@@ -25,6 +25,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"cloud.google.com/go/pubsub"
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
@@ -43,10 +44,19 @@ type Watcher struct {
 	Builder          builder.Builder
 	ArtifactStores   []store.Store
 	Snapshots        []map[string]*snapshot.Snapshot
+	Options          Options
+}
+
+type Options struct {
+	WaitForBuild bool // When true, the watcher will keep observing the run until it's done
 }
 
 func New(uri string) (w *Watcher, err error) {
-	w = &Watcher{}
+	w = &Watcher{
+		Options: Options{
+			WaitForBuild: true, // By default we watch the build run
+		},
+	}
 
 	// Get the builder
 	b, err := builder.New(uri)
@@ -69,19 +79,23 @@ func (w *Watcher) GetRun(specURL string) (*run.Run, error) {
 
 // Watch watches a run, updating the run data as it runs
 func (w *Watcher) Watch(r *run.Run) error {
-	//for {
-	//if !r.IsRunning {
-	//		return nil
-	//	}
+	for {
+		if !r.IsRunning {
+			return nil
+		}
 
-	// Sleep to wait for a status change
-	if err := w.Builder.RefreshRun(r); err != nil {
-		return fmt.Errorf("refreshing run data: %w", err)
+		if !w.Options.WaitForBuild {
+			logrus.Warn("run is still running but watcher won't wait (WaitForBuild = false)")
+		}
+
+		// Sleep to wait for a status change
+		if err := w.Builder.RefreshRun(r); err != nil {
+			return fmt.Errorf("refreshing run data: %w", err)
+		}
+
+		// Sleep
+		time.Sleep(3 * time.Second)
 	}
-	return nil
-	// Sleep
-	//	time.Sleep(3 * time.Second)
-	//}
 }
 
 // LoadAttestation loads a partial attestation to complete
