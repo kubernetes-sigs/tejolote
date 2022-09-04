@@ -58,6 +58,11 @@ func (gcb *GCB) readArtifacts() ([]run.Artifact, error) {
 		return nil, fmt.Errorf("getting build %s from GCB: %w", gcb.BuildID, err)
 	}
 	manifest := build.Results.ArtifactManifest
+	if manifest == "" {
+		logrus.Info("no artifact manifest in run, assuming no artifacts")
+		return []run.Artifact{}, nil
+	}
+
 	logrus.Infof("pulling artifact manifest from %s", manifest)
 
 	// Get the artifacts list from th build service
@@ -65,7 +70,7 @@ func (gcb *GCB) readArtifacts() ([]run.Artifact, error) {
 	if err != nil {
 		return nil, fmt.Errorf("reading build artifact manifest: %w", err)
 	}
-	logrus.Infof("%+v", gcbArtifacts)
+	logrus.Debugf("%+v", gcbArtifacts)
 
 	// Hash the artifacts list
 	var wg errgroup.Group
@@ -144,7 +149,7 @@ func readGCSObjectAttributes(client *storage.Client, objectURL string) (*storage
 	if err != nil {
 		return nil, fmt.Errorf("creating bucket reader: %w", err)
 	}
-	logrus.Infof("%+v", attrs)
+	logrus.Debugf("%+v", attrs)
 	return attrs, nil
 }
 
