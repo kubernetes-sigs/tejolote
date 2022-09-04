@@ -41,7 +41,7 @@ func NewGCS(specURL string) (*GCS, error) {
 	}
 
 	ctx := context.Background()
-	client, err := storage.NewClient(ctx)
+	client, err := newGCSClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("creating storage client: %w", err)
 	}
@@ -57,6 +57,14 @@ func NewGCS(specURL string) (*GCS, error) {
 		WorkDir: tmpdir,
 		client:  client,
 	}, nil
+}
+
+func newGCSClient(ctx context.Context) (*storage.Client, error) {
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
 }
 
 type GCS struct {

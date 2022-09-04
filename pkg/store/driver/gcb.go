@@ -35,7 +35,7 @@ func NewGCB(specURL string) (*GCB, error) {
 	}
 
 	ctx := context.Background()
-	client, err := storage.NewClient(ctx)
+	client, err := newGCSClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("creating storage client: %w", err)
 	}
