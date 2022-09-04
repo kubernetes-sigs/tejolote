@@ -30,6 +30,7 @@ type attestOptions struct {
 	waitForBuild     bool
 	sign             bool
 	continueExisting string
+	vcsurl           string
 	artifacts        []string
 }
 
@@ -58,6 +59,8 @@ where they came from.
 			if err != nil {
 				return fmt.Errorf("building watcher")
 			}
+
+			w.Builder.VCSURL = attestOpts.vcsurl
 
 			w.Options.WaitForBuild = attestOpts.waitForBuild
 			if !attestOpts.waitForBuild {
@@ -156,6 +159,12 @@ where they came from.
 		"wait",
 		true,
 		"when watrching the run, wait for the build to finish",
+	)
+	attestCmd.PersistentFlags().StringVar(
+		&attestOpts.vcsurl,
+		"vcs-url",
+		"",
+		"append a vcs URL to the atetstation materials",
 	)
 
 	parentCmd.AddCommand(attestCmd)

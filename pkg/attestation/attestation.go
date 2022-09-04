@@ -23,11 +23,12 @@ import (
 
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
+	"github.com/sirupsen/logrus"
 )
 
 type (
 	Attestation   intoto.Statement
-	SLSAPredicate *slsa.ProvenancePredicate
+	SLSAPredicate slsa.ProvenancePredicate
 )
 
 func New() *Attestation {
@@ -48,7 +49,7 @@ func (att *Attestation) SLSA() *Attestation {
 
 // NewSLSAPredicate returns a new SLSA predicate fully initialized
 func NewSLSAPredicate() SLSAPredicate {
-	predicate := slsa.ProvenancePredicate{
+	predicate := SLSAPredicate{
 		Builder: slsa.ProvenanceBuilder{
 			ID: "", // TODO: Read builder from trusted environment
 		},
@@ -77,7 +78,7 @@ func NewSLSAPredicate() SLSAPredicate {
 		Materials: []slsa.ProvenanceMaterial{},
 	}
 
-	return &predicate
+	return predicate
 }
 
 func (att *Attestation) ToJSON() ([]byte, error) {
@@ -90,4 +91,23 @@ func (att *Attestation) ToJSON() ([]byte, error) {
 		return nil, fmt.Errorf("encoding spdx sbom: %w", err)
 	}
 	return b.Bytes(), nil
+}
+
+// AddMaterial add an entry to the materials
+func (pred *SLSAPredicate) AddMaterial(uri string, hashes map[string]string) {
+	if pred.Materials == nil {
+		pred.Materials = []slsa.ProvenanceMaterial{}
+	}
+	for _, m := range pred.Materials {
+		if m.URI == uri {
+			logrus.Warnf(
+				"specified material %s is already in the attestation", uri,
+			)
+			return
+		}
+	}
+	pred.Materials = append(pred.Materials, slsa.ProvenanceMaterial{
+		URI:    uri,
+		Digest: hashes,
+	})
 }

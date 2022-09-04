@@ -18,7 +18,9 @@ package builder
 
 import (
 	"fmt"
+	"net/url"
 
+	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
 	"github.com/puerco/tejolote/pkg/attestation"
 	"github.com/puerco/tejolote/pkg/builder/driver"
 	"github.com/puerco/tejolote/pkg/run"
@@ -27,6 +29,7 @@ import (
 
 type Builder struct {
 	SpecURL string
+	VCSURL  string
 	driver  driver.BuildSystem
 }
 
@@ -61,7 +64,22 @@ func (b *Builder) RefreshRun(r *run.Run) error {
 }
 
 func (b *Builder) BuildPredicate(r *run.Run, draft *attestation.SLSAPredicate) (*attestation.SLSAPredicate, error) {
-	return b.driver.BuildPredicate(r, draft)
+	pred, err := b.driver.BuildPredicate(r, draft)
+	if err != nil {
+		return nil, err
+	}
+	// If there is a VCS URL set, add it to the predicate
+	if b.VCSURL != "" {
+		u, err := url.Parse(b.VCSURL)
+		if err != nil {
+			return nil, fmt.Errorf("parsing vcs url: %w", err)
+		}
+		if pred.Materials == nil {
+			pred.Materials = []slsa.ProvenanceMaterial{}
+		}
+		pred.AddMaterial(b.VCSURL, map[string]string{"sha1": u.Fragment})
+	}
+	return pred, nil
 }
 
 func (b *Builder) ArtifactStores() []store.Store {
