@@ -126,17 +126,13 @@ func (w *Watcher) AttestRun(r *run.Run) (att *attestation.Attestation, err error
 		logrus.Warn("run is still running, attestation may not capture en result")
 	}
 
+	att = attestation.New().SLSA()
 	if w.DraftAttestation != nil {
 		att = w.DraftAttestation
-	} else {
-		att = attestation.New().SLSA()
 	}
 
-	var pred *attestation.SLSAPredicate
-	if p, ok := att.Predicate.(attestation.SLSAPredicate); ok {
-		pred = &p
-	}
-
+	// Here, we need to check if its empty
+	pred := &att.Predicate
 	predicate, err := w.Builder.BuildPredicate(r, pred)
 	if err != nil {
 		return nil, fmt.Errorf("building predicate: %w", err)
@@ -154,7 +150,7 @@ func (w *Watcher) AttestRun(r *run.Run) (att *attestation.Attestation, err error
 		att.Subject = append(att.Subject, s)
 	}
 
-	att.Predicate = predicate
+	att.Predicate = *predicate
 	return att, nil
 }
 

@@ -187,6 +187,7 @@ func (gcb *GCB) BuildPredicate(r *run.Run, draft *attestation.SLSAPredicate) (pr
 		pred := attestation.NewSLSAPredicate()
 		predicate = &pred
 	} else {
+		logrus.Debug("Reusing existing slsa predicate")
 		predicate = draft
 	}
 	(*predicate).BuildType = "https://cloudbuild.googleapis.com/CloudBuildYaml@v1"
