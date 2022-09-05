@@ -212,7 +212,10 @@ func (w *Watcher) SaveSnapshots(path string) error {
 	enc := json.NewEncoder(&b)
 	enc.SetIndent("", "  ")
 	enc.SetEscapeHTML(false)
-
+	if len(w.Snapshots) == 0 {
+		logrus.Debug("no storage snapshots set, not saving file")
+		return nil
+	}
 	if err := enc.Encode(w.Snapshots); err != nil {
 		return fmt.Errorf("encoding snapshot data sbom: %w", err)
 	}
