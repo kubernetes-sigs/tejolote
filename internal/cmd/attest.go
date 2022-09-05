@@ -17,6 +17,7 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -55,6 +56,10 @@ where they came from.
 		SilenceUsage:      false,
 		PersistentPreRunE: initLogging,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			if len(args) == 0 {
+				return errors.New("build run spec URL not specified")
+			}
+
 			w, err := watcher.New(args[0])
 			if err != nil {
 				return fmt.Errorf("building watcher")

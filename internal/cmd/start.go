@@ -91,6 +91,10 @@ attestation but with ".storage-snap.json" appended.
 				return fmt.Errorf("validating options: %w", err)
 			}
 
+			if len(args) == 0 {
+				return errors.New("build run spec URL not specified")
+			}
+
 			w, err := watcher.New(args[0])
 			if err != nil {
 				return fmt.Errorf("building watcher")
