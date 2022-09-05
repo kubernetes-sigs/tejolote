@@ -168,9 +168,10 @@ attestation but with ".storage-snap.json" appended.
 					}
 				}
 				message := watcher.StartMessage{
-					SpecURL:     w.Builder.SpecURL,
-					Attestation: base64.StdEncoding.EncodeToString([]byte(json)),
-					Artifacts:   startAttestationOpts.artifacts,
+					SpecURL:      w.Builder.SpecURL,
+					Attestation:  base64.StdEncoding.EncodeToString([]byte(json)),
+					Artifacts:    startAttestationOpts.artifacts,
+					ArtifactList: strings.Join(startAttestationOpts.artifacts, ","),
 				}
 				if sdata != nil {
 					message.Snapshots = base64.StdEncoding.EncodeToString(sdata)

@@ -279,10 +279,11 @@ func (w *Watcher) checkSnapshotMatch(snapset map[string]*snapshot.Snapshot) erro
 }
 
 type StartMessage struct {
-	SpecURL     string   `json:"spec"`
-	Attestation string   `json:"attestation"`
-	Snapshots   string   `json:"snapshots"`
-	Artifacts   []string `json:"artifacts"`
+	SpecURL      string   `json:"spec"`
+	Attestation  string   `json:"attestation"`
+	Snapshots    string   `json:"snapshots"`
+	ArtifactList string   `json:"artifact_list"`
+	Artifacts    []string `json:"artifacts"`
 }
 
 // PublishToTopic sends the data of a partial attestation to a Pub/Sub
