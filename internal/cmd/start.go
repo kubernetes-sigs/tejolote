@@ -151,9 +151,9 @@ attestation but with ".storage-snap.json" appended.
 				predicate.Materials = append(predicate.Materials, material)
 			}
 
-			att.Predicate.Builder.ID = startAttestationOpts.builder
-
 			att.Predicate = predicate
+
+			att.Predicate.Builder.ID = startAttestationOpts.builder
 
 			json, err := att.ToJSON()
 			if err != nil {
