@@ -39,6 +39,7 @@ type startAttestationOptions struct {
 	repo      string
 	repoPath  string
 	pubsub    string
+	vcsURL    string
 	artifacts []string
 }
 
@@ -129,9 +130,12 @@ attestation but with ".storage-snap.json" appended.
 				return fmt.Errorf("repository cloning not yet implemented")
 			}
 
-			vcsURL, err := readVCSURL(*outputOps, startAttestationOpts)
-			if err != nil {
-				return fmt.Errorf("fetching VCS URL: %w", err)
+			vcsURL := startAttestationOpts.vcsURL
+			if vcsURL == "" {
+				vcsURL, err = readVCSURL(*outputOps, startAttestationOpts)
+				if err != nil {
+					return fmt.Errorf("fetching VCS URL: %w", err)
+				}
 			}
 
 			if vcsURL != "" {
@@ -221,6 +225,13 @@ attestation but with ".storage-snap.json" appended.
 		"pubsub",
 		"",
 		"publish event to a pubsub topic",
+	)
+
+	startAttestationCmd.PersistentFlags().StringVar(
+		&startAttestationOpts.vcsURL,
+		"vcs-url",
+		"",
+		"VCS locator to add to SLSA materials (if emtpy will be probed)",
 	)
 
 	startCmd.AddCommand(startAttestationCmd)
