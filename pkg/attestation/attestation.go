@@ -27,7 +27,10 @@ import (
 )
 
 type (
-	Attestation   intoto.Statement
+	Attestation struct {
+		intoto.StatementHeader
+		Predicate SLSAPredicate `json:"predicate"`
+	}
 	SLSAPredicate slsa.ProvenancePredicate
 )
 
