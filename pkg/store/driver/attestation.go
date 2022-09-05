@@ -45,7 +45,9 @@ func NewAttestation(specURL string) (*Attestation, error) {
 	if !strings.HasPrefix(u.Scheme, "intoto+") {
 		return nil, fmt.Errorf("spec URL %s is not an attestation url", u.Scheme)
 	}
-
+	logrus.Info(
+		"Initialized new in-toto attestation storage backend (%s)", specURL,
+	)
 	// TODO: Check scheme to make sure it is valid
 	return &Attestation{
 		URL: strings.TrimPrefix(specURL, "intoto+"),

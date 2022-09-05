@@ -35,13 +35,16 @@ import (
 )
 
 type startAttestationOptions struct {
-	clone     bool
-	repo      string
-	repoPath  string
-	pubsub    string
-	vcsURL    string
-	builder   string
-	artifacts []string
+	clone           bool
+	repo            string
+	repoPath        string
+	pubsub          string
+	vcsURL          string
+	builder         string
+	configSrcEntry  string
+	configSrcURI    string
+	configSrcDigest string
+	artifacts       []string
 }
 
 func (opts startAttestationOptions) Validate() error {
@@ -249,6 +252,27 @@ attestation but with ".storage-snap.json" appended.
 		"builder",
 		"",
 		"URI indicating the builder’s identity",
+	)
+
+	startAttestationCmd.PersistentFlags().StringVar(
+		&startAttestationOpts.configSrcEntry,
+		"config-entrypoint",
+		"",
+		"path to the build configuration",
+	)
+
+	startAttestationCmd.PersistentFlags().StringVar(
+		&startAttestationOpts.configSrcURI,
+		"config-uri",
+		"",
+		"vcs URL pointing to the build-as-code configuration driving the build",
+	)
+
+	startAttestationCmd.PersistentFlags().StringVar(
+		&startAttestationOpts.configSrcDigest,
+		"config-digest",
+		"",
+		"commit hash of the source configutarion commit (eg sha1:14d87563d4...)",
 	)
 
 	startCmd.AddCommand(startAttestationCmd)

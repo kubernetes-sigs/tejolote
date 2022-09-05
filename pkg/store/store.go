@@ -45,39 +45,31 @@ func New(specURL string) (s Store, err error) {
 	switch u.Scheme {
 	case "file":
 		impl, err = driver.NewDirectory(specURL)
-		if err != nil {
-			return s, fmt.Errorf("initializing directory driver: %w", err)
-		}
 	case "gs":
 		impl, err = driver.NewGCS(specURL)
-		if err != nil {
-			return s, fmt.Errorf("initializing gcs driver: %w", err)
-		}
 	case "oci":
 		impl, err = driver.NewOCI(specURL)
-		if err != nil {
-			return s, fmt.Errorf("initializing oci driver: %w", err)
-		}
 	case "actions":
 		impl, err = driver.NewActions(specURL)
-		if err != nil {
-			return s, fmt.Errorf("initializing actions artifacts driver: %w", err)
-		}
 	case "gcb":
 		impl, err = driver.NewGCB(specURL)
-		if err != nil {
-			return s, fmt.Errorf("initializing cloud build artifacts driver: %w", err)
-		}
 	default:
 		// Attestation use a composed scheme
-		if strings.HasPrefix(u.Scheme, "intoto") {
-			impl, err = driver.NewAttestation(specURL)
-			if err != nil {
-				return s, fmt.Errorf("initializing attestation backend: %w", err)
-			}
-		} else {
+		format, _, ok := strings.Cut(u.Scheme, "+")
+		if !ok {
 			return s, fmt.Errorf("%s is not a storage URL", specURL)
 		}
+		switch format {
+		case "intoto":
+			impl, err = driver.NewAttestation(specURL)
+		case "spdx":
+			impl, err = driver.NewSPDX(specURL)
+		default:
+			err = fmt.Errorf("unknown storage backend %s", format)
+		}
+	}
+	if err != nil {
+		return s, fmt.Errorf("initializing storage backend: %w", err)
 	}
 	s.SpecURL = specURL
 	s.Driver = impl
