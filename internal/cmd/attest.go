@@ -17,6 +17,7 @@ limitations under the License.
 package cmd
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
@@ -109,7 +110,11 @@ where they came from.
 					return fmt.Errorf("marshallling encoded attestation: %w", err)
 				}
 				defer f.Close()
-				if err := os.WriteFile(f.Name(), []byte(attestOpts.encodedExisting), os.FileMode(0o644)); err != nil {
+				decodedAtt, err := base64.StdEncoding.DecodeString(attestOpts.encodedExisting)
+				if err != nil {
+					return fmt.Errorf("decoding existing attestation")
+				}
+				if err := os.WriteFile(f.Name(), decodedAtt, os.FileMode(0o644)); err != nil {
 					return fmt.Errorf("writing encoded attestation to disk")
 				}
 				attestOpts.continueExisting = f.Name()
@@ -121,7 +126,11 @@ where they came from.
 					return fmt.Errorf("marshallling encoded snapshots: %w", err)
 				}
 				defer f.Close()
-				if err := os.WriteFile(f.Name(), []byte(attestOpts.encodedExisting), os.FileMode(0o644)); err != nil {
+				decodedSnaps, err := base64.StdEncoding.DecodeString(attestOpts.encodedSnapshots)
+				if err != nil {
+					return fmt.Errorf("decoding received snapshots: %w", err)
+				}
+				if err := os.WriteFile(f.Name(), decodedSnaps, os.FileMode(0o644)); err != nil {
 					return fmt.Errorf("writing encoded attestation to disk")
 				}
 				outputOpts.SnapshotStatePath = f.Name()
