@@ -70,11 +70,19 @@ func (b *Builder) BuildPredicate(r *run.Run, draft *attestation.SLSAPredicate) (
 	}
 	// If there is a VCS URL set, add it to the predicate
 	if b.VCSURL != "" {
+		commithash := map[string]string{}
 		u, commit, ok := strings.Cut(b.VCSURL, "@")
 		if ok {
-			pred.AddMaterial(u, map[string]string{"sha1": commit})
+			// The thing after the @ may not be a commit
+			if len(commit) == 40 {
+				commithash["sha1"] = commit
+			} else {
+				u = b.VCSURL
+			}
+			pred.AddMaterial(u, commithash)
 		} else {
 			logrus.Warn("unable to read commit from vcs url")
+			pred.AddMaterial(u, commithash)
 		}
 	}
 	return pred, nil

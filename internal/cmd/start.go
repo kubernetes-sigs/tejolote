@@ -144,9 +144,16 @@ attestation but with ".storage-snap.json" appended.
 					URI:    vcsURL,
 					Digest: map[string]string{},
 				}
+				commithash := map[string]string{}
 				if repoURL, repoDigest, ok := strings.Cut(vcsURL, "@"); ok {
+					// The thing after the @ may not be a commit
+					if len(repoDigest) == 40 {
+						commithash["sha1"] = repoDigest
+					} else {
+						repoURL = vcsURL
+					}
 					material.URI = repoURL
-					material.Digest["sha1"] = repoDigest
+					material.Digest = commithash
 				}
 				predicate.Materials = append(predicate.Materials, material)
 			}
