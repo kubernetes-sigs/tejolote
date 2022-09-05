@@ -28,13 +28,17 @@ type outputOptions struct {
 	Workspace         string
 }
 
-// FinalSnapshotStatePath returns the final path to store the
-// storage snapshots. The default mode is to store it by
-// appending '.storage-snap.json' to the defaultSeed filename
-// Blank means do not store the data.
+// FinalSnapshotStatePath returns the final path to store/read the storage
+// snapshots. The default mode is to store it by appending '.storage-snap.json'
+// to the defaultSeed filename.
+// It will always return a preset path in SnapshotStatePath
+// A blank seed means do not store the data.
 func (oo *outputOptions) FinalSnapshotStatePath(defaultSeed string) string {
 	snapshotState := oo.SnapshotStatePath
 	if oo.SnapshotStatePath == "default" {
+		if defaultSeed == "" {
+			return ""
+		}
 		snapshotState = strings.TrimSuffix(defaultSeed, ".json") + ".storage-snap.json"
 	}
 	return snapshotState

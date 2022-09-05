@@ -229,6 +229,9 @@ func (w *Watcher) SaveSnapshots(path string) error {
 
 // LoadSnapshots loads saved snapshot state from a file to continue
 func (w *Watcher) LoadSnapshots(path string) error {
+	if path == "" {
+		return nil
+	}
 	rawData, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("opening saved snapshot data: %w", err)

@@ -32,7 +32,16 @@ type attestOptions struct {
 	sign             bool
 	continueExisting string
 	vcsurl           string
+	encodedExisting  string
+	encodedSnapshots string
 	artifacts        []string
+}
+
+func (o *attestOptions) Verify() error {
+	if o.encodedExisting != "" && o.continueExisting != "" {
+		return errors.New("only --encoded-existing or --continue can be set at a time")
+	}
+	return nil
 }
 
 func addAttest(parentCmd *cobra.Command) {
@@ -58,6 +67,10 @@ where they came from.
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			if len(args) == 0 {
 				return errors.New("build run spec URL not specified")
+			}
+
+			if err := attestOpts.Verify(); err != nil {
+				return fmt.Errorf("verifying options: %w", err)
 			}
 
 			w, err := watcher.New(args[0])
@@ -88,6 +101,30 @@ where they came from.
 			// Watch the run run :)
 			if err := w.Watch(r); err != nil {
 				return fmt.Errorf("generating attestation: %w", err)
+			}
+
+			if attestOpts.encodedExisting != "" {
+				f, err := os.CreateTemp("", "attestation-*.intoto.json")
+				if err != nil {
+					return fmt.Errorf("marshallling encoded attestation: %w", err)
+				}
+				defer f.Close()
+				if err := os.WriteFile(f.Name(), []byte(attestOpts.encodedExisting), os.FileMode(0o644)); err != nil {
+					return fmt.Errorf("writing encoded attestation to disk")
+				}
+				attestOpts.continueExisting = f.Name()
+			}
+
+			if attestOpts.encodedSnapshots != "" {
+				f, err := os.CreateTemp("", "snapshots-*.intoto.json")
+				if err != nil {
+					return fmt.Errorf("marshallling encoded snapshots: %w", err)
+				}
+				defer f.Close()
+				if err := os.WriteFile(f.Name(), []byte(attestOpts.encodedExisting), os.FileMode(0o644)); err != nil {
+					return fmt.Errorf("writing encoded attestation to disk")
+				}
+				outputOpts.SnapshotStatePath = f.Name()
 			}
 
 			if w.LoadAttestation(attestOpts.continueExisting); err != nil {
@@ -169,6 +206,20 @@ where they came from.
 		"",
 		"append a vcs URL to the atetstation materials",
 	)
+	attestCmd.PersistentFlags().StringVar(
+		&attestOpts.encodedExisting,
+		"encoded-attestation",
+		"",
+		"encoded attestation to continue",
+	)
+	attestCmd.PersistentFlags().StringVar(
+		&attestOpts.encodedSnapshots,
+		"encoded-snapshots",
+		"",
+		"encoded snapshots to continue",
+	)
+	attestCmd.PersistentFlags().MarkHidden("encoded-attestation")
+	attestCmd.PersistentFlags().MarkHidden("encoded-snapshots")
 
 	parentCmd.AddCommand(attestCmd)
 }
