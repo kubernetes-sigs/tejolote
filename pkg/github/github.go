@@ -60,7 +60,7 @@ func APIGetRequest(url string) (*http.Response, error) {
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 	if os.Getenv("GITHUB_TOKEN") != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("token %s", os.Getenv("GITHUB_TOKEN")))
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("GITHUB_TOKEN")))
 	} else {
 		logrus.Warn("making unauthenticated request to github")
 	}
