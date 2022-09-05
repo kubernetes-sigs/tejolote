@@ -278,6 +278,7 @@ func (w *Watcher) checkSnapshotMatch(snapset map[string]*snapshot.Snapshot) erro
 type StartMessage struct {
 	SpecURL     string   `json:"spec"`
 	Attestation string   `json:"attestation"`
+	Snapshots   string   `json:"snapshots"`
 	Artifacts   []string `json:"artifacts"`
 }
 

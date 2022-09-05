@@ -27,6 +27,7 @@ import (
 	"chainguard.dev/apko/pkg/vcs"
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
 	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/release-utils/util"
 
 	"github.com/puerco/tejolote/pkg/attestation"
 	"github.com/puerco/tejolote/pkg/watcher"
@@ -155,11 +156,22 @@ attestation but with ".storage-snap.json" appended.
 			}
 
 			if startAttestationOpts.pubsub != "" {
+				var sdata []byte
+				if util.Exists(outputOps.FinalSnapshotStatePath(outputOps.OutputPath)) {
+					sdata, err = os.ReadFile(outputOps.FinalSnapshotStatePath(outputOps.OutputPath))
+					if err != nil {
+						return fmt.Errorf("reading snapshot data: %w", err)
+					}
+				}
 				message := watcher.StartMessage{
 					SpecURL:     w.Builder.SpecURL,
 					Attestation: base64.StdEncoding.EncodeToString([]byte(json)),
 					Artifacts:   startAttestationOpts.artifacts,
 				}
+				if sdata != nil {
+					message.Snapshots = base64.StdEncoding.EncodeToString(sdata)
+				}
+
 				if err := w.PublishToTopic(startAttestationOpts.pubsub, message); err != nil {
 					return fmt.Errorf("publishing message to pubsub topic: %w", err)
 				}
