@@ -17,6 +17,7 @@ limitations under the License.
 package cmd
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
@@ -155,8 +156,9 @@ attestation but with ".storage-snap.json" appended.
 
 			if startAttestationOpts.pubsub != "" {
 				message := watcher.StartMessage{
-					SpecURL: w.Builder.SpecURL,
-					VCSURL:  vcsURL,
+					SpecURL:     w.Builder.SpecURL,
+					Attestation: base64.StdEncoding.EncodeToString([]byte(json)),
+					Artifacts:   startAttestationOpts.artifacts,
 				}
 				if err := w.PublishToTopic(startAttestationOpts.pubsub, message); err != nil {
 					return fmt.Errorf("publishing message to pubsub topic: %w", err)
