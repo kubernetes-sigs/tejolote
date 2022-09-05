@@ -314,7 +314,7 @@ func (w *Watcher) PublishToTopic(topicString string, message interface{}) (err e
 	if err != nil {
 		return fmt.Errorf("marshalling message into json: %w", err)
 	}
-	logrus.Info("Message: " + string(data))
+	logrus.Debugf("Message: " + string(data))
 	if _, err := topic.Publish(ctx, &pubsub.Message{Data: data}).Get(ctx); err != nil {
 		return fmt.Errorf("publishing to pubsub topic: %w", err)
 	}
