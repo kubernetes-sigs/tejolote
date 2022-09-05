@@ -40,6 +40,7 @@ type startAttestationOptions struct {
 	repoPath  string
 	pubsub    string
 	vcsURL    string
+	builder   string
 	artifacts []string
 }
 
@@ -150,6 +151,8 @@ attestation but with ".storage-snap.json" appended.
 				predicate.Materials = append(predicate.Materials, material)
 			}
 
+			att.Predicate.Builder.ID = startAttestationOpts.builder
+
 			att.Predicate = predicate
 
 			json, err := att.ToJSON()
@@ -232,6 +235,13 @@ attestation but with ".storage-snap.json" appended.
 		"vcs-url",
 		"",
 		"VCS locator to add to SLSA materials (if emtpy will be probed)",
+	)
+
+	startAttestationCmd.PersistentFlags().StringVar(
+		&startAttestationOpts.builder,
+		"builder",
+		"",
+		"URI indicating the builder’s identity",
 	)
 
 	startCmd.AddCommand(startAttestationCmd)
