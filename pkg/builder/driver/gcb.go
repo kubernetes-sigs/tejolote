@@ -200,6 +200,7 @@ func (gcb *GCB) BuildPredicate(r *run.Run, draft *attestation.SLSAPredicate) (pr
 			Arguments: s.Params,
 		})
 	}
+
 	(*predicate).BuildConfig = buildconfig
 
 	// Get the platform specific data
@@ -218,6 +219,10 @@ func (gcb *GCB) BuildPredicate(r *run.Run, draft *attestation.SLSAPredicate) (pr
 					gcb.ProjectID, build.Substitutions["REPO_NAME"],
 				)
 			}
+		}
+
+		if build.ServiceAccount != "" && (*predicate).Builder.ID == "" {
+			(*predicate).Builder.ID = build.ServiceAccount
 		}
 
 		// Check if we can extract the original repository from the trigger
