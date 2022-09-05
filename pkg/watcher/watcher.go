@@ -282,7 +282,7 @@ type StartMessage struct {
 	SpecURL      string   `json:"spec"`
 	Attestation  string   `json:"attestation"`
 	Snapshots    string   `json:"snapshots"`
-	ArtifactList string   `json:"artifact_list"`
+	ArtifactList string   `json:"artifacts_list"`
 	Artifacts    []string `json:"artifacts"`
 }
 
