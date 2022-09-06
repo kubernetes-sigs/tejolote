@@ -28,7 +28,7 @@ import (
 
 // TokenScopes returns the scopes of token in the eviroment
 func TokenScopes() ([]string, error) {
-	res, err := APIGetRequest("https://api.github.com/events")
+	res, err := APIGetRequest("https://api.github.com/repos/github/docs")
 	if err != nil {
 		return nil, fmt.Errorf("making request to API: %w", err)
 	}
