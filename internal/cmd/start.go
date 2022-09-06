@@ -164,6 +164,14 @@ attestation but with ".storage-snap.json" appended.
 			att.Predicate = predicate
 
 			att.Predicate.Builder.ID = startAttestationOpts.builder
+			att.Predicate.Invocation.ConfigSource.EntryPoint = startAttestationOpts.configSrcEntry
+			att.Predicate.Invocation.ConfigSource.URI = startAttestationOpts.configSrcURI
+			algo, val, ok := strings.Cut(startAttestationOpts.configSrcDigest, ":")
+			if ok {
+				att.Predicate.Invocation.ConfigSource.Digest = slsa.DigestSet{
+					algo: val,
+				}
+			}
 
 			json, err := att.ToJSON()
 			if err != nil {
