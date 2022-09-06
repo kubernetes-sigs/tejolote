@@ -32,7 +32,6 @@ func TokenScopes() ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("making request to API: %w", err)
 	}
-	logrus.Debugf("%+v", res.Header)
 	header := res.Header.Get("x-oauth-scopes")
 	scopes := strings.Split(header, ", ")
 	logrus.Debugf("GitHub Token scopes: %+v", scopes)

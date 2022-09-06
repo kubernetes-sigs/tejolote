@@ -48,14 +48,6 @@ type Actions struct {
 var ErrNoWorkflowToken error = errors.New("token does not have workflow scope")
 
 func NewActions(specURL string) (*Actions, error) {
-	ok, err := github.TokenHas("workflow")
-	if err != nil {
-		return nil, fmt.Errorf("getting github token scopes: %w", err)
-	}
-	if !ok {
-		return nil, ErrNoWorkflowToken
-	}
-
 	u, err := url.Parse(specURL)
 	if err != nil {
 		return nil, fmt.Errorf("parsing SpecURL %s: %w", specURL, err)
@@ -89,7 +81,6 @@ func (a *Actions) readArtifacts() ([]run.Artifact, error) {
 		return nil, fmt.Errorf("querying GitHub api for artifacts: %w", err)
 	}
 	rawData, err := io.ReadAll(res.Body)
-	logrus.Info(string(rawData))
 	defer res.Body.Close()
 	if err != nil {
 		return nil, fmt.Errorf("reading api response data: %w", err)
