@@ -28,7 +28,7 @@ import (
 
 // TokenScopes returns the scopes of token in the eviroment
 func TokenScopes() ([]string, error) {
-	res, err := APIGetRequest("https://api.github.com/user")
+	res, err := APIGetRequest("https://api.github.com/events")
 	if err != nil {
 		return nil, fmt.Errorf("making request to API: %w", err)
 	}
@@ -60,13 +60,13 @@ func APIGetRequest(url string) (*http.Response, error) {
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 	if os.Getenv("GITHUB_TOKEN") != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("GITHUB_TOKEN")))
+		req.Header.Set("Authorization", fmt.Sprintf("token %s", os.Getenv("GITHUB_TOKEN")))
 	} else {
 		logrus.Warn("making unauthenticated request to github")
 	}
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("executing http request to GitHub API: %w", err)
+		return res, fmt.Errorf("executing http request to GitHub API: %w", err)
 	}
 	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf(
