@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Adolfo García Veytia
+Copyright 2022 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,11 +27,12 @@ import (
 	"chainguard.dev/apko/pkg/vcs"
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+
 	"sigs.k8s.io/release-utils/util"
 
-	"github.com/puerco/tejolote/pkg/attestation"
-	"github.com/puerco/tejolote/pkg/watcher"
-	"github.com/spf13/cobra"
+	"sigs.k8s.io/tejolote/pkg/attestation"
+	"sigs.k8s.io/tejolote/pkg/watcher"
 )
 
 type startAttestationOptions struct {

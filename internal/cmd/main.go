@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Adolfo García Veytia
+Copyright 2022 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
 	"sigs.k8s.io/release-utils/log"
 )
 
@@ -28,13 +29,13 @@ func Execute() error {
 	rootCmd := &cobra.Command{
 		Short: "A tool for working with SPDX manifests",
 		Long: `tejolote (the handle of a molcajete, where you make salsa)
-	
-🌶 tejolote is a utility that allows a developer to execute a 
+
+🌶 tejolote is a utility that allows a developer to execute a
 process - ideally a builder - and record its inputs and outputs.
 The main goal is to obtain provenance information of builds
 and other transformations when building and shipping software.
 
-In its simplest form, you can precede your existing build 
+In its simplest form, you can precede your existing build
 command with tejolote run and it will make its best to create a
 meaningful attestation. For example:
 
@@ -46,7 +47,7 @@ meaningful attestation. For example:
 
 Tejolote will try to make sane asumptions but for best results, it
 allows for full control of the process you run.
-	
+
 	`,
 		Use:               "tejolote",
 		SilenceUsage:      false,

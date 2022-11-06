@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Adolfo García Veytia
+Copyright 2022 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,9 +28,10 @@ import (
 	"strings"
 
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
-	"github.com/puerco/tejolote/pkg/run"
-	"github.com/puerco/tejolote/pkg/store/snapshot"
 	"github.com/sirupsen/logrus"
+
+	"sigs.k8s.io/tejolote/pkg/run"
+	"sigs.k8s.io/tejolote/pkg/store/snapshot"
 )
 
 type Attestation struct {

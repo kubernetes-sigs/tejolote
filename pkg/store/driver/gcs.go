@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Adolfo García Veytia
+Copyright 2022 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,11 +27,11 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/api/iterator"
 
-	"github.com/puerco/tejolote/pkg/store/snapshot"
-	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/tejolote/pkg/store/snapshot"
 )
 
 func NewGCS(specURL string) (*GCS, error) {
