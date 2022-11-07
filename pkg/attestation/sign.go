@@ -30,7 +30,7 @@ import (
 
 func (att *Attestation) Sign() ([]byte, error) {
 	ctx := context.Background()
-	var timeout time.Duration /// TODO move to options
+	var timeout time.Duration // TODO: move to options
 	var certPath, certChainPath string
 	ko := options.KeyOpts{
 		// KeyRef:     s.options.PrivateKeyPath,
@@ -42,8 +42,11 @@ func (att *Attestation) Sign() ([]byte, error) {
 
 		InsecureSkipFulcioVerify: false,
 		SkipConfirmation:         true,
-		// FulcioAuthFlow:           "",
+		// FulcioAuthFlow:           "", //nolint: gocritic
 	}
+
+	// TODO: review this
+	//nolint: gocritic
 	/*
 		if options.EnableExperimental() {
 			if options.NOf(ko.KeyRef, ko.Sk) > 1 {
@@ -85,7 +88,8 @@ func (att *Attestation) Sign() ([]byte, error) {
 	fmt.Println(string(signedPayload))
 	return signedPayload, nil
 
-	// ???
+	// TODO: review this
+	//nolint: gocritic
 	/*
 		opts := []static.Option{static.WithLayerMediaType(types.DssePayloadType)}
 		if sv.Cert != nil {

@@ -48,7 +48,7 @@ type startAttestationOptions struct {
 	artifacts       []string
 }
 
-func (opts startAttestationOptions) Validate() error {
+func (opts *startAttestationOptions) Validate() error {
 	if opts.clone && opts.repo == "" {
 		return errors.New("repository clone requested but no repository was specified")
 	}
@@ -60,7 +60,7 @@ func (opts startAttestationOptions) Validate() error {
 }
 
 func addStart(parentCmd *cobra.Command) {
-	startAttestationOpts := startAttestationOptions{}
+	startAttestationOpts := &startAttestationOptions{}
 	var outputOps *outputOptions
 
 	// Verb
@@ -75,8 +75,8 @@ func addStart(parentCmd *cobra.Command) {
 	startAttestationCmd := &cobra.Command{
 		Short: "Attest to a build system run",
 		Long: `tejolote start attestation
-	
-The start command of tejolte writes a partial attestation 
+
+The start command of tejolte writes a partial attestation
 containing initial data that can be observed before launching a
 build. The partial attestation is meant to be completed by
 tejolote once it has finished observing a build run.
@@ -87,7 +87,7 @@ provenance metadata. This allows it to "remember" the storage
 states to notice new artifacts. By default tejolote will store the
 storage state in a file with the same name as the partial
 attestation but with ".storage-snap.json" appended.
-	
+
 	`,
 		Use:               "attestation",
 		SilenceUsage:      false,
@@ -137,7 +137,7 @@ attestation but with ".storage-snap.json" appended.
 
 			vcsURL := startAttestationOpts.vcsURL
 			if vcsURL == "" {
-				vcsURL, err = readVCSURL(*outputOps, startAttestationOpts)
+				vcsURL, err = readVCSURL(outputOps, startAttestationOpts)
 				if err != nil {
 					return fmt.Errorf("fetching VCS URL: %w", err)
 				}
@@ -182,7 +182,10 @@ attestation but with ".storage-snap.json" appended.
 			if outputOps.OutputPath == "" {
 				fmt.Println(string(json))
 			} else {
-				os.WriteFile(outputOps.OutputPath, json, os.FileMode(0o644))
+				err = os.WriteFile(outputOps.OutputPath, json, os.FileMode(0o644))
+				if err != nil {
+					return fmt.Errorf("writing output data: %w", err)
+				}
 			}
 
 			if startAttestationOpts.pubsub != "" {
@@ -195,7 +198,7 @@ attestation but with ".storage-snap.json" appended.
 				}
 				message := watcher.StartMessage{
 					SpecURL:      w.Builder.SpecURL,
-					Attestation:  base64.StdEncoding.EncodeToString([]byte(json)),
+					Attestation:  base64.StdEncoding.EncodeToString(json),
 					Artifacts:    startAttestationOpts.artifacts,
 					ArtifactList: strings.Join(startAttestationOpts.artifacts, ","),
 				}
@@ -253,7 +256,7 @@ attestation but with ".storage-snap.json" appended.
 		&startAttestationOpts.vcsURL,
 		"vcs-url",
 		"",
-		"VCS locator to add to SLSA materials (if emtpy will be probed)",
+		"VCS locator to add to SLSA materials (if empty will be probed)",
 	)
 
 	startAttestationCmd.PersistentFlags().StringVar(
@@ -290,7 +293,7 @@ attestation but with ".storage-snap.json" appended.
 
 // readVCSURL checks the repository path to get the VCS url for the
 // materials
-func readVCSURL(outputOpts outputOptions, opts startAttestationOptions) (string, error) {
+func readVCSURL(outputOpts *outputOptions, opts *startAttestationOptions) (string, error) {
 	if opts.repoPath == "" {
 		return "", nil
 	}

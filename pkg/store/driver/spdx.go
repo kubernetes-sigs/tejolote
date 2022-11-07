@@ -97,7 +97,7 @@ func (s *SPDX) Snap() (*snapshot.Snapshot, error) {
 		// Leaving this commented because it breaks with the kubernetes sboms
 		// but perhaps we should be stricter here
 		if len(p.Checksum) == 0 {
-			logrus.Warn("SPDX package %s has no checksum", identifier)
+			logrus.Warnf("SPDX package %s has no checksum", identifier)
 			continue
 		}
 

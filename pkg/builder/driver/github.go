@@ -45,7 +45,7 @@ type GitHubWorkflow struct {
 
 func parseGitHubURL(specURL string) (org, repo string, runID int64, err error) {
 	u, err := url.Parse(specURL)
-	if u.Scheme != "github" {
+	if u.Scheme != GITHUB {
 		return org, repo, runID, errors.New("URL is not a github URL")
 	}
 	if err != nil {
@@ -58,7 +58,6 @@ func parseGitHubURL(specURL string) (org, repo string, runID int64, err error) {
 	}
 
 	return u.Hostname(), parts[1], int64(rID), nil
-
 }
 
 func (ghw *GitHubWorkflow) GetRun(specURL string) (*run.Run, error) {
@@ -155,17 +154,17 @@ func (ghw *GitHubWorkflow) BuildPredicate(
 	} else {
 		predicate = draft
 	}
-	(*predicate).Builder.ID = "https://github.com/Attestations/GitHubHostedActions@v1"
-	(*predicate).BuildType = "https://github.com/Attestations/GitHubActionsWorkflow@v1"
-	(*predicate).Invocation.ConfigSource.Digest = slsa.DigestSet{
+	predicate.Builder.ID = "https://github.com/Attestations/GitHubHostedActions@v1"
+	predicate.BuildType = "https://github.com/Attestations/GitHubActionsWorkflow@v1"
+	predicate.Invocation.ConfigSource.Digest = slsa.DigestSet{
 		"sha1": r.SystemData.(*github.Run).HeadSHA,
 	}
-	(*predicate).Invocation.ConfigSource.EntryPoint = r.SystemData.(*github.Run).Path
-	(*predicate).Invocation.ConfigSource.URI = fmt.Sprintf(
+	predicate.Invocation.ConfigSource.EntryPoint = r.SystemData.(*github.Run).Path
+	predicate.Invocation.ConfigSource.URI = fmt.Sprintf(
 		"git+https://github.com/%s/%s.git", org, repo,
 	)
 	// TODO: I think we need to checkout the file from git to fill
-	(*predicate).Invocation.Environment = githubEnvironment{
+	predicate.Invocation.Environment = githubEnvironment{
 		Arch: "",
 		Env:  map[string]string{},
 		Context: struct {

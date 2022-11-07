@@ -307,7 +307,7 @@ func (w *Watcher) PublishToTopic(topicString string, message interface{}) (err e
 	if m, ok := message.(StartMessage); ok {
 		data, err = json.Marshal(m)
 	} else {
-		return errors.New("unkown message format")
+		return errors.New("unknown message format")
 	}
 
 	if err != nil {

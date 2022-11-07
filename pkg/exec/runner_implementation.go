@@ -29,7 +29,7 @@ import (
 )
 
 type RunnerImplementation interface {
-	CreateRun(*Options, run.Step) (*Run, error)
+	CreateRun(*Options, *run.Step) (*Run, error)
 	Snapshot(*Options, *[]watcher.Watcher) error
 	Execute(*Options, *Run) error
 	WriteAttestation(*Options, *Run) error
@@ -38,7 +38,7 @@ type RunnerImplementation interface {
 type defaultRunnerImplementation struct{}
 
 // CreateRun creates a run from the data defined in the step
-func (ri *defaultRunnerImplementation) CreateRun(opts *Options, step run.Step) (r *Run, err error) {
+func (ri *defaultRunnerImplementation) CreateRun(opts *Options, step *run.Step) (r *Run, err error) {
 	var cmd *command.Command
 	cwd := opts.CWD
 	if opts.CWD == "" {
@@ -73,30 +73,32 @@ func (ri *defaultRunnerImplementation) CreateRun(opts *Options, step run.Step) (
 	return r, nil
 }
 
-func (ri *defaultRunnerImplementation) Execute(opts *Options, run *Run) (err error) {
+func (ri *defaultRunnerImplementation) Execute(opts *Options, runner *Run) (err error) {
 	var output *command.Stream
 
-	run.StartTime = time.Now()
+	runner.StartTime = time.Now()
 	// Execute the run's command
 	if opts.Verbose {
-		output, err = run.Executable.RunSuccessOutput()
+		output, err = runner.Executable.RunSuccessOutput()
 	} else {
-		output, err = run.Executable.RunSilentSuccessOutput()
+		output, err = runner.Executable.RunSilentSuccessOutput()
 	}
-	run.EndTime = time.Now()
+	runner.EndTime = time.Now()
 	if err != nil {
 		return fmt.Errorf("executing run: %w", err)
 	}
 
-	run.Output = output
+	runner.Output = output
 	if opts.Verbose {
-		logrus.Info(run.Output)
+		logrus.Info(runner.Output)
 	}
 	return nil
 }
 
 func (ri *defaultRunnerImplementation) Snapshot(opts *Options, watchers *[]watcher.Watcher) error {
+	// TODO: review this
 	// Take the initial snapshots
+	//nolint: gocritic
 	/*
 		for i := range *watchers {
 			if err := (*watchers)[i].Snap(); err != nil {
@@ -107,7 +109,7 @@ func (ri *defaultRunnerImplementation) Snapshot(opts *Options, watchers *[]watch
 	return nil
 }
 
-func (ri *defaultRunnerImplementation) WriteAttestation(opts *Options, run *Run) error {
+func (ri *defaultRunnerImplementation) WriteAttestation(opts *Options, runner *Run) error {
 	path := opts.AttestationPath
 	if path == "" {
 		f, err := os.CreateTemp("", "provenance-*.json")
@@ -117,9 +119,11 @@ func (ri *defaultRunnerImplementation) WriteAttestation(opts *Options, run *Run)
 		path = f.Name()
 		opts.Logger.Debugf("Writing attestation to temp file: %s", path)
 	}
-	if err := run.WriteAttestation(path); err != nil {
+
+	if err := runner.WriteAttestation(path); err != nil {
 		return fmt.Errorf("writing attestation path: %w", err)
 	}
+
 	opts.Logger.Infof("Wrote provenance attestation to %s", path)
 	return nil
 }

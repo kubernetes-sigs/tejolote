@@ -46,7 +46,7 @@ type Actions struct {
 	RunID        int
 }
 
-var ErrNoWorkflowToken error = errors.New("token does not have workflow scope")
+var ErrNoWorkflowToken = errors.New("token does not have workflow scope")
 
 func NewActions(specURL string) (*Actions, error) {
 	u, err := url.Parse(specURL)
@@ -72,12 +72,12 @@ func NewActions(specURL string) (*Actions, error) {
 
 // readArtifacts gets the artiofacts from the run
 func (a *Actions) readArtifacts() ([]run.Artifact, error) {
-	runUrl := fmt.Sprintf(
+	runURL := fmt.Sprintf(
 		actionsArtifactsURL,
 		a.Organization, a.Repository, a.RunID,
 	)
 
-	res, err := github.APIGetRequest(runUrl)
+	res, err := github.APIGetRequest(runURL)
 	if err != nil {
 		return nil, fmt.Errorf("querying GitHub api for artifacts: %w", err)
 	}
@@ -121,7 +121,7 @@ func (a *Actions) readArtifacts() ([]run.Artifact, error) {
 			return nil, fmt.Errorf("hashing file: %w", err)
 		}
 		ret = append(ret, run.Artifact{
-			Path: runUrl + "/" + a.Name,
+			Path: runURL + "/" + a.Name,
 			Checksum: map[string]string{
 				"SHA256": shaVal,
 			},

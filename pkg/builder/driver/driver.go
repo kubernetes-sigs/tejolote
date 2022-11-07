@@ -25,6 +25,10 @@ import (
 	"sigs.k8s.io/tejolote/pkg/store"
 )
 
+const (
+	GITHUB = "github"
+)
+
 // BuildSystemDriver is an interface to a type that can query a buildsystem
 // for data required to build a provenance attestation
 type BuildSystem interface {
@@ -47,7 +51,7 @@ func NewFromSpecURL(specURL string) (BuildSystem, error) {
 		if err != nil {
 			return nil, fmt.Errorf("creating GCB driver: %w", err)
 		}
-	case "github":
+	case GITHUB:
 		driver = &GitHubWorkflow{}
 	default:
 		return nil, fmt.Errorf("unable to get driver from url %s", specURL)
@@ -60,7 +64,7 @@ func NewFromMoniker(moniker string) (BuildSystem, error) {
 	switch moniker {
 	case "gcb":
 		driver = &GCB{}
-	case "github":
+	case GITHUB:
 		driver = &GitHubWorkflow{}
 	default:
 		return nil, fmt.Errorf("unable to get driver from moniker %s", moniker)

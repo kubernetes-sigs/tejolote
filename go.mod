@@ -15,7 +15,7 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/sync v0.1.0
-	sigs.k8s.io/release-utils v0.7.3
+	sigs.k8s.io/release-utils v0.7.4-0.20221107015016-09e3a8f94ecb
 )
 
 require (
@@ -289,5 +289,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	sigs.k8s.io/bom v0.3.0
 )
-
-replace sigs.k8s.io/release-utils v0.7.3 => github.com/cpanato/release-utils v0.3.1-0.20221106093939-c1756ce53829

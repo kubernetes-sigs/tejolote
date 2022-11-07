@@ -138,7 +138,7 @@ where they came from.
 				outputOpts.SnapshotStatePath = f.Name()
 			}
 
-			if w.LoadAttestation(attestOpts.continueExisting); err != nil {
+			if err = w.LoadAttestation(attestOpts.continueExisting); err != nil {
 				return fmt.Errorf("loading previous attestation")
 			}
 
@@ -229,8 +229,9 @@ where they came from.
 		"",
 		"encoded snapshots to continue",
 	)
-	attestCmd.PersistentFlags().MarkHidden("encoded-attestation")
-	attestCmd.PersistentFlags().MarkHidden("encoded-snapshots")
+
+	_ = attestCmd.PersistentFlags().MarkHidden("encoded-attestation") //nolint: errcheck
+	_ = attestCmd.PersistentFlags().MarkHidden("encoded-snapshots")   //nolint: errcheck
 
 	parentCmd.AddCommand(attestCmd)
 }
