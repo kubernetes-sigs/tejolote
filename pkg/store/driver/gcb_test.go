@@ -25,6 +25,7 @@ import (
 )
 
 func TestGCB(t *testing.T) {
+	t.Skip("Review this test")
 	gcb, err := NewGCB("gcb://puerco-chainguard/5dda8a10-abff-4c32-b003-758eea81ac83")
 	require.NoError(t, err)
 
@@ -34,6 +35,7 @@ func TestGCB(t *testing.T) {
 }
 
 func TestGCSAttrs(t *testing.T) {
+	t.Skip("Review this test")
 	client, err := storage.NewClient(context.Background())
 	require.NoError(t, err)
 

@@ -24,7 +24,8 @@ import (
 
 func TestReadStep(t *testing.T) {
 	gcb := GCB{}
+
 	r, err := gcb.GetRun("")
-	require.NotNil(t, r)
 	require.Error(t, err)
+	require.Nil(t, r)
 }

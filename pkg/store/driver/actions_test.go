@@ -23,6 +23,7 @@ import (
 )
 
 func TestActions(t *testing.T) {
+	t.Skip("Need to review this test, actions expire the logs or we have a fake data or get always a fresh workflow")
 	a, err := NewActions("actions://puerco/tejolote-test/2969514606")
 	require.NoError(t, err)
 

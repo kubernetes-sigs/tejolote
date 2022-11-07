@@ -23,6 +23,7 @@ import (
 )
 
 func TestGCSSnap(t *testing.T) {
+	t.Skip("Review this test")
 	gcs, err := NewGCS("gs://kubernetes-release/release/v1.24.4/bin/windows/386/")
 	require.NoError(t, err)
 
@@ -32,6 +33,7 @@ func TestGCSSnap(t *testing.T) {
 }
 
 func TestSyncGSFile(t *testing.T) {
+	t.Skip("Review this test")
 	gcs, err := NewGCS("gs://kubernetes-release/release/v1.24.4/bin/")
 	require.NoError(t, err)
 	require.NoError(t, gcs.syncGSFile("release/v1.24.4/bin/windows/386/kubectl.exe.sha256"))
