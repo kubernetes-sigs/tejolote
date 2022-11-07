@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 /*
 Copyright 2022 The Kubernetes Authors.
 
@@ -14,11 +17,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package config
+package main
 
-type Step struct {
-	CommandString string            `json:"command"`
-	WorkDir       string            `json:"workdir"`
-	ParamList     []string          `json:"params"`
-	Env           map[string]string `json:"env"`
-}
+import (
+	"os"
+
+	"github.com/magefile/mage/mage"
+)
+
+func main() { os.Exit(mage.Main()) }

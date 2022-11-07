@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Adolfo García Veytia
+Copyright 2022 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,9 +25,11 @@ import (
 
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
-	"github.com/puerco/tejolote/pkg/git"
-	"github.com/puerco/tejolote/pkg/run"
+
 	"sigs.k8s.io/release-utils/command"
+
+	"sigs.k8s.io/tejolote/pkg/git"
+	"sigs.k8s.io/tejolote/pkg/run"
 )
 
 type Run struct {

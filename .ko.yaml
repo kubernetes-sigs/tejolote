@@ -1,0 +1,13 @@
+defaultBaseImage: ghcr.io/chainguard-images/static:latest
+
+builds:
+  - id: tejolote
+    dir: .
+    main: ./cmd/tejolote
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -extldflags "-static"
+      - "{{ .Env.TEJOLOTE_LDFLAGS }}"

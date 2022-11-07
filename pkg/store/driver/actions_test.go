@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Adolfo García Veytia
+Copyright 2022 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,9 +23,10 @@ import (
 )
 
 func TestActions(t *testing.T) {
+	t.Skip("Need to review this test, actions expire the logs or we have a fake data or get always a fresh workflow")
 	a, err := NewActions("actions://puerco/tejolote-test/2969514606")
-	// a, err := NewActions("actions://puerco/tejolote-test/348751771")
 	require.NoError(t, err)
+
 	snap, err := a.Snap()
 	require.NoError(t, err)
 	require.Nil(t, snap)

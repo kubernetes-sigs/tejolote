@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Adolfo García Veytia
+Copyright 2022 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,9 +20,13 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/puerco/tejolote/pkg/attestation"
-	"github.com/puerco/tejolote/pkg/run"
-	"github.com/puerco/tejolote/pkg/store"
+	"sigs.k8s.io/tejolote/pkg/attestation"
+	"sigs.k8s.io/tejolote/pkg/run"
+	"sigs.k8s.io/tejolote/pkg/store"
+)
+
+const (
+	GITHUB = "github"
 )
 
 // BuildSystemDriver is an interface to a type that can query a buildsystem
@@ -47,7 +51,7 @@ func NewFromSpecURL(specURL string) (BuildSystem, error) {
 		if err != nil {
 			return nil, fmt.Errorf("creating GCB driver: %w", err)
 		}
-	case "github":
+	case GITHUB:
 		driver = &GitHubWorkflow{}
 	default:
 		return nil, fmt.Errorf("unable to get driver from url %s", specURL)
@@ -60,7 +64,7 @@ func NewFromMoniker(moniker string) (BuildSystem, error) {
 	switch moniker {
 	case "gcb":
 		driver = &GCB{}
-	case "github":
+	case GITHUB:
 		driver = &GitHubWorkflow{}
 	default:
 		return nil, fmt.Errorf("unable to get driver from moniker %s", moniker)

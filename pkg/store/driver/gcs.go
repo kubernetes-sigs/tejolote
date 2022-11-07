@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Adolfo García Veytia
+Copyright 2022 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,11 +27,11 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/api/iterator"
 
-	"github.com/puerco/tejolote/pkg/store/snapshot"
-	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/tejolote/pkg/store/snapshot"
 )
 
 func NewGCS(specURL string) (*GCS, error) {
@@ -96,7 +96,7 @@ func (gcs *GCS) syncGCSPrefix(ctx context.Context, prefix string, seen map[strin
 
 		// If name is empty, then it is a new prefix, lets index it:
 		if _, ok := seen[attrs.Prefix]; !ok && attrs.Name == "" {
-			gcs.syncGCSPrefix(ctx, attrs.Prefix, seen)
+			_ = gcs.syncGCSPrefix(ctx, attrs.Prefix, seen) //nolint: errcheck
 			continue
 		}
 
@@ -105,7 +105,7 @@ func (gcs *GCS) syncGCSPrefix(ctx context.Context, prefix string, seen map[strin
 		if strings.HasSuffix(attrs.Name, "/") {
 			trimmed := strings.TrimSuffix(attrs.Name, "/")
 			if _, ok := seen[trimmed]; !ok {
-				gcs.syncGCSPrefix(ctx, trimmed, seen)
+				_ = gcs.syncGCSPrefix(ctx, trimmed, seen) //nolint: errcheck
 				continue
 			}
 		}
@@ -130,7 +130,7 @@ func (gcs *GCS) syncGCSPrefix(ctx context.Context, prefix string, seen map[strin
 	for _, filename := range filesToSync {
 		filename := filename
 		wg.Go(func() error {
-			if err := gcs.syncGSFile(ctx, filename); err != nil {
+			if err := gcs.syncGSFile(filename); err != nil {
 				return fmt.Errorf("synching file: %w", err)
 			}
 			return nil
@@ -143,14 +143,14 @@ func (gcs *GCS) syncGCSPrefix(ctx context.Context, prefix string, seen map[strin
 }
 
 // syncGSFile copies a file from the bucket to local workdir
-func (gcs *GCS) syncGSFile(ctx context.Context, filePath string) error {
+func (gcs *GCS) syncGSFile(filePath string) error {
 	logrus.WithField("driver", "gcs").Debugf("Copying file from bucket: %s", filePath)
 	localpath := filepath.Join(gcs.WorkDir, filePath)
 	// Ensure the directory exists
-	os.MkdirAll(filepath.Dir(localpath), os.FileMode(0o755))
+	_ = os.MkdirAll(filepath.Dir(localpath), os.FileMode(0o755)) //nolint: errcheck
 
 	// Open the local file
-	f, err := os.OpenFile(localpath, os.O_RDWR|os.O_CREATE, 0644)
+	f, err := os.OpenFile(localpath, os.O_RDWR|os.O_CREATE, 0o644)
 	if err != nil {
 		return fmt.Errorf("opening localfile: %w", err)
 	}

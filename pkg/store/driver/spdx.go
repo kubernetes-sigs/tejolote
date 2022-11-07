@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Adolfo García Veytia
+Copyright 2022 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,10 +22,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/puerco/tejolote/pkg/run"
-	"github.com/puerco/tejolote/pkg/store/snapshot"
 	"github.com/sirupsen/logrus"
+
 	"sigs.k8s.io/bom/pkg/spdx"
+
+	"sigs.k8s.io/tejolote/pkg/run"
+	"sigs.k8s.io/tejolote/pkg/store/snapshot"
 )
 
 type SPDX struct {
@@ -95,7 +97,7 @@ func (s *SPDX) Snap() (*snapshot.Snapshot, error) {
 		// Leaving this commented because it breaks with the kubernetes sboms
 		// but perhaps we should be stricter here
 		if len(p.Checksum) == 0 {
-			logrus.Warn("SPDX package %s has no checksum", identifier)
+			logrus.Warnf("SPDX package %s has no checksum", identifier)
 			continue
 		}
 

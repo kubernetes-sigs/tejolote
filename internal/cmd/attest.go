@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Adolfo García Veytia
+Copyright 2022 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,10 +22,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/puerco/tejolote/pkg/watcher"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
 	"sigs.k8s.io/release-utils/util"
+
+	"sigs.k8s.io/tejolote/pkg/watcher"
 )
 
 type attestOptions struct {
@@ -136,7 +138,7 @@ where they came from.
 				outputOpts.SnapshotStatePath = f.Name()
 			}
 
-			if w.LoadAttestation(attestOpts.continueExisting); err != nil {
+			if err = w.LoadAttestation(attestOpts.continueExisting); err != nil {
 				return fmt.Errorf("loading previous attestation")
 			}
 
@@ -227,8 +229,9 @@ where they came from.
 		"",
 		"encoded snapshots to continue",
 	)
-	attestCmd.PersistentFlags().MarkHidden("encoded-attestation")
-	attestCmd.PersistentFlags().MarkHidden("encoded-snapshots")
+
+	_ = attestCmd.PersistentFlags().MarkHidden("encoded-attestation") //nolint: errcheck
+	_ = attestCmd.PersistentFlags().MarkHidden("encoded-snapshots")   //nolint: errcheck
 
 	parentCmd.AddCommand(attestCmd)
 }

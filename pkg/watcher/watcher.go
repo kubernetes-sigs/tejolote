@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Adolfo García Veytia
+Copyright 2022 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,13 +30,13 @@ import (
 	"cloud.google.com/go/pubsub"
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
-
-	"github.com/puerco/tejolote/pkg/attestation"
-	"github.com/puerco/tejolote/pkg/builder"
-	"github.com/puerco/tejolote/pkg/run"
-	"github.com/puerco/tejolote/pkg/store"
-	"github.com/puerco/tejolote/pkg/store/snapshot"
 	"github.com/sirupsen/logrus"
+
+	"sigs.k8s.io/tejolote/pkg/attestation"
+	"sigs.k8s.io/tejolote/pkg/builder"
+	"sigs.k8s.io/tejolote/pkg/run"
+	"sigs.k8s.io/tejolote/pkg/store"
+	"sigs.k8s.io/tejolote/pkg/store/snapshot"
 )
 
 type Watcher struct {
@@ -307,7 +307,7 @@ func (w *Watcher) PublishToTopic(topicString string, message interface{}) (err e
 	if m, ok := message.(StartMessage); ok {
 		data, err = json.Marshal(m)
 	} else {
-		return errors.New("unkown message format")
+		return errors.New("unknown message format")
 	}
 
 	if err != nil {

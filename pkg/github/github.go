@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Adolfo García Veytia
+Copyright 2022 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ func TokenScopes() ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("making request to API: %w", err)
 	}
+	defer res.Body.Close()
+
 	header := res.Header.Get("x-oauth-scopes")
 	scopes := strings.Split(header, ", ")
 	logrus.Debugf("GitHub Token scopes: %+v", scopes)

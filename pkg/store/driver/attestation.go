@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Adolfo García Veytia
+Copyright 2022 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,9 +28,10 @@ import (
 	"strings"
 
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
-	"github.com/puerco/tejolote/pkg/run"
-	"github.com/puerco/tejolote/pkg/store/snapshot"
 	"github.com/sirupsen/logrus"
+
+	"sigs.k8s.io/tejolote/pkg/run"
+	"sigs.k8s.io/tejolote/pkg/store/snapshot"
 )
 
 type Attestation struct {
@@ -45,7 +46,7 @@ func NewAttestation(specURL string) (*Attestation, error) {
 	if !strings.HasPrefix(u.Scheme, "intoto+") {
 		return nil, fmt.Errorf("spec URL %s is not an attestation url", u.Scheme)
 	}
-	logrus.Info(
+	logrus.Infof(
 		"Initialized new in-toto attestation storage backend (%s)", specURL,
 	)
 	// TODO: Check scheme to make sure it is valid
@@ -123,9 +124,9 @@ func (att *Attestation) downloadAttestation() ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func downloadHTTP(url string, f io.Writer) error {
+func downloadHTTP(urlPath string, f io.Writer) error {
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", urlPath, nil)
 	if err != nil {
 		return fmt.Errorf("creating http request: %w", err)
 	}
@@ -147,6 +148,6 @@ func downloadHTTP(url string, f io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("writing http response to disk: %w", err)
 	}
-	logrus.Debugf("%d MB downloaded from %s", (numBytes / 1024 / 1024), url)
+	logrus.Debugf("%d MB downloaded from %s", (numBytes / 1024 / 1024), urlPath)
 	return nil
 }

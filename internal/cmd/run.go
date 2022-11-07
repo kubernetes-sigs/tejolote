@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Adolfo García Veytia
+Copyright 2022 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/puerco/tejolote/pkg/exec"
-	"github.com/puerco/tejolote/pkg/run"
+	"sigs.k8s.io/tejolote/pkg/exec"
+	"sigs.k8s.io/tejolote/pkg/run"
 )
 
 type runOptions struct {
@@ -40,7 +40,7 @@ func addRun(parentCmd *cobra.Command) {
 	runCmd := &cobra.Command{
 		Short: "Execute one or more builder steps",
 		Long: `tejolote run [command]
-	
+
 The run subcommand os tejolote executes a process intended to
 transform files. Generally this happens as part of a build, patching
 or cloning repositories.
@@ -48,19 +48,15 @@ or cloning repositories.
 Tejolote will monitor for changes that occurred during the command
 execution and will attest to them to generate provenance data of
 where they came from.
-	
+
 	`,
 		Use:               "run",
 		SilenceUsage:      false,
 		PersistentPreRunE: initLogging,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			var runner *exec.Runner
-			runner, err = buildRunner(runOpts)
-			if err != nil {
-				return fmt.Errorf("creating runner: %w", err)
-			}
+			runner := buildRunner(runOpts)
 
-			var step *run.Step
+			step := &run.Step{}
 			if len(args) > 0 {
 				step, err = syntheticStepFromArgs(args...)
 				if err != nil {
@@ -77,7 +73,7 @@ where they came from.
 			}
 
 			// What do we do with the run?
-			run, err2 := runner.RunStep(*step)
+			run, err2 := runner.RunStep(step)
 			if err2 != nil {
 				return fmt.Errorf("executing step: %w", err)
 			}
@@ -113,10 +109,12 @@ where they came from.
 }
 
 // buildRunner returns a configured runner
-func buildRunner(opts runOptions) (*exec.Runner, error) {
+func buildRunner(opts runOptions) *exec.Runner {
 	runner := exec.NewRunner()
 	runner.Options.CWD = opts.CWD
 
+	// TODO: review this
+	//nolint: gocritic
 	/*
 		for _, dir := range opts.OutputDirs {
 			store, err := store.New(dir)
@@ -125,7 +123,7 @@ func buildRunner(opts runOptions) (*exec.Runner, error) {
 		}
 	*/
 
-	return runner, nil
+	return runner
 }
 
 // syntheticStepFromArgs evaluates the arguments passed to see if

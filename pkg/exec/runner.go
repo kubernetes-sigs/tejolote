@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Adolfo García Veytia
+Copyright 2022 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ package exec
 import (
 	"fmt"
 
-	"github.com/puerco/tejolote/pkg/run"
-	"github.com/puerco/tejolote/pkg/watcher"
 	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/tejolote/pkg/run"
+	"sigs.k8s.io/tejolote/pkg/watcher"
 )
 
 func NewRunner() *Runner {
@@ -48,34 +48,37 @@ type Options struct {
 }
 
 // RunStep executes a step
-func (r *Runner) RunStep(step run.Step) (run *Run, err error) {
+func (r *Runner) RunStep(step *run.Step) (runner *Run, err error) {
 	// Create the command
-	run, err = r.implementation.CreateRun(&r.Options, step)
+	runner, err = r.implementation.CreateRun(&r.Options, step)
 	if err != nil {
 		return nil, fmt.Errorf("getting step command and arguments: %w", err)
 	}
 
 	// Call the watcher to snapshot everything
 	if err := r.implementation.Snapshot(&r.Options, &r.Watchers); err != nil {
-		return run, fmt.Errorf("running initial snapshots: %w", err)
+		return runner, fmt.Errorf("running initial snapshots: %w", err)
 	}
 
-	if err := r.implementation.Execute(&r.Options, run); err != nil {
+	if err := r.implementation.Execute(&r.Options, runner); err != nil {
 		return nil, fmt.Errorf("executing run: %w", err)
 	}
 
 	// Call the watcher to snapshot the results
 	if err := r.implementation.Snapshot(&r.Options, &r.Watchers); err != nil {
-		return run, fmt.Errorf("running final snapshots: %w", err)
+		return runner, fmt.Errorf("running final snapshots: %w", err)
 	}
+
+	// TODO: review this
+	//nolint: gocritic
 	/*
 		for _, w := range r.Watchers {
 			run.Artifacts = append(run.Artifacts, w.(*watcher.Directory).Snapshots[0].Delta(&w.(*watcher.Directory).Snapshots[1])...)
 		}
 	*/
-	if err := r.implementation.WriteAttestation(&r.Options, run); err != nil {
-		return run, fmt.Errorf("writing provenance attestation: %w", err)
+	if err := r.implementation.WriteAttestation(&r.Options, runner); err != nil {
+		return runner, fmt.Errorf("writing provenance attestation: %w", err)
 	}
 
-	return run, err
+	return runner, err
 }

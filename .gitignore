@@ -10,7 +10,18 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+# This is where the result of the go build goes
+/output*/
+/_output*/
+/_output
+
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
 .vscode
+
+
+# downloaded and built binaries
+bin
+qemu-*-static
+rootfs.tar

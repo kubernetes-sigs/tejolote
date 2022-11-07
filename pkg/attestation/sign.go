@@ -1,3 +1,19 @@
+/*
+Copyright 2022 The Kubernetes Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package attestation
 
 import (
@@ -14,7 +30,7 @@ import (
 
 func (att *Attestation) Sign() ([]byte, error) {
 	ctx := context.Background()
-	var timeout time.Duration /// TODO move to options
+	var timeout time.Duration // TODO: move to options
 	var certPath, certChainPath string
 	ko := options.KeyOpts{
 		// KeyRef:     s.options.PrivateKeyPath,
@@ -26,8 +42,11 @@ func (att *Attestation) Sign() ([]byte, error) {
 
 		InsecureSkipFulcioVerify: false,
 		SkipConfirmation:         true,
-		// FulcioAuthFlow:           "",
+		// FulcioAuthFlow:           "", //nolint: gocritic
 	}
+
+	// TODO: review this
+	//nolint: gocritic
 	/*
 		if options.EnableExperimental() {
 			if options.NOf(ko.KeyRef, ko.Sk) > 1 {
@@ -69,7 +88,8 @@ func (att *Attestation) Sign() ([]byte, error) {
 	fmt.Println(string(signedPayload))
 	return signedPayload, nil
 
-	// ???
+	// TODO: review this
+	//nolint: gocritic
 	/*
 		opts := []static.Option{static.WithLayerMediaType(types.DssePayloadType)}
 		if sv.Cert != nil {
