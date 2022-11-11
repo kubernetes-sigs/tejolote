@@ -121,6 +121,7 @@ func BuildImages() error {
 
 	gitVersion := getVersion()
 	gitCommit := getCommit()
+
 	ldFlag, err := mage.GenerateLDFlags()
 	if err != nil {
 		return err
@@ -134,7 +135,7 @@ func BuildImages() error {
 
 	return sh.RunV("ko", "build", "--bare",
 		"--platform=all", "--tags", gitVersion, "--tags", gitCommit,
-		"sigs.k8s.io/bom/cmd/bom")
+		"sigs.k8s.io/tejolote/cmd/tejolote")
 }
 
 // BuildImagesLocal build images locally and not push
@@ -174,16 +175,6 @@ func BuildStaging() error {
 	if err := BuildImages(); err != nil {
 		return fmt.Errorf("building the images: %w", err)
 	}
-
-	// if err := sh.RunV("cd", "output"); err != nil {
-	// 	return fmt.Errorf("cd into output directory: %w", err)
-	// }
-
-	// if err := sh.RunV("./bom-linux-amd64", "output", "generate", "-f", "bom-darwin-amd64",
-	// 	"-f", "bom-darwin-arm64", "-f", "bom-linux-amd64", "-f", "bom-linux-arm64",
-	// 	"-f", "bom-windows-amd64.exe", "-d", "../", "-o", "bom-sbom.sdpx"); err != nil {
-	// 	return fmt.Errorf("generating the bom: %w", err)
-	// }
 
 	return nil
 }
