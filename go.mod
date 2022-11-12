@@ -8,7 +8,7 @@ require (
 	github.com/carolynvs/magex v0.9.0
 	github.com/google/go-containerregistry v0.12.0
 	github.com/in-toto/in-toto-golang v0.3.4-0.20220709202702-fa494aaa0add
-	github.com/magefile/mage v1.13.0
+	github.com/magefile/mage v1.14.0
 	github.com/sigstore/cosign v1.13.1
 	github.com/sigstore/sigstore v1.4.5
 	github.com/sirupsen/logrus v1.9.0
@@ -90,8 +90,6 @@ require (
 	github.com/docker/distribution v2.8.1+incompatible // indirect
 	github.com/docker/docker v20.10.20+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
-	github.com/docker/go-connections v0.4.0 // indirect
-	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
@@ -133,7 +131,7 @@ require (
 	github.com/google/go-github/v45 v45.2.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/licenseclassifier/v2 v2.0.0-alpha.1 // indirect
+	github.com/google/licenseclassifier/v2 v2.0.0 // indirect
 	github.com/google/trillian v1.5.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.0 // indirect
@@ -253,7 +251,7 @@ require (
 	golang.org/x/term v0.1.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect
-	golang.org/x/tools v0.1.12 // indirect
+	golang.org/x/tools v0.2.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20221014213838-99cd37c6964a // indirect
@@ -287,5 +285,5 @@ require (
 	golang.org/x/sys v0.1.0 // indirect
 	google.golang.org/api v0.100.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	sigs.k8s.io/bom v0.3.0
+	sigs.k8s.io/bom v0.4.1
 )
