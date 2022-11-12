@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"sigs.k8s.io/release-utils/log"
+	"sigs.k8s.io/release-utils/version"
 )
 
 func Execute() error {
@@ -42,7 +43,7 @@ meaningful attestation. For example:
 	If your build command is:
 	make build
 
-	CHange it with:
+	Change it with:
 	tejolote run make build
 
 Tejolote will try to make sane asumptions but for best results, it
@@ -64,6 +65,7 @@ allows for full control of the process you run.
 	addRun(rootCmd)
 	addAttest(rootCmd)
 	addStart(rootCmd)
+	rootCmd.AddCommand(version.WithFont("larry3d"))
 
 	if err := rootCmd.Execute(); err != nil {
 		logrus.Fatal(err)
