@@ -115,7 +115,7 @@ func Build() error {
 	return nil
 }
 
-// BuildImages build bom image using ko
+// BuildImages build tejolote image using ko
 func BuildImages() error {
 	fmt.Println("Building images with ko...")
 
