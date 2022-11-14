@@ -6,7 +6,7 @@ require (
 	chainguard.dev/apko v0.5.1-0.20220830194137-0cf1314de16d
 	cloud.google.com/go/storage v1.28.0
 	github.com/carolynvs/magex v0.9.0
-	github.com/google/go-containerregistry v0.12.0
+	github.com/google/go-containerregistry v0.12.1
 	github.com/in-toto/in-toto-golang v0.3.4-0.20220709202702-fa494aaa0add
 	github.com/magefile/mage v1.14.0
 	github.com/sigstore/cosign v1.13.1
