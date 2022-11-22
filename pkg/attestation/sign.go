@@ -26,12 +26,26 @@ import (
 	"github.com/sigstore/cosign/cmd/cosign/cli/sign"
 	"github.com/sigstore/sigstore/pkg/signature/dsse"
 	signatureoptions "github.com/sigstore/sigstore/pkg/signature/options"
+	"github.com/sigstore/sigstore/pkg/tuf"
 )
 
 func (att *Attestation) Sign() ([]byte, error) {
+	var certPath, certChainPath string
+
 	ctx := context.Background()
 	var timeout time.Duration // TODO: move to options
-	var certPath, certChainPath string
+	if timeout != 0 {
+		var cancelFn context.CancelFunc
+		ctx, cancelFn = context.WithTimeout(ctx, timeout)
+		defer cancelFn()
+	}
+
+	// Initialize the TUF cache to ensure we have the
+	// latests root, otherwise proof of inclusion may fail.
+	if err := tuf.Initialize(ctx, tuf.DefaultRemoteRoot, nil); err != nil {
+		return nil, fmt.Errorf("initializing TUF client: %w", err)
+	}
+
 	ko := options.KeyOpts{
 		// KeyRef:     s.options.PrivateKeyPath,
 		// IDToken:    identityToken,
@@ -43,25 +57,6 @@ func (att *Attestation) Sign() ([]byte, error) {
 		InsecureSkipFulcioVerify: false,
 		SkipConfirmation:         true,
 		// FulcioAuthFlow:           "", //nolint: gocritic
-	}
-
-	// TODO: review this
-	//nolint: gocritic
-	/*
-		if options.EnableExperimental() {
-			if options.NOf(ko.KeyRef, ko.Sk) > 1 {
-				return &options.KeyParseError{}
-			}
-		} else {
-			if !options.OneOf(ko.KeyRef, ko.Sk) {
-				return &options.KeyParseError{}
-			}
-		}
-	*/
-	if timeout != 0 {
-		var cancelFn context.CancelFunc
-		ctx, cancelFn = context.WithTimeout(ctx, timeout)
-		defer cancelFn()
 	}
 
 	sv, err := sign.SignerFromKeyOpts(ctx, certPath, certChainPath, ko)
