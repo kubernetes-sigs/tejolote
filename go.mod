@@ -255,7 +255,7 @@ require (
 	golang.org/x/tools v0.2.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20221111202108-142d8a6fa32e // indirect
+	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6 // indirect
 	google.golang.org/grpc v1.50.1 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.28 // indirect
@@ -277,7 +277,7 @@ require (
 )
 
 require (
-	cloud.google.com/go/pubsub v1.26.0
+	cloud.google.com/go/pubsub v1.27.0
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
