@@ -8,7 +8,7 @@ signed [SLSA](https://slsa.dev/) provenance attestations about build runs.
 ![SLSA Logo](docs/slsa-logo.png)
 
 If you are not familiar with
-[provenance](https://www.tiktok.com/@chainguard_dev/video/7133203786927050027) attestations, think of them as non-falsifiable documents that inform you
+[provenance](https://www.tiktok.com/@chainguard_dev/video/7133203786927050027) attestations, think of them as non-falsifiable documents that inform your
 users how software was built, mainly:
 
 What went in → What was done to the source code (and by who) → what came out.
