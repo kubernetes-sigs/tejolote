@@ -286,7 +286,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/sys v0.3.0 // indirect
-	google.golang.org/api v0.104.0
+	google.golang.org/api v0.105.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	sigs.k8s.io/bom v0.4.1
 )
