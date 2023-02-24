@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
+	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
 	"github.com/sirupsen/logrus"
 )
@@ -53,7 +54,7 @@ func (att *Attestation) SLSA() *Attestation {
 // NewSLSAPredicate returns a new SLSA predicate fully initialized
 func NewSLSAPredicate() SLSAPredicate {
 	predicate := SLSAPredicate{
-		Builder: slsa.ProvenanceBuilder{
+		Builder: common.ProvenanceBuilder{
 			ID: "", // TODO: Read builder from trusted environment
 		},
 		BuildType: "",
@@ -78,7 +79,7 @@ func NewSLSAPredicate() SLSAPredicate {
 			},
 			Reproducible: false,
 		},
-		Materials: []slsa.ProvenanceMaterial{},
+		Materials: []common.ProvenanceMaterial{},
 	}
 
 	return predicate
@@ -99,7 +100,7 @@ func (att *Attestation) ToJSON() ([]byte, error) {
 // AddMaterial add an entry to the materials
 func (pred *SLSAPredicate) AddMaterial(uri string, hashes map[string]string) {
 	if pred.Materials == nil {
-		pred.Materials = []slsa.ProvenanceMaterial{}
+		pred.Materials = []common.ProvenanceMaterial{}
 	}
 	for _, m := range pred.Materials {
 		if m.URI == uri {
@@ -109,7 +110,7 @@ func (pred *SLSAPredicate) AddMaterial(uri string, hashes map[string]string) {
 			return
 		}
 	}
-	pred.Materials = append(pred.Materials, slsa.ProvenanceMaterial{
+	pred.Materials = append(pred.Materials, common.ProvenanceMaterial{
 		URI:    uri,
 		Digest: hashes,
 	})

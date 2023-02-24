@@ -29,7 +29,7 @@ import (
 
 	"cloud.google.com/go/pubsub"
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
-	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
+	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 	"github.com/sirupsen/logrus"
 
 	"sigs.k8s.io/tejolote/pkg/attestation"
@@ -142,7 +142,7 @@ func (w *Watcher) AttestRun(r *run.Run) (att *attestation.Attestation, err error
 	for _, a := range r.Artifacts {
 		s := intoto.Subject{
 			Name:   a.Path,
-			Digest: slsa.DigestSet{},
+			Digest: common.DigestSet{},
 		}
 		for a, v := range a.Checksum {
 			s.Digest[a] = v
