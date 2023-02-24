@@ -26,7 +26,7 @@ import (
 	"strings"
 	"time"
 
-	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
+	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 	"github.com/sirupsen/logrus"
 
 	"sigs.k8s.io/tejolote/pkg/attestation"
@@ -156,7 +156,7 @@ func (ghw *GitHubWorkflow) BuildPredicate(
 	}
 	predicate.Builder.ID = "https://github.com/Attestations/GitHubHostedActions@v1"
 	predicate.BuildType = "https://github.com/Attestations/GitHubActionsWorkflow@v1"
-	predicate.Invocation.ConfigSource.Digest = slsa.DigestSet{
+	predicate.Invocation.ConfigSource.Digest = common.DigestSet{
 		"sha1": r.SystemData.(*github.Run).HeadSHA,
 	}
 	predicate.Invocation.ConfigSource.EntryPoint = r.SystemData.(*github.Run).Path

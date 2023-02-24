@@ -24,6 +24,7 @@ import (
 	"time"
 
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
+	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
 
 	"sigs.k8s.io/release-utils/command"
@@ -138,7 +139,7 @@ func (r *Run) Predicate() (*slsa.ProvenancePredicate, error) {
 		return nil, fmt.Errorf("reading invocation data: %w", err)
 	}
 	predicate := slsa.ProvenancePredicate{
-		Builder: slsa.ProvenanceBuilder{
+		Builder: common.ProvenanceBuilder{
 			ID: "", // TODO: Read builder from trsuted environment
 		},
 		BuildType:   TejoloteURI,
@@ -155,7 +156,7 @@ func (r *Run) Predicate() (*slsa.ProvenancePredicate, error) {
 			},
 			Reproducible: false,
 		},
-		Materials: []slsa.ProvenanceMaterial{},
+		Materials: []common.ProvenanceMaterial{},
 	}
 
 	return &predicate, nil

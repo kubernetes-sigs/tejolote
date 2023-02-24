@@ -25,7 +25,7 @@ import (
 	"strings"
 
 	"chainguard.dev/apko/pkg/vcs"
-	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
+	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -144,7 +144,7 @@ attestation but with ".storage-snap.json" appended.
 			}
 
 			if vcsURL != "" {
-				material := slsa.ProvenanceMaterial{
+				material := common.ProvenanceMaterial{
 					URI:    vcsURL,
 					Digest: map[string]string{},
 				}
@@ -169,7 +169,7 @@ attestation but with ".storage-snap.json" appended.
 			att.Predicate.Invocation.ConfigSource.URI = startAttestationOpts.configSrcURI
 			algo, val, ok := strings.Cut(startAttestationOpts.configSrcDigest, ":")
 			if ok {
-				att.Predicate.Invocation.ConfigSource.Digest = slsa.DigestSet{
+				att.Predicate.Invocation.ConfigSource.Digest = common.DigestSet{
 					algo: val,
 				}
 			}
