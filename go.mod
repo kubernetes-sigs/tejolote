@@ -7,7 +7,7 @@ require (
 	cloud.google.com/go/storage v1.29.0
 	github.com/carolynvs/magex v0.9.0
 	github.com/google/go-containerregistry v0.13.1-0.20230203223142-b3c23b4c3f28
-	github.com/in-toto/in-toto-golang v0.6.0
+	github.com/in-toto/in-toto-golang v0.7.0
 	github.com/magefile/mage v1.14.0
 	github.com/sigstore/cosign v1.13.1
 	github.com/sigstore/sigstore v1.5.2
@@ -156,7 +156,7 @@ require (
 	github.com/pjbgf/sha1cd v0.2.3 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sassoftware/relic v0.0.0-20210427151427-dfb082b79b74 // indirect
-	github.com/secure-systems-lab/go-securesystemslib v0.4.0 // indirect
+	github.com/secure-systems-lab/go-securesystemslib v0.5.0 // indirect
 	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
