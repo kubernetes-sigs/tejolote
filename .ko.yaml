@@ -1,4 +1,5 @@
-defaultBaseImage: ghcr.io/chainguard-images/static:latest
+---
+defaultBaseImage: cgr.dev/chainguard/static:latest
 
 builds:
   - id: tejolote
