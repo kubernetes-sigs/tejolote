@@ -15,7 +15,7 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.2
 	golang.org/x/sync v0.1.0
-	sigs.k8s.io/release-utils v0.7.4-0.20221107015016-09e3a8f94ecb
+	sigs.k8s.io/release-utils v0.7.4-0.20230327105754-648ff1e919a9
 )
 
 require (
