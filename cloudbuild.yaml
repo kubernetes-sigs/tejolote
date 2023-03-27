@@ -34,12 +34,6 @@ steps:
       - mage.go
       - buildStaging
 
-artifacts:
-  objects:
-    location: 'gs://k8s-staging-tejolote/${_PULL_BASE_REF}'
-    paths:
-      - "go/src/sigs.k8s.io/tejolote/output/*"
-
 substitutions:
   # _GIT_TAG will be filled with a git-based tag for the image, of the form vYYYYMMDD-hash, and
   # can be used as a substitution

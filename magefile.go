@@ -168,10 +168,6 @@ func BuildStaging() error {
 		return err
 	}
 
-	if err := Build(); err != nil {
-		return fmt.Errorf("building the binaries: %w", err)
-	}
-
 	if err := BuildImages(); err != nil {
 		return fmt.Errorf("building the images: %w", err)
 	}
