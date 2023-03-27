@@ -24,11 +24,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"github.com/carolynvs/magex/pkg"
-	"github.com/carolynvs/magex/pkg/archive"
-	"github.com/carolynvs/magex/pkg/downloads"
 	"github.com/magefile/mage/sh"
 
 	"sigs.k8s.io/release-utils/mage"
@@ -141,7 +138,7 @@ func BuildImages() error {
 // BuildImagesLocal build images locally and not push
 func BuildImagesLocal() error {
 	fmt.Println("Building image with ko for local test...")
-	if err := EnsureKO(""); err != nil {
+	if err := mage.EnsureKO("0.13.0"); err != nil {
 		return err
 	}
 
@@ -164,7 +161,7 @@ func BuildStaging() error {
 		return err
 	}
 
-	if err := EnsureKO(""); err != nil {
+	if err := mage.EnsureKO(""); err != nil {
 		return err
 	}
 
@@ -251,59 +248,4 @@ func getBuildDateTime() string {
 
 	date, _ := sh.Output("date", "+%Y-%m-%dT%H:%M:%SZ")
 	return date
-}
-
-// Maybe we can  move this to release-utils
-func EnsureKO(version string) error {
-	versionToInstall := version
-	if versionToInstall == "" {
-		versionToInstall = "0.13.0"
-	}
-
-	fmt.Printf("Checking if `ko` version %s is installed\n", versionToInstall)
-	found, err := pkg.IsCommandAvailable("ko", "version", versionToInstall)
-	if err != nil {
-		return err
-	}
-
-	if !found {
-		fmt.Println("`ko` not found")
-		return InstallKO(versionToInstall)
-	}
-
-	fmt.Println("`ko` is installed!")
-	return nil
-}
-
-// Maybe we can  move this to release-utils
-func InstallKO(version string) error {
-	fmt.Println("Will install `ko`")
-	target := "ko"
-	if runtime.GOOS == "windows" {
-		target = "ko.exe"
-	}
-
-	opts := archive.DownloadArchiveOptions{
-		DownloadOptions: downloads.DownloadOptions{
-			UrlTemplate: "https://github.com/google/ko/releases/download/v{{.VERSION}}/ko_{{.VERSION}}_{{.GOOS}}_{{.GOARCH}}{{.EXT}}",
-			Name:        "ko",
-			Version:     version,
-			OsReplacement: map[string]string{
-				"darwin":  "Darwin",
-				"linux":   "Linux",
-				"windows": "Windows",
-			},
-			ArchReplacement: map[string]string{
-				"amd64": "x86_64",
-			},
-		},
-		ArchiveExtensions: map[string]string{
-			"linux":   ".tar.gz",
-			"darwin":  ".tar.gz",
-			"windows": ".tar.gz",
-		},
-		TargetFileTemplate: target,
-	}
-
-	return archive.DownloadToGopathBin(opts)
 }
