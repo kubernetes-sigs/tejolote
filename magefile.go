@@ -175,6 +175,33 @@ func BuildStaging() error {
 	return nil
 }
 
+func BuildBinaries() error {
+	fmt.Println("Building binaries with goreleaser...")
+
+	ldFlag, err := mage.GenerateLDFlags()
+	if err != nil {
+		return err
+	}
+
+	os.Setenv("TEJOLOTE_LDFLAGS", ldFlag)
+
+	return sh.RunV("goreleaser", "release", "--clean")
+}
+
+func BuildBinariesSnapshot() error {
+	fmt.Println("Building binaries with goreleaser in snapshot mode...")
+
+	ldFlag, err := mage.GenerateLDFlags()
+	if err != nil {
+		return err
+	}
+
+	os.Setenv("TEJOLOTE_LDFLAGS", ldFlag)
+
+	return sh.RunV("goreleaser", "release", "--clean",
+		"--snapshot", "--skip-sign")
+}
+
 func Clean() {
 	fmt.Println("Cleaning workspace...")
 	toClean := []string{"output"}
