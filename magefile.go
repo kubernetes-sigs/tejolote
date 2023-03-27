@@ -168,15 +168,38 @@ func BuildStaging() error {
 		return err
 	}
 
-	if err := Build(); err != nil {
-		return fmt.Errorf("building the binaries: %w", err)
-	}
-
 	if err := BuildImages(); err != nil {
 		return fmt.Errorf("building the images: %w", err)
 	}
 
 	return nil
+}
+
+func BuildBinaries() error {
+	fmt.Println("Building binaries with goreleaser...")
+
+	ldFlag, err := mage.GenerateLDFlags()
+	if err != nil {
+		return err
+	}
+
+	os.Setenv("TEJOLOTE_LDFLAGS", ldFlag)
+
+	return sh.RunV("goreleaser", "release", "--clean")
+}
+
+func BuildBinariesSnapshot() error {
+	fmt.Println("Building binaries with goreleaser in snapshot mode...")
+
+	ldFlag, err := mage.GenerateLDFlags()
+	if err != nil {
+		return err
+	}
+
+	os.Setenv("TEJOLOTE_LDFLAGS", ldFlag)
+
+	return sh.RunV("goreleaser", "release", "--clean",
+		"--snapshot", "--skip-sign")
 }
 
 func Clean() {
@@ -234,7 +257,7 @@ func getBuildDateTime() string {
 func EnsureKO(version string) error {
 	versionToInstall := version
 	if versionToInstall == "" {
-		versionToInstall = "0.12.0"
+		versionToInstall = "0.13.0"
 	}
 
 	fmt.Printf("Checking if `ko` version %s is installed\n", versionToInstall)
