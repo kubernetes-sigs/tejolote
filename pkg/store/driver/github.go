@@ -37,7 +37,16 @@ type GitHubRelease struct {
 	Owner      string
 	Repository string
 	Tag        string
+	Options    GitHubReleaseOptions
 	gh         *github.GitHub
+}
+
+type GitHubReleaseOptions struct {
+	IgnoreExtensions []string
+}
+
+var DefaultGitHubReleaseOptions = GitHubReleaseOptions{
+	IgnoreExtensions: []string{".pem", ".sig", ".cert"},
 }
 
 func NewGithub(specURL string) (*GitHubRelease, error) {
@@ -60,6 +69,7 @@ func NewGithub(specURL string) (*GitHubRelease, error) {
 		Owner:      u.Hostname(),
 		Repository: parts[0],
 		Tag:        parts[1],
+		Options:    DefaultGitHubReleaseOptions,
 		gh:         github.New(),
 	}
 
@@ -94,6 +104,13 @@ func (ghr *GitHubRelease) Snap() (*snapshot.Snapshot, error) {
 		if err != nil {
 			return fmt.Errorf("hashing artifact: %w", err)
 		}
+
+		for _, ext := range ghr.Options.IgnoreExtensions {
+			if strings.HasSuffix(path, ext) {
+				return nil
+			}
+		}
+
 		mtx.Lock()
 		snap[filepath.Base(path)] = run.Artifact{
 			Path: filepath.Base(path),
