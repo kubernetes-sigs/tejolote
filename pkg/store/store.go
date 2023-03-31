@@ -53,6 +53,8 @@ func New(specURL string) (s Store, err error) {
 		impl, err = driver.NewActions(specURL)
 	case "gcb":
 		impl, err = driver.NewGCB(specURL)
+	case "github":
+		impl, err = driver.NewGithub(specURL)
 	default:
 		// Attestation use a composed scheme
 		format, _, ok := strings.Cut(u.Scheme, "+")
