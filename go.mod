@@ -16,7 +16,7 @@ require (
 	github.com/stretchr/testify v1.8.2
 	golang.org/x/sync v0.1.0
 	sigs.k8s.io/release-sdk v0.10.0
-	sigs.k8s.io/release-utils v0.7.4-0.20230327105754-648ff1e919a9
+	sigs.k8s.io/release-utils v0.7.4-0.20230327115955-2b998c68e4b6
 )
 
 require (
@@ -35,6 +35,7 @@ require (
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
+	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Masterminds/semver/v3 v3.2.0 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8 // indirect
@@ -188,6 +189,7 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/zeebo/errs v1.3.0 // indirect
+	gitlab.alpinelinux.org/alpine/go v0.6.0 // indirect
 	go.mongodb.org/mongo-driver v1.10.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/otel v1.13.0 // indirect
@@ -236,5 +238,5 @@ require (
 	golang.org/x/sys v0.6.0 // indirect
 	google.golang.org/api v0.114.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	sigs.k8s.io/bom v0.4.2-0.20230224095135-00be8b90f049
+	sigs.k8s.io/bom v0.5.1
 )
