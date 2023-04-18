@@ -15,8 +15,9 @@ gomod:
 
 builds:
   - id: tejolote
-    binary: tejolote
     main: ./cmd/tejolote
+    no_unique_dist_dir: true
+    binary: tejolote-{{ .Arch }}-{{ .Os }}
     goos:
       - darwin
       - linux
@@ -45,6 +46,7 @@ builds:
 
 archives:
   - format: binary
+    name_template: tejolote-{{ .Arch }}-{{ .Os }}
     allow_different_binary_count: true
 
 signs:
@@ -53,8 +55,31 @@ signs:
     signature: "${artifact}.sig"
     certificate: "${artifact}.pem"
     cmd: cosign
-    args: ["sign-blob", "--output-signature", "${artifact}.sig", "--output-certificate", "${artifact}.pem", "${artifact}"]
+    args:
+      - "sign-blob"
+      - "--output-signature"
+      - "${artifact}.sig"
+      - "--output-certificate"
+      - "${artifact}.pem"
+      - "${artifact}"
     artifacts: all
+
+sboms:
+  - id: tejolote
+    cmd: bom
+    args:
+      - generate
+      - "--output"
+      - "tejolote.json.spdx"
+      - "-d"
+      - "../"
+      - "-c"
+      - "../.bom-config.yaml"
+      - "--format"
+      - "json"
+    artifacts: any
+    documents:
+      - "tejolote.json.spdx"
 
 checksum:
   name_template: 'checksums.txt'
