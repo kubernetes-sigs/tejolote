@@ -31,7 +31,7 @@ jobs:
         uses: sigstore/cosign-installer@9e9de2292db7abb3f51b7f4808d98f0d347a8919 # v3.0.2
 
       - name: Install bom
-        uses: puerco/release-action/setup-bom@8d40ac756bb1e4cab06267d89141baa650623919 # main
+        uses: puerco/release-actions/setup-bom@8d40ac756bb1e4cab06267d89141baa650623919 # main
 
       - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@f82d6c1c344bcacabba2c841718984797f664a6b # v4.2.0
