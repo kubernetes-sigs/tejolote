@@ -1,0 +1,48 @@
+---
+namespace: https://sigs.k8s.io/tejolote
+license: Apache-2.0
+name: tejolote
+creator:
+ person: The Kubernetes Authors
+ tool: tejolote
+
+artifacts:
+  - type: file
+    source: tejolote-amd64-windows.exe
+    license: Apache-2.0
+    gomodules: true
+
+  - type: file
+    source: tejolote-amd64-darwin
+    license: Apache-2.0
+    gomodules: true
+
+  - type: file
+    source: tejolote-amd64-linux
+    license: Apache-2.0
+    gomodules: true
+
+  - type: file
+    source: tejolote-arm-linux
+    license: Apache-2.0
+    gomodules: true
+
+  - type: file
+    source: tejolote-arm64-darwin
+    license: Apache-2.0
+    gomodules: true
+
+  - type: file
+    source: tejolote-arm64-linux
+    license: Apache-2.0
+    gomodules: true
+
+  - type: file
+    source: tejolote-ppc64le-linux
+    license: Apache-2.0
+    gomodules: true
+
+  - type: file
+    source: tejolote-s390x-linux
+    license: Apache-2.0
+    gomodules: true

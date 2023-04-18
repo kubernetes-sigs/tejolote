@@ -24,6 +24,9 @@ jobs:
         with:
           install-only: true
 
+      - name: Install bom
+        uses: puerco/release-actions/setup-bom@8d40ac756bb1e4cab06267d89141baa650623919 # main
+
       - name: Run Mage
         uses: magefile/mage-action@3b833fb24c0d19eed3aa760b9eb285b4b84f420f # v2.3.0
         with:
@@ -31,4 +34,4 @@ jobs:
           args: buildBinariesSnapshot
 
       - name: check binary
-        run: ./dist/tejolote_linux_amd64_v1/tejolote version
+        run: ./dist/tejolote-amd64-linux version
