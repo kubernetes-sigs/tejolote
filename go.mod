@@ -7,7 +7,7 @@ require (
 	cloud.google.com/go/storage v1.30.1
 	github.com/carolynvs/magex v0.9.0
 	github.com/google/go-containerregistry v0.14.0
-	github.com/in-toto/in-toto-golang v0.7.1
+	github.com/in-toto/in-toto-golang v0.8.0
 	github.com/magefile/mage v1.14.0
 	github.com/sigstore/cosign/v2 v2.0.1
 	github.com/sigstore/sigstore v1.6.3
