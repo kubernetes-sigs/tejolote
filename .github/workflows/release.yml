@@ -28,7 +28,7 @@ jobs:
           check-latest: true
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@9e9de2292db7abb3f51b7f4808d98f0d347a8919 # v3.0.2
+        uses: sigstore/cosign-installer@204a51a57a74d190b284a0ce69b44bc37201f343 # v3.0.3
 
       - name: Install bom
         uses: puerco/release-actions/setup-bom@6c88cda6495b4415966e61f20798fb96a9081397 # main
