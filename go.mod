@@ -5,7 +5,6 @@ go 1.20
 require (
 	chainguard.dev/apko v0.7.3
 	cloud.google.com/go/storage v1.30.1
-	github.com/carolynvs/magex v0.9.0
 	github.com/google/go-containerregistry v0.14.0
 	github.com/in-toto/in-toto-golang v0.8.0
 	github.com/magefile/mage v1.14.0
@@ -14,9 +13,10 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.2
+	github.com/uwu-tools/magex v0.10.0
 	golang.org/x/sync v0.1.0
 	sigs.k8s.io/release-sdk v0.10.0
-	sigs.k8s.io/release-utils v0.7.4-0.20230327115955-2b998c68e4b6
+	sigs.k8s.io/release-utils v0.7.4-0.20230502075013-5274b69697f0
 )
 
 require (
@@ -36,7 +36,7 @@ require (
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
-	github.com/Masterminds/semver/v3 v3.2.0 // indirect
+	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8 // indirect
 	github.com/ThalesIgnite/crypto11 v1.2.5 // indirect
