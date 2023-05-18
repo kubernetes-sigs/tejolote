@@ -10,7 +10,7 @@ require (
 	github.com/magefile/mage v1.15.0
 	github.com/sigstore/cosign/v2 v2.0.1
 	github.com/sigstore/sigstore v1.6.4
-	github.com/sirupsen/logrus v1.9.1
+	github.com/sirupsen/logrus v1.9.2
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.2
 	github.com/uwu-tools/magex v0.10.0
