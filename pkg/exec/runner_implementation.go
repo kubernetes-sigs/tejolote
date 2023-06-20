@@ -95,7 +95,7 @@ func (ri *defaultRunnerImplementation) Execute(opts *Options, runner *Run) (err 
 	return nil
 }
 
-func (ri *defaultRunnerImplementation) Snapshot(opts *Options, watchers *[]watcher.Watcher) error {
+func (ri *defaultRunnerImplementation) Snapshot(_ *Options, _ *[]watcher.Watcher) error {
 	// TODO: review this
 	// Take the initial snapshots
 	//nolint: gocritic

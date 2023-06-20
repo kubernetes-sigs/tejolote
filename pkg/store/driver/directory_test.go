@@ -63,10 +63,8 @@ func TestDirectorySnap(t *testing.T) {
 				); err != nil {
 					return err
 				}
-				if err := os.Chtimes(filePath, fixedTime, fixedTime); err != nil {
-					return err
-				}
-				return nil
+
+				return os.Chtimes(filePath, fixedTime, fixedTime)
 			},
 			[]run.Artifact{
 				{
@@ -85,10 +83,8 @@ func TestDirectorySnap(t *testing.T) {
 				); err != nil {
 					return err
 				}
-				if err := os.Chtimes(filePath, fixedTime, fixedTime); err != nil {
-					return err
-				}
-				return nil
+
+				return os.Chtimes(filePath, fixedTime, fixedTime)
 			},
 			func(path string) error {
 				filePath := filepath.Join(path, "test.txt")
@@ -97,10 +93,8 @@ func TestDirectorySnap(t *testing.T) {
 				); err != nil {
 					return err
 				}
-				if err := os.Chtimes(filePath, fixedTime, fixedTime); err != nil {
-					return err
-				}
-				return nil
+
+				return os.Chtimes(filePath, fixedTime, fixedTime)
 			},
 			[]run.Artifact{
 				{
