@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	chainguard.dev/apko v0.8.0
-	cloud.google.com/go/storage v1.30.1
+	cloud.google.com/go/storage v1.31.0
 	github.com/google/go-containerregistry v0.15.2
 	github.com/in-toto/in-toto-golang v0.9.0
 	github.com/magefile/mage v1.15.0
