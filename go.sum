@@ -1,5 +1,5 @@
-chainguard.dev/apko v0.8.0 h1:Ee46H52mn9nvAL2X/nxIIXMsXd4wzTgpgFr+T5bKIp8=
-chainguard.dev/apko v0.8.0/go.mod h1:avKgL6ETv4Gz5HbDSMvShwACob60CSaf82vMsRdOKds=
+chainguard.dev/apko v0.9.0 h1:prZ3YP2HFTC/V2ppxaj4Ayoo0GoOvg8QXkUi052RVf8=
+chainguard.dev/apko v0.9.0/go.mod h1:ef3JdcTvnXnqFmQaom+f1HzctTZMJe3zYwovnU/tk30=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=
@@ -505,8 +505,8 @@ github.com/hashicorp/go-cleanhttp v0.5.2/go.mod h1:kO/YDlP8L1346E6Sodw+PrpBSV4/S
 github.com/hashicorp/go-hclog v0.9.2/go.mod h1:5CU+agLiy3J7N7QjHK5d05KxGsuXiQLrjA0H7acj2lQ=
 github.com/hashicorp/go-hclog v1.2.0 h1:La19f8d7WIlm4ogzNHB0JGqs5AUDAZ2UfCY4sJXcJdM=
 github.com/hashicorp/go-multierror v1.1.1 h1:H5DkEtf6CXdFp0N0Em5UCwQpXMWke8IA0+lD48awMYo=
-github.com/hashicorp/go-retryablehttp v0.7.2 h1:AcYqCvkpalPnPF2pn0KamgwamS42TqUDDYFRKq/RAd0=
-github.com/hashicorp/go-retryablehttp v0.7.2/go.mod h1:Jy/gPYAdjqffZ/yFGCFV2doI5wjtH1ewM9u8iYVjtX8=
+github.com/hashicorp/go-retryablehttp v0.7.4 h1:ZQgVdpTdAL7WpMIwLzCfbalOcSUdkDZnpUv3/+BxzFA=
+github.com/hashicorp/go-retryablehttp v0.7.4/go.mod h1:Jy/gPYAdjqffZ/yFGCFV2doI5wjtH1ewM9u8iYVjtX8=
 github.com/hashicorp/go-rootcerts v1.0.2 h1:jzhAVGtqPKbwpyCPELlgNWhE1znq+qwJtW5Oi2viEzc=
 github.com/hashicorp/go-secure-stdlib/parseutil v0.1.7 h1:UpiO20jno/eV1eVZcxqWnUohyKRe1g8FPV/xH1s/2qs=
 github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 h1:kes8mmyCpxJsI7FTwtzRqEy9CdjCtrXrXGuOpxEA7Ts=
@@ -805,8 +805,8 @@ github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9dec
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 github.com/zeebo/errs v1.3.0 h1:hmiaKqgYZzcVgRL1Vkc1Mn2914BbzB0IBxs+ebeutGs=
 github.com/zeebo/errs v1.3.0/go.mod h1:sgbWHsvVuTPHcqJJGQ1WhI5KbWlHYz+2+2C/LSEtCw4=
-gitlab.alpinelinux.org/alpine/go v0.7.0 h1:N1uWANXNTdu9soAl1eXSs2SQ+gNV4dE0zfJzNG64DeY=
-gitlab.alpinelinux.org/alpine/go v0.7.0/go.mod h1:maZIvJ1++n6Tc3VI+Ta2Sys2OjEmuoXhd92aRzeIjZI=
+gitlab.alpinelinux.org/alpine/go v0.7.1-0.20230613043312-f696350aabb4 h1:4+AOhkYK3ppV5regspb7kzQfXxE48ZeOnL6ThKmwqKc=
+gitlab.alpinelinux.org/alpine/go v0.7.1-0.20230613043312-f696350aabb4/go.mod h1:maZIvJ1++n6Tc3VI+Ta2Sys2OjEmuoXhd92aRzeIjZI=
 go.mongodb.org/mongo-driver v1.7.3/go.mod h1:NqaYOwnXWr5Pm7AOpO5QFxKJ503nbMse/R79oO62zWg=
 go.mongodb.org/mongo-driver v1.7.5/go.mod h1:VXEWRZ6URJIkUq2SCAyapmhH0ZLRBP+FT4xhp5Zvxng=
 go.mongodb.org/mongo-driver v1.10.0/go.mod h1:wsihk0Kdgv8Kqu1Anit4sfK+22vSFbUrAVEYRhCXrA8=
@@ -1293,8 +1293,8 @@ sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd h1:EDPBXCAspyGV4jQlpZSudPeMm
 sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd/go.mod h1:B8JuhiUyNFVKdsE8h686QcCxMaH6HrOAZj4vswFpcB0=
 sigs.k8s.io/release-sdk v0.10.2 h1:FXY2x8Isld5xDj/pQ6xNiMvlguVOzA1aQYGdrIfnURg=
 sigs.k8s.io/release-sdk v0.10.2/go.mod h1:pafL29n+JFFOikvBpBSIHu0spAr5o0LLaPCkuvJV+jo=
-sigs.k8s.io/release-utils v0.7.4 h1:17LmJrydpUloTCtaoWj95uKlcrUp4h2A9Sa+ZL+lV9w=
-sigs.k8s.io/release-utils v0.7.4/go.mod h1:JEt2QPHItd5Pg2UKLAU8PEaSlF4bUjCZimpxFDgymVU=
+sigs.k8s.io/release-utils v0.7.5-0.20230601212346-3866fe05b204 h1:oB0LGHHXwo1zRnJpcnvQ8oIH25dF3BPsdpcNy8lFAVs=
+sigs.k8s.io/release-utils v0.7.5-0.20230601212346-3866fe05b204/go.mod h1:RKLCuHoXJRu4AdFL61n6j4o7cE8dPVruL1Bzn2Yn0AU=
 sigs.k8s.io/structured-merge-diff/v4 v4.2.3 h1:PRbqxJClWWYMNV1dhaG4NsibJbArud9kFxnAMREiWFE=
 sigs.k8s.io/structured-merge-diff/v4 v4.2.3/go.mod h1:qjx8mGObPmV2aSZepjQjbmb2ihdVs8cGKBraizNC69E=
 sigs.k8s.io/yaml v1.3.0 h1:a2VclLzOGrwOHDiV8EfBGhvjHvP46CtW5j6POvhYGGo=
