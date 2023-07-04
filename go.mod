@@ -3,7 +3,7 @@ module sigs.k8s.io/tejolote
 go 1.20
 
 require (
-	chainguard.dev/apko v0.8.0
+	chainguard.dev/apko v0.9.0
 	cloud.google.com/go/storage v1.31.0
 	github.com/google/go-containerregistry v0.15.2
 	github.com/in-toto/in-toto-golang v0.9.0
@@ -16,7 +16,7 @@ require (
 	github.com/uwu-tools/magex v0.10.0
 	golang.org/x/sync v0.3.0
 	sigs.k8s.io/release-sdk v0.10.2
-	sigs.k8s.io/release-utils v0.7.4
+	sigs.k8s.io/release-utils v0.7.5-0.20230601212346-3866fe05b204
 )
 
 require (
@@ -129,7 +129,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.2.5 // indirect
 	github.com/googleapis/gax-go/v2 v2.11.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.2 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/imdario/mergo v0.3.15 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
@@ -194,7 +194,7 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/zeebo/errs v1.3.0 // indirect
-	gitlab.alpinelinux.org/alpine/go v0.7.0 // indirect
+	gitlab.alpinelinux.org/alpine/go v0.7.1-0.20230613043312-f696350aabb4 // indirect
 	go.mongodb.org/mongo-driver v1.11.3 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/otel v1.16.0 // indirect
