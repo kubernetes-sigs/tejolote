@@ -16,7 +16,7 @@ require (
 	github.com/uwu-tools/magex v0.10.0
 	golang.org/x/sync v0.3.0
 	sigs.k8s.io/release-sdk v0.10.2
-	sigs.k8s.io/release-utils v0.7.5-0.20230601212346-3866fe05b204
+	sigs.k8s.io/release-utils v0.7.5-0.20230707140704-1bf6b4c5d954
 )
 
 require (

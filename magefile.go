@@ -82,7 +82,7 @@ func Verify() error {
 	}
 
 	fmt.Println("Running golangci-lint...")
-	if err := mage.RunGolangCILint("v1.53.2", false); err != nil {
+	if err := mage.RunGolangCILint("", false); err != nil {
 		return err
 	}
 
