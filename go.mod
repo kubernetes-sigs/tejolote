@@ -235,7 +235,7 @@ require (
 )
 
 require (
-	cloud.google.com/go/pubsub v1.32.0
+	cloud.google.com/go/pubsub v1.33.0
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-git/go-git/v5 v5.8.0
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
