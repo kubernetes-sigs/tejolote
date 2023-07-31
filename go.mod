@@ -3,7 +3,7 @@ module sigs.k8s.io/tejolote
 go 1.20
 
 require (
-	chainguard.dev/apko v0.9.0
+	chainguard.dev/apko v0.10.0
 	cloud.google.com/go/storage v1.31.0
 	github.com/google/go-containerregistry v0.15.2
 	github.com/in-toto/in-toto-golang v0.9.0
@@ -139,7 +139,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
-	github.com/klauspost/compress v1.16.5 // indirect
+	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/letsencrypt/boulder v0.0.0-20221109233200-85aa52084eaf // indirect
