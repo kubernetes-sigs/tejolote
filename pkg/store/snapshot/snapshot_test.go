@@ -77,6 +77,6 @@ func TestDelta(t *testing.T) {
 			[]run.Artifact{modHashFile},
 		},
 	} {
-		require.Equal(t, tc.expect, tc.preSnap.Delta(&tc.postSnap))
+		require.Equal(t, tc.expect, tc.preSnap.Delta(&tc.postSnap)) //nolint: gosec
 	}
 }
