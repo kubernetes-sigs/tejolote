@@ -245,7 +245,7 @@ require (
 	google.golang.org/genproto v0.0.0-20230913181813-007df8e322eb // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230913181813-007df8e322eb // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230920204549-e6e6cdab5c13 // indirect
-	google.golang.org/grpc v1.57.0 // indirect
+	google.golang.org/grpc v1.58.2 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/DataDog/dd-trace-go.v1 v1.53.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
@@ -273,7 +273,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/sys v0.12.0 // indirect
-	google.golang.org/api v0.143.0
+	google.golang.org/api v0.144.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	sigs.k8s.io/bom v0.5.2-0.20230620055422-4c46f958c7ff
 )
