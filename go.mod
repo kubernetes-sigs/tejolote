@@ -1,6 +1,6 @@
 module sigs.k8s.io/tejolote
 
-go 1.20
+go 1.21
 
 require (
 	chainguard.dev/apko v0.10.0
@@ -16,7 +16,7 @@ require (
 	github.com/uwu-tools/magex v0.10.0
 	golang.org/x/sync v0.3.0
 	sigs.k8s.io/release-sdk v0.10.3
-	sigs.k8s.io/release-utils v0.7.5-0.20230707140704-1bf6b4c5d954
+	sigs.k8s.io/release-utils v0.7.5-0.20230901085630-ff2d69b7382d
 )
 
 require (
