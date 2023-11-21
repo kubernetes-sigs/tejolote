@@ -15,7 +15,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/uwu-tools/magex v0.10.0
 	golang.org/x/sync v0.5.0
-	sigs.k8s.io/release-sdk v0.10.3
+	sigs.k8s.io/release-sdk v0.10.4
 	sigs.k8s.io/release-utils v0.7.7
 )
 
@@ -134,8 +134,8 @@ require (
 	github.com/google/certificate-transparency-go v1.1.7 // indirect
 	github.com/google/gnostic-models v0.6.9-0.20230804172637-c7be7c783f49 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/google/go-github/v53 v53.2.0 // indirect
 	github.com/google/go-github/v55 v55.0.0 // indirect
+	github.com/google/go-github/v56 v56.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/licenseclassifier/v2 v2.0.0 // indirect
@@ -234,13 +234,13 @@ require (
 	go.uber.org/zap v1.26.0 // indirect
 	go4.org/intern v0.0.0-20230525184215-6c62f75575cb // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20230525183740-e7c30c78aeb2 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/crypto v0.15.0 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 	golang.org/x/mod v0.13.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/oauth2 v0.13.0 // indirect
+	golang.org/x/net v0.18.0 // indirect
+	golang.org/x/oauth2 v0.14.0 // indirect
 	golang.org/x/term v0.14.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.14.0 // indirect
 	golang.org/x/tools/go/vcs v0.1.0-deprecated // indirect
@@ -260,7 +260,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	inet.af/netaddr v0.0.0-20230525184311-b8eac61e914a // indirect
 	k8s.io/api v0.28.3 // indirect
-	k8s.io/apimachinery v0.28.3 // indirect
+	k8s.io/apimachinery v0.28.4 // indirect
 	k8s.io/client-go v0.28.3 // indirect
 	k8s.io/klog/v2 v2.100.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00 // indirect
