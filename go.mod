@@ -3,7 +3,7 @@ module sigs.k8s.io/tejolote
 go 1.21
 
 require (
-	chainguard.dev/apko v0.12.0
+	chainguard.dev/apko v0.13.1
 	cloud.google.com/go/storage v1.36.0
 	github.com/google/go-containerregistry v0.17.0
 	github.com/in-toto/in-toto-golang v0.9.0
@@ -206,7 +206,7 @@ require (
 	go.step.sm/crypto v0.38.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
-	golang.org/x/crypto v0.16.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/exp v0.0.0-20231108232855-2478ac86f678 // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.19.0 // indirect
