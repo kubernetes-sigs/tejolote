@@ -81,12 +81,16 @@ func Verify() error {
 		return err
 	}
 
-	fmt.Println("Running golangci-lint...")
-	if err := mage.RunGolangCILint("", false); err != nil {
+	if err := Build(); err != nil {
 		return err
 	}
 
-	if err := Build(); err != nil {
+	return nil
+}
+
+func GolangCILint() error {
+	fmt.Println("Running golangci-lint...")
+	if err := mage.RunGolangCILint("", false); err != nil {
 		return err
 	}
 
