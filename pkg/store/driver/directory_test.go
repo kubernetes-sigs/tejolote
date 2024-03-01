@@ -39,8 +39,8 @@ func TestDirectorySnap(t *testing.T) {
 	}{
 		// Two empty directories. No error, no change
 		{
-			func(path string) error { return nil },
-			func(path string) error { return nil },
+			func(_ string) error { return nil },
+			func(_ string) error { return nil },
 			[]run.Artifact{},
 		},
 		// One file, unchanged at mutation time
@@ -48,7 +48,7 @@ func TestDirectorySnap(t *testing.T) {
 			func(path string) error {
 				return os.WriteFile(filepath.Join(path, "test.txt"), []byte("test"), os.FileMode(0o644))
 			},
-			func(path string) error { return nil },
+			func(_ string) error { return nil },
 			[]run.Artifact{},
 		},
 		// One file, rewritten should be reported

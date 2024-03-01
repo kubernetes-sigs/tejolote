@@ -67,7 +67,7 @@ where they came from.
 		Use:               "attest",
 		SilenceUsage:      false,
 		PersistentPreRunE: initLogging,
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(_ *cobra.Command, args []string) (err error) {
 			if len(args) == 0 {
 				return errors.New("build run spec URL not specified")
 			}
