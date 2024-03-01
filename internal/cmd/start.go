@@ -92,7 +92,7 @@ attestation but with ".storage-snap.json" appended.
 		Use:               "attestation",
 		SilenceUsage:      false,
 		PersistentPreRunE: initLogging,
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(_ *cobra.Command, args []string) (err error) {
 			if err := startAttestationOpts.Validate(); err != nil {
 				return fmt.Errorf("validating options: %w", err)
 			}

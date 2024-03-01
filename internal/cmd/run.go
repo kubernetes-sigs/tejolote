@@ -53,7 +53,7 @@ where they came from.
 		Use:               "run",
 		SilenceUsage:      false,
 		PersistentPreRunE: initLogging,
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(_ *cobra.Command, args []string) (err error) {
 			runner := buildRunner(runOpts)
 
 			step := &run.Step{}
