@@ -75,6 +75,8 @@ jobs:
 
       - run: |
           tejolote attest --artifacts github://kubernetes-sigs/tejolote/${{ steps.tag.outputs.tag_name }} github://kubernetes-sigs/tejolote/"${GITHUB_RUN_ID}" --output tejolote.intoto.json --sign
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Release
         uses: softprops/action-gh-release@9d7c94cfd0a1f3ed45544c887983e9fa900f0564 # v0.1.15
