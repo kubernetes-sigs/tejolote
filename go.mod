@@ -3,7 +3,7 @@ module sigs.k8s.io/tejolote
 go 1.22
 
 require (
-	chainguard.dev/apko v0.14.1
+	chainguard.dev/apko v0.14.2
 	cloud.google.com/go/storage v1.41.0
 	github.com/google/go-containerregistry v0.19.1
 	github.com/in-toto/in-toto-golang v0.9.0
@@ -165,7 +165,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	github.com/package-url/packageurl-go v0.1.2 // indirect
+	github.com/package-url/packageurl-go v0.1.3 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
@@ -207,9 +207,9 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.49.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0 // indirect
-	go.opentelemetry.io/otel v1.26.0 // indirect
-	go.opentelemetry.io/otel/metric v1.26.0 // indirect
-	go.opentelemetry.io/otel/trace v1.26.0 // indirect
+	go.opentelemetry.io/otel v1.27.0 // indirect
+	go.opentelemetry.io/otel/metric v1.27.0 // indirect
+	go.opentelemetry.io/otel/trace v1.27.0 // indirect
 	go.step.sm/crypto v0.44.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
