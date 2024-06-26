@@ -200,7 +200,7 @@ func BuildBinariesSnapshot() error {
 	os.Setenv("TEJOLOTE_LDFLAGS", ldFlag)
 
 	return sh.RunV("goreleaser", "release", "--clean",
-		"--snapshot", "--skip-sign")
+		"--snapshot", "--skip=sign")
 }
 
 func Clean() {
