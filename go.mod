@@ -5,7 +5,7 @@ go 1.22.4
 require (
 	chainguard.dev/apko v0.16.0
 	cloud.google.com/go/storage v1.43.0
-	github.com/google/go-containerregistry v0.20.0
+	github.com/google/go-containerregistry v0.20.1
 	github.com/in-toto/in-toto-golang v0.9.0
 	github.com/magefile/mage v1.15.0
 	github.com/sigstore/cosign/v2 v2.2.4
