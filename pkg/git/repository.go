@@ -36,7 +36,7 @@ type Repository struct {
 
 // IsRepo return true is a directory is a git repo
 func IsRepo(path string) bool {
-	return util.Exists(filepath.Join(path, "/.git"))
+	return util.Exists(filepath.Join(path, ".git"))
 }
 
 // NewRepository opens a git repository from the specified directory

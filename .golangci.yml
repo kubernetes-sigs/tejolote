@@ -49,8 +49,6 @@ linters:
     - predeclared
     - promlinter
     - revive
-    # - rowserrcheck
-    # - sqlclosecheck
     - staticcheck
     - stylecheck
     - typecheck
@@ -58,11 +56,12 @@ linters:
     - unparam
     - unused
     - whitespace
+    # - rowserrcheck
+    # - sqlclosecheck
     # - cyclop
     # - errorlint
     # - exhaustive
     # - exhaustivestruct
-    # - exportloopref
     # - forbidigo
     # - forcetypeassert
     # - funlen
@@ -99,74 +98,77 @@ linters-settings:
     check-blank: true
   gocritic:
     enabled-checks:
-      # Diagnostic
-      - appendAssign
-      - argOrder
-      - badCond
-      - caseOrder
-      - codegenComment
-      - commentedOutCode
-      - deprecatedComment
-      - dupArg
-      - dupBranchBody
-      - dupCase
-      - dupSubExpr
-      - exitAfterDefer
-      - flagDeref
-      - flagName
-      - nilValReturn
-      - offBy1
-      - sloppyReassign
-      - weakCond
-      - octalLiteral
-
-      # Performance
       - appendCombine
-      - equalFold
-      - hugeParam
-      - indexAlloc
-      - rangeExprCopy
-      - rangeValCopy
-
-      # Style
-      - assignOp
+      - badLock
+      - badRegexp
+      - badSorting
+      - badSyncOnceFunc
       - boolExprSimplify
-      - captLocal
-      - commentFormatting
+      - builtinShadow
+      - builtinShadowDecl
+      - commentedOutCode
       - commentedOutImport
-      - defaultCaseOrder
+      - deferUnlambda
       - docStub
-      - elseif
+      - dupImport
+      - dynamicFmtString
+      - emptyDecl
       - emptyFallthrough
       - emptyStringTest
+      - equalFold
+      - evalOrder
+      - exposedSyncMutex
+      - externalErrorReassign
+      - filepathJoin
       - hexLiteral
-      - methodExprCall
-      - regexpMust
-      - singleCaseSwitch
-      - sloppyLen
-      - stringXbytes
-      - switchTrue
-      - typeAssertChain
-      - typeSwitchVar
-      - underef
-      - unlabelStmt
-      - unlambda
-      - unslice
-      - valSwap
-      - wrapperFunc
-      - yodaStyleExpr
-      # - ifElseChain
-
-      # Opinionated
-      - builtinShadow
+      - hugeParam
       - importShadow
+      - indexAlloc
       - initClause
+      - methodExprCall
       - nestingReduce
+      - nilValReturn
+      - octalLiteral
       - paramTypeCombine
+      - preferDecodeRune
+      - preferFilepathJoin
+      - preferFprint
+      - preferStringWriter
+      - preferWriteByte
       - ptrToRefParam
+      - rangeExprCopy
+      - rangeValCopy
+      - redundantSprint
+      - regexpPattern
+      - regexpSimplify
+      - returnAfterHttpError
+      - ruleguard
+      - sliceClear
+      - sloppyReassign
+      - sortSlice
+      - sprintfQuotedString
+      - sqlQuery
+      - stringConcatSimplify
+      - stringXbytes
+      - stringsCompare
+      - syncMapLoadAndDelete
+      - timeExprSimplify
+      - todoCommentWithoutDetail
+      - tooManyResultsChecker
+      - truncateCmp
+      - typeAssertChain
+      - typeDefFirst
       - typeUnparen
+      - uncheckedInlineErr
+      - unlabelStmt
       - unnamedResult
       - unnecessaryBlock
+      - unnecessaryDefer
+      - weakCond
+      - yodaStyleExpr
+      # - deferInLoop
+      # - httpNoBody
+      # - whyNoLint
   nolintlint:
     # Enable to ensure that nolint directives are all used. Default is true.
     allow-unused: false
