@@ -17,7 +17,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/uwu-tools/magex v0.10.0
 	golang.org/x/sync v0.8.0
-	google.golang.org/api v0.202.0
+	google.golang.org/api v0.203.0
 	sigs.k8s.io/bom v0.6.0
 	sigs.k8s.io/release-sdk v0.12.1
 	sigs.k8s.io/release-utils v0.8.5
@@ -26,7 +26,7 @@ require (
 require (
 	cel.dev/expr v0.16.2 // indirect
 	cloud.google.com/go v0.116.0 // indirect
-	cloud.google.com/go/auth v0.9.8 // indirect
+	cloud.google.com/go/auth v0.9.9 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.4 // indirect
 	cloud.google.com/go/compute/metadata v0.5.2 // indirect
 	cloud.google.com/go/iam v1.2.1 // indirect
