@@ -3,7 +3,7 @@ module sigs.k8s.io/tejolote
 go 1.23.2
 
 require (
-	chainguard.dev/apko v0.19.2
+	chainguard.dev/apko v0.19.3
 	cloud.google.com/go/pubsub v1.45.0
 	cloud.google.com/go/storage v1.45.0
 	github.com/go-git/go-git/v5 v5.12.0
@@ -263,7 +263,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.31.1 // indirect
-	k8s.io/apimachinery v0.31.1 // indirect
+	k8s.io/apimachinery v0.31.2 // indirect
 	k8s.io/client-go v0.31.1 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20241009091222-67ed5848f094 // indirect
