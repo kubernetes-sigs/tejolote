@@ -3,8 +3,8 @@ module sigs.k8s.io/tejolote
 go 1.23.2
 
 require (
-	chainguard.dev/apko v0.19.3
-	cloud.google.com/go/pubsub v1.45.0
+	chainguard.dev/apko v0.19.4
+	cloud.google.com/go/pubsub v1.45.1
 	cloud.google.com/go/storage v1.45.0
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/google/go-containerregistry v0.20.2
