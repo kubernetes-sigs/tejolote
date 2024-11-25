@@ -14,7 +14,7 @@ require (
 	github.com/sigstore/sigstore v1.8.10
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/uwu-tools/magex v0.10.0
 	golang.org/x/sync v0.9.0
 	google.golang.org/api v0.209.0
