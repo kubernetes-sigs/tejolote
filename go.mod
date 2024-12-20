@@ -3,7 +3,7 @@ module sigs.k8s.io/tejolote
 go 1.23.2
 
 require (
-	chainguard.dev/apko v0.22.2
+	chainguard.dev/apko v0.22.3
 	cloud.google.com/go/pubsub v1.45.3
 	cloud.google.com/go/storage v1.48.0
 	github.com/go-git/go-git/v5 v5.12.0
@@ -17,7 +17,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/uwu-tools/magex v0.10.0
 	golang.org/x/sync v0.10.0
-	google.golang.org/api v0.213.0
+	google.golang.org/api v0.214.0
 	sigs.k8s.io/bom v0.6.0
 	sigs.k8s.io/release-sdk v0.12.1
 	sigs.k8s.io/release-utils v0.8.5
@@ -244,7 +244,7 @@ require (
 	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c // indirect
 	golang.org/x/mod v0.21.0 // indirect
-	golang.org/x/net v0.32.0 // indirect
+	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/oauth2 v0.24.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/term v0.27.0 // indirect
