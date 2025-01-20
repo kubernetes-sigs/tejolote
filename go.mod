@@ -1,6 +1,7 @@
 module sigs.k8s.io/tejolote
 
-go 1.23.2
+go 1.23.4
+
 require (
 	chainguard.dev/apko v0.22.6
 	cloud.google.com/go/pubsub v1.45.3
