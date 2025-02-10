@@ -19,7 +19,7 @@ require (
 	golang.org/x/sync v0.11.0
 	google.golang.org/api v0.220.0
 	sigs.k8s.io/bom v0.6.0
-	sigs.k8s.io/release-sdk v0.12.1
+	sigs.k8s.io/release-sdk v0.12.2
 	sigs.k8s.io/release-utils v0.11.0
 )
 
@@ -236,7 +236,7 @@ require (
 	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f // indirect
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/net v0.34.0 // indirect
-	golang.org/x/oauth2 v0.25.0 // indirect
+	golang.org/x/oauth2 v0.26.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/term v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
