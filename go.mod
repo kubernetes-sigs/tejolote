@@ -3,7 +3,7 @@ module sigs.k8s.io/tejolote
 go 1.23.4
 
 require (
-	chainguard.dev/apko v0.25.0
+	chainguard.dev/apko v0.25.1
 	cloud.google.com/go/pubsub v1.47.0
 	cloud.google.com/go/storage v1.50.0
 	github.com/go-git/go-git/v5 v5.13.2
@@ -13,7 +13,7 @@ require (
 	github.com/sigstore/cosign/v2 v2.4.2
 	github.com/sigstore/sigstore v1.8.14
 	github.com/sirupsen/logrus v1.9.3
-	github.com/spf13/cobra v1.8.1
+	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	github.com/uwu-tools/magex v0.10.1
 	golang.org/x/sync v0.11.0
