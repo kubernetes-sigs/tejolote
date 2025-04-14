@@ -23,7 +23,6 @@ import (
 
 	"sigs.k8s.io/bom/pkg/spdx"
 	"sigs.k8s.io/release-utils/util"
-
 	"sigs.k8s.io/tejolote/pkg/run"
 )
 

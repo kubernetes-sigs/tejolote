@@ -26,9 +26,7 @@ import (
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
-
 	"sigs.k8s.io/release-utils/command"
-
 	"sigs.k8s.io/tejolote/pkg/git"
 	"sigs.k8s.io/tejolote/pkg/run"
 )
@@ -55,20 +53,25 @@ type RunEnvironment struct {
 
 // InvocationData return the invocation of the command in SLSA strcut
 func (r *Run) InvocationData() (slsa.ProvenanceInvocation, error) {
-	// Get the git drector
+	// Invocation
 	invocation := slsa.ProvenanceInvocation{
 		ConfigSource: slsa.ConfigSource{},
 	}
-	invocation.Parameters = []string{r.Command}
-	invocation.Parameters = append(invocation.Parameters.([]string), r.Params...)
-	invocation.Environment = map[string]string{}
 
+	// Parameters
+	params := []string{r.Command}
+	params = append(params, r.Params...)
+	invocation.Parameters = params
+
+	// Environment
+	env := map[string]string{}
 	for _, e := range os.Environ() {
 		varData := strings.SplitN(e, "=", 2)
 		if len(varData) == 2 {
-			invocation.Environment.(map[string]string)[varData[0]] = varData[1]
+			env[varData[0]] = varData[1]
 		}
 	}
+	invocation.Environment = map[string]string{}
 
 	// Read the git repo data
 	if git.IsRepo(r.Environment.Directory) {
@@ -110,7 +113,7 @@ func (r *Run) WriteAttestation(path string) error {
 
 	// Add the artifacts to the attestation
 	for _, m := range r.Artifacts {
-		attestation.StatementHeader.Subject = append(attestation.StatementHeader.Subject, intoto.Subject{
+		attestation.Subject = append(attestation.Subject, intoto.Subject{
 			Name:   m.Path,
 			Digest: m.Checksum,
 		})

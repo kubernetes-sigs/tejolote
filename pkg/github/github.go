@@ -17,6 +17,7 @@ limitations under the License.
 package github
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -34,7 +35,7 @@ func TokenScopes() ([]string, error) {
 	}
 	defer res.Body.Close()
 
-	header := res.Header.Get("x-oauth-scopes")
+	header := res.Header.Get("X-Oauth-Scopes")
 	scopes := strings.Split(header, ", ")
 	logrus.Debugf("GitHub Token scopes: %+v", scopes)
 	return scopes, nil
@@ -55,9 +56,9 @@ func TokenHas(scope string) (bool, error) {
 }
 
 func APIGetRequest(url string) (*http.Response, error) {
-	logrus.Infof("GitHubAPI[GET]: %s", url)
+	logrus.Debugf("GitHubAPI[GET]: %s", url)
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating http request: %w", err)
 	}
@@ -81,7 +82,7 @@ func APIGetRequest(url string) (*http.Response, error) {
 
 func Download(url string, f io.Writer) error {
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
 		return fmt.Errorf("creating http request: %w", err)
 	}

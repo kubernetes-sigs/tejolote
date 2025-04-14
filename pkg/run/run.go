@@ -29,7 +29,7 @@ type Run struct {
 	Artifacts  []Artifact
 	StartTime  time.Time
 	EndTime    time.Time
-	SystemData interface{}
+	SystemData any
 }
 
 // Step is the interface that defines the behaviour of a build step

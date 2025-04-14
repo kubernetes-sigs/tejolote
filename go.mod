@@ -10,6 +10,7 @@ require (
 	cloud.google.com/go/storage v1.51.0
 	github.com/go-git/go-git/v5 v5.15.0
 	github.com/google/go-containerregistry v0.20.3
+	github.com/in-toto/attestation v1.1.1
 	github.com/in-toto/in-toto-golang v0.9.0
 	github.com/magefile/mage v1.15.0
 	github.com/sigstore/cosign/v2 v2.5.0
@@ -153,7 +154,6 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
-	github.com/in-toto/attestation v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jedisct1/go-minisign v0.0.0-20230811132847-661be99b8267 // indirect

@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-
 	"sigs.k8s.io/tejolote/pkg/attestation"
 	"sigs.k8s.io/tejolote/pkg/builder/driver"
 	"sigs.k8s.io/tejolote/pkg/run"

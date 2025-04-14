@@ -23,9 +23,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-
 	"sigs.k8s.io/bom/pkg/spdx"
-
 	"sigs.k8s.io/tejolote/pkg/run"
 	"sigs.k8s.io/tejolote/pkg/store/snapshot"
 )

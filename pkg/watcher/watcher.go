@@ -31,7 +31,6 @@ import (
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 	"github.com/sirupsen/logrus"
-
 	"sigs.k8s.io/tejolote/pkg/attestation"
 	"sigs.k8s.io/tejolote/pkg/builder"
 	"sigs.k8s.io/tejolote/pkg/run"

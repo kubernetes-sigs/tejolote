@@ -18,6 +18,7 @@ package driver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -30,7 +31,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/api/iterator"
-
 	"sigs.k8s.io/tejolote/pkg/store/snapshot"
 )
 
@@ -86,7 +86,7 @@ func (gcs *GCS) syncGCSPrefix(ctx context.Context, prefix string, seen map[strin
 	filesToSync := []string{}
 	for {
 		attrs, err := it.Next()
-		if err == iterator.Done {
+		if errors.Is(err, iterator.Done) {
 			logrus.WithField("driver", "gcs").Debugf("Done listing %s", gcs.Bucket)
 			break
 		}
@@ -96,7 +96,7 @@ func (gcs *GCS) syncGCSPrefix(ctx context.Context, prefix string, seen map[strin
 
 		// If name is empty, then it is a new prefix, lets index it:
 		if _, ok := seen[attrs.Prefix]; !ok && attrs.Name == "" {
-			_ = gcs.syncGCSPrefix(ctx, attrs.Prefix, seen) //nolint: errcheck
+			_ = gcs.syncGCSPrefix(ctx, attrs.Prefix, seen)
 			continue
 		}
 
@@ -105,7 +105,7 @@ func (gcs *GCS) syncGCSPrefix(ctx context.Context, prefix string, seen map[strin
 		if strings.HasSuffix(attrs.Name, "/") {
 			trimmed := strings.TrimSuffix(attrs.Name, "/")
 			if _, ok := seen[trimmed]; !ok {
-				_ = gcs.syncGCSPrefix(ctx, trimmed, seen) //nolint: errcheck
+				_ = gcs.syncGCSPrefix(ctx, trimmed, seen)
 				continue
 			}
 		}
@@ -128,7 +128,6 @@ func (gcs *GCS) syncGCSPrefix(ctx context.Context, prefix string, seen map[strin
 
 	var wg errgroup.Group
 	for _, filename := range filesToSync {
-		filename := filename
 		wg.Go(func() error {
 			if err := gcs.syncGSFile(filename); err != nil {
 				return fmt.Errorf("synching file: %w", err)
@@ -147,10 +146,10 @@ func (gcs *GCS) syncGSFile(filePath string) error {
 	logrus.WithField("driver", "gcs").Debugf("Copying file from bucket: %s", filePath)
 	localpath := filepath.Join(gcs.WorkDir, filePath)
 	// Ensure the directory exists
-	_ = os.MkdirAll(filepath.Dir(localpath), os.FileMode(0o755)) //nolint: errcheck
+	_ = os.MkdirAll(filepath.Dir(localpath), os.FileMode(0o755))
 
 	// Open the local file
-	f, err := os.OpenFile(localpath, os.O_RDWR|os.O_CREATE, 0o644)
+	f, err := os.OpenFile(localpath, os.O_RDWR|os.O_CREATE, 0o644) //nolint:gosec // This file should be read by others
 	if err != nil {
 		return fmt.Errorf("opening localfile: %w", err)
 	}

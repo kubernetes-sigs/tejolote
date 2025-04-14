@@ -23,8 +23,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	intoto "github.com/in-toto/attestation/go/v1"
 	"sigs.k8s.io/release-utils/hash"
-
 	"sigs.k8s.io/tejolote/pkg/run"
 	"sigs.k8s.io/tejolote/pkg/store/snapshot"
 )
@@ -79,7 +79,7 @@ func (d *Directory) Snap() (*snapshot.Snapshot, error) {
 			// Register the file with the path normalized
 			snap[path] = run.Artifact{
 				Path:     path,
-				Checksum: map[string]string{"SHA256": sha},
+				Checksum: map[string]string{string(intoto.AlgorithmSHA256): sha},
 				Time:     info.ModTime(),
 			}
 			return nil

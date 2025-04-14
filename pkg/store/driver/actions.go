@@ -27,10 +27,9 @@ import (
 	"strconv"
 	"strings"
 
+	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
-
 	"sigs.k8s.io/release-utils/hash"
-
 	"sigs.k8s.io/tejolote/pkg/github"
 	"sigs.k8s.io/tejolote/pkg/run"
 	"sigs.k8s.io/tejolote/pkg/store/snapshot"
@@ -123,7 +122,7 @@ func (a *Actions) readArtifacts() ([]run.Artifact, error) {
 		ret = append(ret, run.Artifact{
 			Path: runURL + "/" + a.Name,
 			Checksum: map[string]string{
-				"SHA256": shaVal,
+				string(intoto.AlgorithmSHA256): shaVal,
 			},
 			Time: a.UpdatedAt,
 		})

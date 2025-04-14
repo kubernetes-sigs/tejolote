@@ -96,7 +96,7 @@ similar to this:
     {
       "name": "gs://ulabs-cloud-tests/test/bom-windows-amd64.exe",
       "digest": {
-        "SHA256": "c03c50f220b095bf52a0ca496989a6c07f198d03cb8aad19834df143625ee821"
+        "sha256": "c03c50f220b095bf52a0ca496989a6c07f198d03cb8aad19834df143625ee821"
       }
     }
   ],

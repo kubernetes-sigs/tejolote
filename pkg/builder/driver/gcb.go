@@ -32,7 +32,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/cloudbuild/v1"
-
 	"sigs.k8s.io/tejolote/pkg/attestation"
 	"sigs.k8s.io/tejolote/pkg/run"
 	"sigs.k8s.io/tejolote/pkg/store"
