@@ -35,9 +35,7 @@ func TestSourceURL(t *testing.T) {
 	url = git@github.com:kubernetes-sigs/tejolote.git
 	fetch = +refs/heads/*:refs/remotes/origin/*
 `
-	tmpdir, err := os.MkdirTemp("", "")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpdir)
+	tmpdir := t.TempDir()
 
 	// Write a minimal git config to check the remote
 	require.NoError(t, os.Mkdir(filepath.Join(tmpdir, ".git"), os.FileMode(0o755)))
@@ -52,5 +50,5 @@ func TestSourceURL(t *testing.T) {
 	require.NoError(t, err)
 	url, err := repo.SourceURL()
 	require.NoError(t, err)
-	require.Equal(t, url, "git+ssh://git@github.com/kubernetes-sigs/tejolote")
+	require.Equal(t, "git+ssh://git@github.com/kubernetes-sigs/tejolote", url)
 }

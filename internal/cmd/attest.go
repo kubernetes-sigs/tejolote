@@ -24,9 +24,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-
 	"sigs.k8s.io/release-utils/util"
-
 	"sigs.k8s.io/tejolote/pkg/watcher"
 )
 
@@ -230,8 +228,8 @@ where they came from.
 		"encoded snapshots to continue",
 	)
 
-	_ = attestCmd.PersistentFlags().MarkHidden("encoded-attestation") //nolint: errcheck
-	_ = attestCmd.PersistentFlags().MarkHidden("encoded-snapshots")   //nolint: errcheck
+	_ = attestCmd.PersistentFlags().MarkHidden("encoded-attestation")
+	_ = attestCmd.PersistentFlags().MarkHidden("encoded-snapshots")
 
 	parentCmd.AddCommand(attestCmd)
 }

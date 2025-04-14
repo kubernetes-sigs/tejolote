@@ -30,12 +30,11 @@ import (
 	"sync"
 
 	"cloud.google.com/go/storage"
+	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/api/cloudbuild/v1"
-
 	"sigs.k8s.io/release-utils/hash"
-
 	"sigs.k8s.io/tejolote/pkg/run"
 	"sigs.k8s.io/tejolote/pkg/store/snapshot"
 )
@@ -95,7 +94,6 @@ func (gcb *GCB) readArtifacts() ([]run.Artifact, error) {
 	var mtx sync.Mutex
 	artifacts := []run.Artifact{}
 	for _, artifactData := range gcbArtifacts {
-		artifactData := artifactData
 		wg.Go(func() error {
 			f, err := os.CreateTemp("", "artifact-temp-")
 			if err != nil {
@@ -120,7 +118,7 @@ func (gcb *GCB) readArtifacts() ([]run.Artifact, error) {
 			artifacts = append(artifacts, run.Artifact{
 				Path: artifactData.Location,
 				Checksum: map[string]string{
-					"SHA256": hashValue,
+					string(intoto.AlgorithmSHA256): hashValue,
 				},
 				Time: attrs.Updated,
 			})

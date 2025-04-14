@@ -18,6 +18,8 @@ package run
 
 import (
 	"time"
+
+	intoto "github.com/in-toto/attestation/go/v1"
 )
 
 type Run struct {
@@ -29,7 +31,8 @@ type Run struct {
 	Artifacts  []Artifact
 	StartTime  time.Time
 	EndTime    time.Time
-	SystemData interface{}
+	BuildPoint *intoto.ResourceDescriptor
+	SystemData any
 }
 
 // Step is the interface that defines the behaviour of a build step

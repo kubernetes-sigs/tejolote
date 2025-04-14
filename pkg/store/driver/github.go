@@ -115,7 +115,7 @@ func (ghr *GitHubRelease) Snap() (*snapshot.Snapshot, error) {
 		snap[filepath.Base(path)] = run.Artifact{
 			Path: filepath.Base(path),
 			Checksum: map[string]string{
-				"SHA256": hashValue,
+				"sha256": hashValue,
 			},
 			Time: time.Now(), // TODO: This needs to be set properly for future
 		}

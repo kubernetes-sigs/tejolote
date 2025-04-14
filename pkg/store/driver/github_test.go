@@ -35,6 +35,6 @@ func TestGitHubRelease(t *testing.T) {
 	logrus.Infof("%+v", snap)
 	require.Equal(
 		t, "2dcb1895edab89c32a356e437d3c94e83fc6cde2d5a052f2e7b4051326f9ba44",
-		(*snap)["sbom.spdx"].Checksum["SHA256"],
+		(*snap)["sbom.spdx"].Checksum["sha256"],
 	)
 }

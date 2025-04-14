@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-
 	"sigs.k8s.io/tejolote/pkg/attestation"
 	"sigs.k8s.io/tejolote/pkg/builder/driver"
 	"sigs.k8s.io/tejolote/pkg/run"
@@ -85,6 +84,10 @@ func (b *Builder) BuildPredicate(r *run.Run, draft *attestation.SLSAPredicate) (
 			logrus.Warn("unable to read commit from vcs url")
 			pred.AddMaterial(u, commithash)
 		}
+	}
+
+	if r.BuildPoint != nil {
+		pred.AddMaterial(r.BuildPoint.GetUri(), r.BuildPoint.GetDigest())
 	}
 	return pred, nil
 }

@@ -21,14 +21,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
+	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 	"github.com/sirupsen/logrus"
-
 	"sigs.k8s.io/tejolote/pkg/attestation"
 	"sigs.k8s.io/tejolote/pkg/github"
 	"sigs.k8s.io/tejolote/pkg/run"
@@ -52,6 +53,9 @@ func parseGitHubURL(specURL string) (org, repo string, runID int64, err error) {
 		return org, repo, runID, fmt.Errorf("parsing spec url: %w", err)
 	}
 	parts := strings.SplitN(u.Path, "/", 3)
+	if len(parts) != 3 {
+		return "", "", 0, fmt.Errorf("invalid run URI")
+	}
 	rID, err := strconv.Atoi(strings.TrimSuffix(parts[2], "/"))
 	if err != nil {
 		return org, repo, runID, fmt.Errorf("parsing run ID from URL: %w", err)
@@ -92,7 +96,7 @@ func (ghw *GitHubWorkflow) RefreshRun(r *run.Run) error {
 		return fmt.Errorf("querying github api: %w", err)
 	}
 
-	if res.StatusCode != 200 {
+	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("got https error %d from github API", res.StatusCode)
 	}
 
@@ -121,6 +125,13 @@ func (ghw *GitHubWorkflow) RefreshRun(r *run.Run) error {
 	}
 
 	r.SystemData = runData
+
+	r.BuildPoint = &intoto.ResourceDescriptor{
+		Uri: fmt.Sprintf("git+ssh://github.com/%s/%s@%s", org, repo, runData.HeadSHA),
+		Digest: map[string]string{
+			"sha1": runData.HeadSHA,
+		},
+	}
 
 	// TODO: Consider pulling the job data if specified and the workflow yaml.
 	// Using those we can populate the entry point better to the job, the label of
@@ -154,12 +165,17 @@ func (ghw *GitHubWorkflow) BuildPredicate(
 	} else {
 		predicate = draft
 	}
+
 	predicate.Builder.ID = "https://github.com/Attestations/GitHubHostedActions@v1"
 	predicate.BuildType = "https://github.com/Attestations/GitHubActionsWorkflow@v1"
-	predicate.Invocation.ConfigSource.Digest = common.DigestSet{
-		"sha1": r.SystemData.(*github.Run).HeadSHA,
+
+	if ghrun, ok := r.SystemData.(*github.Run); ok {
+		predicate.Invocation.ConfigSource.Digest = common.DigestSet{
+			"sha1": ghrun.HeadSHA,
+		}
+		predicate.Invocation.ConfigSource.EntryPoint = ghrun.Path
 	}
-	predicate.Invocation.ConfigSource.EntryPoint = r.SystemData.(*github.Run).Path
+
 	predicate.Invocation.ConfigSource.URI = fmt.Sprintf(
 		"git+https://github.com/%s/%s.git", org, repo,
 	)

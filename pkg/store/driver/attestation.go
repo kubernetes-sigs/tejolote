@@ -29,7 +29,6 @@ import (
 
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/sirupsen/logrus"
-
 	"sigs.k8s.io/tejolote/pkg/run"
 	"sigs.k8s.io/tejolote/pkg/store/snapshot"
 )
@@ -126,7 +125,7 @@ func (att *Attestation) downloadAttestation() ([]byte, error) {
 
 func downloadHTTP(urlPath string, f io.Writer) error {
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", urlPath, nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, urlPath, nil)
 	if err != nil {
 		return fmt.Errorf("creating http request: %w", err)
 	}
