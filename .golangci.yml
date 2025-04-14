@@ -1,181 +1,181 @@
+# SPDX-FileCopyrightText: Copyright 2022 The Kubernetes Authors.
+# SPDX-License-Identifier: Apache-2.0
 ---
+version: "2"
 run:
   concurrency: 6
   timeout: 5m
 issues:
-  exclude-rules:
-    # counterfeiter fakes are usually named 'fake_<something>.go'
-    - path: fake_.*\.go
-      linters:
-        - gocritic
-        - golint
-        - dupl
-
   # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
   max-issues-per-linter: 0
 
   # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
   max-same-issues: 0
-linters:
-  disable-all: true
+formatters:
+  # Enable specific formatter.
+  # Default: [] (uses standard Go formatting)
   enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+    # - golines
+  settings: 
+    gci:
+      no-inline-comments: false
+      no-prefix-comments: true
+      sections:
+        - standard
+        - default
+        - prefix(github.com/kubernetes-sigs/tejolote)
+linters:
+  enable:
+    - asasalint
     - asciicheck
+    - bidichk
     - bodyclose
+    - canonicalheader
+    - containedctx
+    # - contextcheck
+    - copyloopvar
+    - decorder
     - dogsled
     - dupl
     - durationcheck
+    # - errcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exhaustive
+    - exptostd
+    - fatcontext
+    - forcetypeassert
+    - ginkgolinter
+    - gocheckcompilerdirectives
+    - gochecksumtype
     - goconst
     - gocritic
     - gocyclo
+    # - godot
     - godox
-    - gofmt
-    - gofumpt
     - goheader
-    - goimports
     - gomoddirectives
     - gomodguard
     - goprintffuncname
     - gosec
-    - gosimple
+    - gosmopolitan
     - govet
+    - grouper
+    - iface
     - importas
     - ineffassign
+    - intrange
+    - loggercheck
     - makezero
+    - mirror
     - misspell
+    - musttag
     - nakedret
+    - nilerr
+    - nilnesserr
+    # - nlreturn
+    - noctx
     - nolintlint
+    - nosprintfhostport
+    # - perfsprint
     - prealloc
     - predeclared
     - promlinter
-    - revive
+    - protogetter
+    - reassign
+    - recvcheck
+    # - revive
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
     - staticcheck
-    - stylecheck
-    - typecheck
+    - tagalign
+    - testableexamples
+    - testifylint
+    - tparallel
     - unconvert
     - unparam
     - unused
+    - usestdlibvars
+    - usetesting
+    - wastedassign
     - whitespace
-    # - cyclop
-    # - errcheck
-    # - errorlint
-    # - exhaustive
-    # - exhaustivestruct
-    # - forbidigo
-    # - forcetypeassert
-    # - funlen
-    # - gci
-    # - gochecknoglobals
-    # - gochecknoinits
-    # - gocognit
-    # - godot
-    # - goerr113
-    # - gomnd
-    # - ifshort
-    # - lll
-    # - nestif
-    # - nilerr
-    # - nlreturn
-    # - noctx
-    # - paralleltest
-    # - rowserrcheck
-    # - scopelint
-    # - sqlclosecheck
-    # - tagliatelle
-    # - testpackage
-    # - thelper
-    # - tparallel
-    # - wastedassign
-    # - wrapcheck
     # - wsl
-linters-settings:
-  godox:
-    keywords:
-      - BUG
-      - FIXME
-      - HACK
-  errcheck:
-    check-type-assertions: true
-    check-blank: true
-  gocritic:
-    enabled-checks:
-      - appendCombine
-      - badLock
-      - badRegexp
-      - badSorting
-      - badSyncOnceFunc
-      - boolExprSimplify
-      - builtinShadow
-      - builtinShadowDecl
-      - commentedOutCode
-      - commentedOutImport
-      - deferUnlambda
-      - docStub
-      - dupImport
-      - dynamicFmtString
-      - emptyDecl
-      - emptyFallthrough
-      - emptyStringTest
-      - equalFold
-      - evalOrder
-      - exposedSyncMutex
-      - externalErrorReassign
-      - filepathJoin
-      - hexLiteral
-      - hugeParam
-      - importShadow
-      - indexAlloc
-      - initClause
-      - methodExprCall
-      - nestingReduce
-      - nilValReturn
-      - octalLiteral
-      - paramTypeCombine
-      - preferDecodeRune
-      - preferFilepathJoin
-      - preferFprint
-      - preferStringWriter
-      - preferWriteByte
-      - ptrToRefParam
-      - rangeExprCopy
-      - rangeValCopy
-      - redundantSprint
-      - regexpPattern
-      - regexpSimplify
-      - returnAfterHttpError
-      - ruleguard
-      - sliceClear
-      - sloppyReassign
-      - sortSlice
-      - sprintfQuotedString
-      - sqlQuery
-      - stringConcatSimplify
-      - stringXbytes
-      - stringsCompare
-      - syncMapLoadAndDelete
-      - timeExprSimplify
-      - todoCommentWithoutDetail
-      - tooManyResultsChecker
-      - truncateCmp
-      - typeAssertChain
-      - typeDefFirst
-      - typeUnparen
-      - uncheckedInlineErr
-      - unlabelStmt
-      - unnamedResult
-      - unnecessaryBlock
-      - unnecessaryDefer
-      - weakCond
-      - yodaStyleExpr
-      # - deferInLoop
-      # - httpNoBody
-      # - whyNoLint
-  nolintlint:
-    # Enable to ensure that nolint directives are all used. Default is true.
-    allow-unused: false
-    # Exclude following linters from requiring an explanation.  Default is [].
-    allow-no-explanation: []
-    # Enable to require an explanation of nonzero length after each nolint directive. Default is false.
-    # TODO(lint): Enforce explanations for `nolint` directives
-    require-explanation: false
-    # Enable to require nolint directives to mention the specific linter being suppressed. Default is false.
-    require-specific: true
+    - zerologlint
+  disable:
+    - errcheck
+  settings:
+    gocyclo:
+      min-complexity: 35
+    godox:
+      keywords:
+        - BUG
+        - FIXME
+        - HACK
+    gosec:
+      excludes:
+        - G304
+    gosmopolitan:
+      # Allow and ignore `time.Local` usages.
+      #
+      # Default: false
+      allow-time-local: true
+    perfsprint:
+      integer-format: false
+    gocritic:
+      enabled-checks:
+        # Diagnostic
+        - commentedOutCode
+        - nilValReturn
+        - sloppyReassign
+        - weakCond
+        - octalLiteral
+
+        # Performance
+        - appendCombine
+        - equalFold
+        - hugeParam
+        - indexAlloc
+        - rangeExprCopy
+        - rangeValCopy
+
+        # Style
+        - boolExprSimplify
+        - commentedOutImport
+        - docStub
+        - emptyFallthrough
+        - emptyStringTest
+        - hexLiteral
+        - methodExprCall
+        - stringXbytes
+        - typeAssertChain
+        - unlabelStmt
+        - yodaStyleExpr
+        # - ifElseChain
+
+        # Opinionated
+        - builtinShadow
+        - importShadow
+        - initClause
+        - nestingReduce
+        - paramTypeCombine
+        - ptrToRefParam
+        - typeUnparen
+        - unnamedResult
+        - unnecessaryBlock
+    nolintlint:
+      # Enable to ensure that nolint directives are all used. Default is true.
+      allow-unused: false
+      # Exclude following linters from requiring an explanation.  Default is [].
+      allow-no-explanation: []
+      # Enable to require an explanation of nonzero length after each nolint directive. Default is false.
+      # TODO(lint): Enforce explanations for `nolint` directives
+      require-explanation: false
+      # Enable to require nolint directives to mention the specific linter being suppressed. Default is false.
+      require-specific: true
