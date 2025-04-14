@@ -18,6 +18,8 @@ package run
 
 import (
 	"time"
+
+	intoto "github.com/in-toto/attestation/go/v1"
 )
 
 type Run struct {
@@ -29,6 +31,7 @@ type Run struct {
 	Artifacts  []Artifact
 	StartTime  time.Time
 	EndTime    time.Time
+	BuildPoint *intoto.ResourceDescriptor
 	SystemData any
 }
 

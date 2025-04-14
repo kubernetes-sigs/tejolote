@@ -85,6 +85,10 @@ func (b *Builder) BuildPredicate(r *run.Run, draft *attestation.SLSAPredicate) (
 			pred.AddMaterial(u, commithash)
 		}
 	}
+
+	if r.BuildPoint != nil {
+		pred.AddMaterial(r.BuildPoint.GetUri(), r.BuildPoint.GetDigest())
+	}
 	return pred, nil
 }
 

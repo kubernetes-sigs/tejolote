@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/tejolote/pkg/attestation"
@@ -124,6 +125,13 @@ func (ghw *GitHubWorkflow) RefreshRun(r *run.Run) error {
 	}
 
 	r.SystemData = runData
+
+	r.BuildPoint = &intoto.ResourceDescriptor{
+		Uri: fmt.Sprintf("git+ssh://github.com/%s/%s@%s", org, repo, runData.HeadSHA),
+		Digest: map[string]string{
+			"sha1": runData.HeadSHA,
+		},
+	}
 
 	// TODO: Consider pulling the job data if specified and the workflow yaml.
 	// Using those we can populate the entry point better to the job, the label of
