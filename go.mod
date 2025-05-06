@@ -5,7 +5,7 @@ go 1.23.4
 toolchain go1.24.1
 
 require (
-	chainguard.dev/apko v0.27.1
+	chainguard.dev/apko v0.27.2
 	cloud.google.com/go/pubsub v1.49.0
 	cloud.google.com/go/storage v1.53.0
 	github.com/go-git/go-git/v5 v5.16.0
@@ -19,7 +19,7 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	github.com/uwu-tools/magex v0.10.1
-	golang.org/x/sync v0.13.0
+	golang.org/x/sync v0.14.0
 	google.golang.org/api v0.231.0
 	sigs.k8s.io/bom v0.6.0
 	sigs.k8s.io/release-sdk v0.12.2
