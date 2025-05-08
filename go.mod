@@ -5,7 +5,7 @@ go 1.23.4
 toolchain go1.24.1
 
 require (
-	chainguard.dev/apko v0.27.2
+	chainguard.dev/apko v0.27.3
 	cloud.google.com/go/pubsub v1.49.0
 	cloud.google.com/go/storage v1.53.0
 	github.com/go-git/go-git/v5 v5.16.0
@@ -238,7 +238,7 @@ require (
 	golang.org/x/mod v0.24.0 // indirect
 	golang.org/x/net v0.39.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.31.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
