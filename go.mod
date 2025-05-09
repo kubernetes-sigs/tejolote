@@ -5,7 +5,7 @@ go 1.23.4
 toolchain go1.24.1
 
 require (
-	chainguard.dev/apko v0.27.3
+	chainguard.dev/apko v0.27.4
 	cloud.google.com/go/pubsub v1.49.0
 	cloud.google.com/go/storage v1.53.0
 	github.com/go-git/go-git/v5 v5.16.0
