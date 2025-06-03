@@ -17,7 +17,6 @@ limitations under the License.
 package driver
 
 import (
-	"context"
 	"testing"
 
 	"cloud.google.com/go/storage"
@@ -36,7 +35,7 @@ func TestGCB(t *testing.T) {
 
 func TestGCSAttrs(t *testing.T) {
 	t.Skip("Review this test")
-	client, err := storage.NewClient(context.Background())
+	client, err := storage.NewClient(t.Context())
 	require.NoError(t, err)
 
 	attrs, err := readGCSObjectAttributes(client, "gs://puerco-chainguard-public/test-build/7a3bd0e/README.md")
