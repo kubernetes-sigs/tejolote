@@ -1,7 +1,7 @@
 cel.dev/expr v0.23.0 h1:wUb94w6OYQS4uXraxo9U+wUAs9jT47Xvl4iPgAwM2ss=
 cel.dev/expr v0.23.0/go.mod h1:hLPLo1W4QUmuYdA72RBX06QTs6MXw941piREPl3Yfiw=
-chainguard.dev/apko v0.29.2 h1:A7MrtHG/c7BVb+VUIlThX4xW76adOHL6SobRLIUbSkw=
-chainguard.dev/apko v0.29.2/go.mod h1:CSOVrykmtLIeJMLwP14qg4j0AbkY8u+en9t02ow86nw=
+chainguard.dev/apko v0.29.3 h1:bAEOjwLbGNQ7FO9+7Pewvcog4AzIHJxdYPC94JhkT/o=
+chainguard.dev/apko v0.29.3/go.mod h1:CSOVrykmtLIeJMLwP14qg4j0AbkY8u+en9t02ow86nw=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.121.1 h1:S3kTQSydxmu1JfLRLpKtxRPA7rSrYPRPEUmL/PavVUw=
 cloud.google.com/go v0.121.1/go.mod h1:nRFlrHq39MNVWu+zESP2PosMWA0ryJw8KUBZ2iZpxbw=
