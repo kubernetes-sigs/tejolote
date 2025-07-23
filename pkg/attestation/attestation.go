@@ -20,17 +20,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"time"
 
+	v1 "github.com/in-toto/attestation/go/v1"
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
-	"github.com/sirupsen/logrus"
 )
 
 type (
 	Attestation struct {
 		intoto.StatementHeader
-		Predicate SLSAPredicate `json:"predicate"`
+		Predicate Predicate `json:"predicate"`
 	}
 	SLSAPredicate slsa.ProvenancePredicate
 )
@@ -51,9 +52,14 @@ func (att *Attestation) SLSA() *Attestation {
 	return att
 }
 
+func (att *Attestation) SLSAv1() *Attestation {
+	att.Predicate = NewSLSAV1Predicate()
+	return att
+}
+
 // NewSLSAPredicate returns a new SLSA predicate fully initialized
-func NewSLSAPredicate() SLSAPredicate {
-	predicate := SLSAPredicate{
+func NewSLSAPredicate() *SLSAPredicate {
+	predicate := &SLSAPredicate{
 		Builder: common.ProvenanceBuilder{
 			ID: "", // TODO: Read builder from trusted environment
 		},
@@ -85,6 +91,39 @@ func NewSLSAPredicate() SLSAPredicate {
 	return predicate
 }
 
+func (pred *SLSAPredicate) SetBuilderID(id string) {
+	pred.Builder.ID = id
+}
+
+func (pred *SLSAPredicate) SetBuilderType(id string) {
+	pred.BuildType = id
+}
+
+func (pred *SLSAPredicate) SetInvocationID(id string) {
+	pred.Metadata.BuildInvocationID = id
+}
+
+func (pred *SLSAPredicate) SetConfigSource(src *v1.ResourceDescriptor) {
+	for algo, val := range src.GetDigest() {
+		pred.Invocation.ConfigSource.Digest[algo] = val
+	}
+	pred.Invocation.ConfigSource.URI = src.GetUri()
+}
+
+func (pred *SLSAPredicate) SetEntryPoint(ep string) {
+	pred.Invocation.ConfigSource.EntryPoint = ep
+}
+
+func (pred *SLSAPredicate) SetResolvedDependencies(deps []*v1.ResourceDescriptor) {
+	pred.Materials = []common.ProvenanceMaterial{}
+	for _, dep := range deps {
+		pred.Materials = append(pred.Materials, common.ProvenanceMaterial{
+			URI:    dep.GetUri(),
+			Digest: dep.GetDigest(),
+		})
+	}
+}
+
 func (att *Attestation) ToJSON() ([]byte, error) {
 	var b bytes.Buffer
 	enc := json.NewEncoder(&b)
@@ -98,20 +137,35 @@ func (att *Attestation) ToJSON() ([]byte, error) {
 }
 
 // AddMaterial add an entry to the materials
-func (pred *SLSAPredicate) AddMaterial(uri string, hashes map[string]string) {
+func (pred *SLSAPredicate) AddDependency(dep *v1.ResourceDescriptor) {
 	if pred.Materials == nil {
 		pred.Materials = []common.ProvenanceMaterial{}
 	}
-	for _, m := range pred.Materials {
-		if m.URI == uri {
-			logrus.Warnf(
-				"specified material %s is already in the attestation", uri,
-			)
+	mat := common.ProvenanceMaterial{
+		URI:    dep.GetUri(),
+		Digest: dep.GetDigest(),
+	}
+	for i, m := range pred.Materials {
+		if m.URI == dep.GetUri() {
+			pred.Materials[i] = mat
 			return
 		}
 	}
-	pred.Materials = append(pred.Materials, common.ProvenanceMaterial{
-		URI:    uri,
-		Digest: hashes,
-	})
+	pred.Materials = append(pred.Materials, mat)
+}
+
+func (pred *SLSAPredicate) SetBuildConfig(conf map[string]any) {
+	pred.BuildConfig = conf
+}
+
+func (pred *SLSAPredicate) SetInternalParameters(params map[string]any) {
+	pred.Invocation.Environment = params
+}
+
+func (pred *SLSAPredicate) SetStartedOn(d *time.Time) {
+	pred.Metadata.BuildStartedOn = d
+}
+
+func (pred *SLSAPredicate) SetFinishedOn(d *time.Time) {
+	pred.Metadata.BuildFinishedOn = d
 }
