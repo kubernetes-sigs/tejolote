@@ -28,7 +28,6 @@ import (
 	"time"
 
 	intoto "github.com/in-toto/attestation/go/v1"
-	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/tejolote/pkg/attestation"
 	"sigs.k8s.io/tejolote/pkg/github"
@@ -142,56 +141,54 @@ func (ghw *GitHubWorkflow) RefreshRun(r *run.Run) error {
 
 // BuildPredicate builds a predicate from the run data
 func (ghw *GitHubWorkflow) BuildPredicate(
-	r *run.Run, draft *attestation.SLSAPredicate,
-) (predicate *attestation.SLSAPredicate, err error) {
-	type githubEnvironment struct {
-		// The architecture of the runner.
-		Arch string            `json:"arch"`
-		Env  map[string]string `json:"env"`
-		// The context values that were referenced in the workflow definition.
-		// Secrets are set to the empty string.
-		Context struct {
-			GitHub map[string]string `json:"github"`
-			Runner map[string]string `json:"runner"`
-		} `json:"context"`
-	}
+	r *run.Run, draft attestation.Predicate,
+) (predicate attestation.Predicate, err error) {
 	org, repo, runID, err := parseGitHubURL(r.SpecURL)
 	if err != nil {
 		return nil, fmt.Errorf("parsing run spec URL: %w", nil)
 	}
+	repo = strings.TrimSuffix(repo, ".git")
 	if draft == nil {
 		pred := attestation.NewSLSAPredicate()
-		predicate = &pred
+		predicate = pred
 	} else {
 		predicate = draft
 	}
 
-	predicate.Builder.ID = "https://github.com/Attestations/GitHubHostedActions@v1"
-	predicate.BuildType = "https://github.com/Attestations/GitHubActionsWorkflow@v1"
+	predicate.SetBuilderID("https://github.com/Attestations/GitHubHostedActions@v1")
+	predicate.SetBuilderType("https://github.com/Attestations/GitHubActionsWorkflow@v1")
+
+	predicate.SetInvocationID(fmt.Sprintf("%d", runID))
+
+	confsource := &intoto.ResourceDescriptor{
+		Uri:    fmt.Sprintf("git+https://github.com/%s/%s", org, repo),
+		Digest: map[string]string{},
+	}
 
 	if ghrun, ok := r.SystemData.(*github.Run); ok {
-		predicate.Invocation.ConfigSource.Digest = common.DigestSet{
-			"sha1": ghrun.HeadSHA,
-		}
-		predicate.Invocation.ConfigSource.EntryPoint = ghrun.Path
+		confsource.Digest["sha1"] = ghrun.HeadSHA
+		confsource.Digest["gitCommit"] = ghrun.HeadSHA
+		predicate.SetBuilderID(fmt.Sprintf("https://github.com/%s/%s/%s@%s", org, repo, ghrun.Path, ghrun.HeadSHA))
+		predicate.SetEntryPoint(ghrun.Path)
+		predicate.SetStartedOn(ghrun.CreatedAt)
+		predicate.SetFinishedOn(ghrun.UpdatedAt)
 	}
 
-	predicate.Invocation.ConfigSource.URI = fmt.Sprintf(
-		"git+https://github.com/%s/%s.git", org, repo,
-	)
+	predicate.SetConfigSource(confsource)
+
 	// TODO: I think we need to checkout the file from git to fill
-	predicate.Invocation.Environment = githubEnvironment{
-		Arch: "",
-		Env:  map[string]string{},
-		Context: struct {
-			GitHub map[string]string `json:"github"`
-			Runner map[string]string `json:"runner"`
-		}{
-			GitHub: map[string]string{
-				"run_id": fmt.Sprintf("%d", runID),
+	predicate.SetInternalParameters(
+		map[string]any{
+			"arch": "",
+			"env":  map[string]string{},
+			"context": map[string]any{
+				"github": map[string]string{
+					"run_id": fmt.Sprintf("%d", runID),
+				},
+				"runner": map[string]string{},
 			},
 		},
-	}
+	)
 	return predicate, nil
 }
 
