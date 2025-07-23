@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"strings"
 
+	v1 "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/tejolote/pkg/attestation"
 	"sigs.k8s.io/tejolote/pkg/builder/driver"
@@ -63,31 +64,39 @@ func (b *Builder) RefreshRun(r *run.Run) error {
 	return b.driver.RefreshRun(r)
 }
 
-func (b *Builder) BuildPredicate(r *run.Run, draft *attestation.SLSAPredicate) (*attestation.SLSAPredicate, error) {
+func (b *Builder) BuildPredicate(r *run.Run, draft attestation.Predicate) (attestation.Predicate, error) {
 	pred, err := b.driver.BuildPredicate(r, draft)
 	if err != nil {
 		return nil, err
 	}
 	// If there is a VCS URL set, add it to the predicate
 	if b.VCSURL != "" {
-		commithash := map[string]string{}
 		u, commit, ok := strings.Cut(b.VCSURL, "@")
+		des := &v1.ResourceDescriptor{
+			Uri: u,
+		}
 		if ok {
 			// The thing after the @ may not be a commit
 			if len(commit) == 40 {
-				commithash["sha1"] = commit
+				des.Digest["sha1"] = commit
+				des.Digest["gitCommit"] = commit
 			} else {
-				u = b.VCSURL
+				des.Uri = b.VCSURL
 			}
-			pred.AddMaterial(u, commithash)
+			pred.AddDependency(des)
 		} else {
 			logrus.Warn("unable to read commit from vcs url")
-			pred.AddMaterial(u, commithash)
+			pred.AddDependency(des)
 		}
 	}
 
 	if r.BuildPoint != nil {
-		pred.AddMaterial(r.BuildPoint.GetUri(), r.BuildPoint.GetDigest())
+		pred.AddDependency(
+			&v1.ResourceDescriptor{
+				Uri:    r.BuildPoint.GetUri(),
+				Digest: r.BuildPoint.GetDigest(),
+			},
+		)
 	}
 	return pred, nil
 }

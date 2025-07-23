@@ -34,7 +34,7 @@ const (
 type BuildSystem interface {
 	GetRun(string) (*run.Run, error)
 	RefreshRun(*run.Run) error
-	BuildPredicate(*run.Run, *attestation.SLSAPredicate) (*attestation.SLSAPredicate, error)
+	BuildPredicate(*run.Run, attestation.Predicate) (attestation.Predicate, error)
 	ArtifactStores() []store.Store
 }
 

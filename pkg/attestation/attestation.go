@@ -22,15 +22,13 @@ import (
 	"fmt"
 
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
-	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
-	"github.com/sirupsen/logrus"
 )
 
 type (
 	Attestation struct {
 		intoto.StatementHeader
-		Predicate SLSAPredicate `json:"predicate"`
+		Predicate Predicate `json:"predicate"`
 	}
 	SLSAPredicate slsa.ProvenancePredicate
 )
@@ -51,38 +49,9 @@ func (att *Attestation) SLSA() *Attestation {
 	return att
 }
 
-// NewSLSAPredicate returns a new SLSA predicate fully initialized
-func NewSLSAPredicate() SLSAPredicate {
-	predicate := SLSAPredicate{
-		Builder: common.ProvenanceBuilder{
-			ID: "", // TODO: Read builder from trusted environment
-		},
-		BuildType: "",
-		Invocation: slsa.ProvenanceInvocation{
-			ConfigSource: slsa.ConfigSource{
-				URI:        "",
-				Digest:     map[string]string{},
-				EntryPoint: "",
-			},
-			Parameters:  nil,
-			Environment: nil,
-		},
-		BuildConfig: nil,
-		Metadata: &slsa.ProvenanceMetadata{
-			BuildInvocationID: "",
-			BuildStartedOn:    nil,
-			BuildFinishedOn:   nil,
-			Completeness: slsa.ProvenanceComplete{
-				Parameters:  true,
-				Environment: false,
-				Materials:   false,
-			},
-			Reproducible: false,
-		},
-		Materials: []common.ProvenanceMaterial{},
-	}
-
-	return predicate
+func (att *Attestation) SLSAv1() *Attestation {
+	att.Predicate = NewSLSAV1Predicate()
+	return att
 }
 
 func (att *Attestation) ToJSON() ([]byte, error) {
@@ -95,23 +64,4 @@ func (att *Attestation) ToJSON() ([]byte, error) {
 		return nil, fmt.Errorf("encoding spdx sbom: %w", err)
 	}
 	return b.Bytes(), nil
-}
-
-// AddMaterial add an entry to the materials
-func (pred *SLSAPredicate) AddMaterial(uri string, hashes map[string]string) {
-	if pred.Materials == nil {
-		pred.Materials = []common.ProvenanceMaterial{}
-	}
-	for _, m := range pred.Materials {
-		if m.URI == uri {
-			logrus.Warnf(
-				"specified material %s is already in the attestation", uri,
-			)
-			return
-		}
-	}
-	pred.Materials = append(pred.Materials, common.ProvenanceMaterial{
-		URI:    uri,
-		Digest: hashes,
-	})
 }

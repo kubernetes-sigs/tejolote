@@ -29,19 +29,19 @@ type Artifact struct {
 }
 
 type Run struct {
-	ID              int64  `json:"id"`
-	Status          string `json:"status"`
-	Conclusion      string `json:"conclusion"`
-	HeadBranch      string `json:"head_branch"`
-	HeadSHA         string `json:"head_sha"`
-	Path            string `json:"path"`
-	RunNumber       int64  `json:"run_number"`
-	WorkFlowID      int64  `json:"workflow_id"`
-	CreatedAt       string `json:"created_at"`
-	UpdatedAt       string `json:"updated_at"`
-	LogsURL         string `json:"logs_url"`
-	Actor           Actor  `json:"actor"`
-	TriggeringActor Actor  `json:"triggering_actor"`
+	ID              int64      `json:"id"`
+	Status          string     `json:"status"`
+	Conclusion      string     `json:"conclusion"`
+	HeadBranch      string     `json:"head_branch"`
+	HeadSHA         string     `json:"head_sha"`
+	Path            string     `json:"path"`
+	RunNumber       int64      `json:"run_number"`
+	WorkFlowID      int64      `json:"workflow_id"`
+	CreatedAt       *time.Time `json:"created_at"`
+	UpdatedAt       *time.Time `json:"updated_at"`
+	LogsURL         string     `json:"logs_url"`
+	Actor           Actor      `json:"actor"`
+	TriggeringActor Actor      `json:"triggering_actor"`
 }
 
 type Actor struct {

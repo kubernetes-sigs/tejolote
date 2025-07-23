@@ -30,6 +30,7 @@ import (
 	"strings"
 	"time"
 
+	v1 "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/cloudbuild/v1"
 	"sigs.k8s.io/tejolote/pkg/attestation"
@@ -178,7 +179,7 @@ func (gcb *GCB) RefreshRun(r *run.Run) error {
 
 // BuildPredicate returns a SLSA predicate populated with the GCB
 // run data as recommended by the SLSA 0.2 spec
-func (gcb *GCB) BuildPredicate(r *run.Run, draft *attestation.SLSAPredicate) (predicate *attestation.SLSAPredicate, err error) {
+func (gcb *GCB) BuildPredicate(r *run.Run, draft attestation.Predicate) (predicate attestation.Predicate, err error) {
 	type stepData struct {
 		Image     string   `json:"image"`
 		Arguments []string `json:"arguments"`
@@ -186,56 +187,60 @@ func (gcb *GCB) BuildPredicate(r *run.Run, draft *attestation.SLSAPredicate) (pr
 
 	if draft == nil {
 		pred := attestation.NewSLSAPredicate()
-		predicate = &pred
+		predicate = pred
 	} else {
 		logrus.Debug("Reusing existing slsa predicate")
 		predicate = draft
 	}
-	predicate.BuildType = "https://cloudbuild.googleapis.com/CloudBuildYaml@v1"
-	buildconfig := map[string][]stepData{}
+	predicate.SetBuilderType("https://cloudbuild.googleapis.com/CloudBuildYaml@v1")
+	buildconfig := map[string]any{}
 
-	buildconfig["steps"] = []stepData{}
+	steps := []stepData{}
 
 	for _, s := range r.Steps {
-		buildconfig["steps"] = append(buildconfig["steps"], stepData{
+		buildconfig["steps"] = append(steps, stepData{
 			Image:     s.Image,
 			Arguments: s.Params,
 		})
 	}
+	buildconfig["steps"] = steps
 
-	predicate.BuildConfig = buildconfig
+	predicate.SetBuildConfig(buildconfig)
 
 	// Get the platform specific data
 	build, ok := r.SystemData.(*cloudbuild.Build)
 	if ok {
+		confsource := &v1.ResourceDescriptor{}
 		if build.Substitutions != nil {
 			if c, ok := build.Substitutions["COMMIT_SHA"]; ok {
-				predicate.Invocation.ConfigSource.Digest["sha1"] = c
+				confsource.Digest["sha1"] = c
+				confsource.Digest["gitCommit"] = c
 			}
 			if t, ok := build.Substitutions["TRIGGER_BUILD_CONFIG_PATH"]; ok {
-				predicate.Invocation.ConfigSource.EntryPoint = t
+				predicate.SetEntryPoint(t)
 			}
 			if _, ok := build.Substitutions["REPO_NAME"]; ok {
-				predicate.Invocation.ConfigSource.URI = fmt.Sprintf(
+				confsource.Uri = fmt.Sprintf(
 					"git+https://source.developers.google.com/p/%s/r/%s",
 					gcb.ProjectID, build.Substitutions["REPO_NAME"],
 				)
 			}
 		}
 
-		if build.ServiceAccount != "" && predicate.Builder.ID == "" {
-			predicate.Builder.ID = build.ServiceAccount
+		if build.ServiceAccount != "" {
+			predicate.SetBuilderID(build.ServiceAccount)
 		}
 
 		// Check if we can extract the original repository from the trigger
 		if build.BuildTriggerId != "" {
 			repo, err := gcb.TriggerDetails(build.BuildTriggerId)
 			if err == nil {
-				predicate.Invocation.ConfigSource.URI = repo
+				confsource.Uri = repo
 			} else {
 				logrus.Error(fmt.Errorf("fetching trigger details: %w", err))
 			}
 		}
+		predicate.SetConfigSource(confsource)
 	}
 
 	// TODO: review this
