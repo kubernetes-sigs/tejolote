@@ -47,7 +47,8 @@ type Watcher struct {
 }
 
 type Options struct {
-	WaitForBuild bool // When true, the watcher will keep observing the run until it's done
+	WaitForBuild bool   // When true, the watcher will keep observing the run until it's done
+	SLSAVersion  string // SLSA version for the attestation predicate
 }
 
 func New(uri string) (w *Watcher, err error) {
@@ -109,6 +110,14 @@ func (w *Watcher) LoadAttestation(path string) error {
 	}
 
 	att := attestation.New().SLSA()
+	switch w.Options.SLSAVersion {
+	case "1", "1.0":
+		att = att.SLSAv1()
+	case "0.2", "":
+		att = att.SLSA()
+	default:
+		return fmt.Errorf("invalid SLSA version")
+	}
 
 	if err := json.Unmarshal(data, &att); err != nil {
 		return fmt.Errorf("unmarshaling attestation json: %w", err)
@@ -125,13 +134,23 @@ func (w *Watcher) AttestRun(r *run.Run) (att *attestation.Attestation, err error
 		logrus.Warn("run is still running, attestation may not capture en result")
 	}
 
-	att = attestation.New().SLSA()
+	// Generate the attestation according to the required version
+	att = attestation.New()
+	switch w.Options.SLSAVersion {
+	case "1", "1.0":
+		att = att.SLSAv1()
+	case "0.2", "":
+		att = att.SLSA()
+	default:
+		return nil, fmt.Errorf("invalid SLSA version")
+	}
+
 	if w.DraftAttestation != nil {
 		att = w.DraftAttestation
 	}
 
 	// Here, we need to check if its empty
-	pred := &att.Predicate
+	pred := att.Predicate
 	predicate, err := w.Builder.BuildPredicate(r, pred)
 	if err != nil {
 		return nil, fmt.Errorf("building predicate: %w", err)
@@ -149,7 +168,7 @@ func (w *Watcher) AttestRun(r *run.Run) (att *attestation.Attestation, err error
 		att.Subject = append(att.Subject, s)
 	}
 
-	att.Predicate = *predicate
+	att.Predicate = predicate
 	return att, nil
 }
 
