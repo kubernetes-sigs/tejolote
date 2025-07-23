@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"chainguard.dev/apko/pkg/vcs"
+	v1 "github.com/in-toto/attestation/go/v1"
 	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -104,6 +105,9 @@ attestation but with ".storage-snap.json" appended.
 				return fmt.Errorf("building watcher")
 			}
 
+			// TODO(puerco): Move the attestation build to support other versions
+			w.Options.SLSAVersion = "0.2"
+
 			// Add artifact monitors to the watcher
 			for _, uri := range startAttestationOpts.artifacts {
 				if err := w.AddArtifactSource(uri); err != nil {
@@ -162,15 +166,16 @@ attestation but with ".storage-snap.json" appended.
 
 			att.Predicate = predicate
 
-			att.Predicate.Builder.ID = startAttestationOpts.builder
-			att.Predicate.Invocation.ConfigSource.EntryPoint = startAttestationOpts.configSrcEntry
-			att.Predicate.Invocation.ConfigSource.URI = startAttestationOpts.configSrcURI
+			att.Predicate.SetBuilderID(startAttestationOpts.builder)
+			att.Predicate.SetEntryPoint(startAttestationOpts.configSrcEntry)
+			confsource := &v1.ResourceDescriptor{
+				Uri: startAttestationOpts.configSrcURI,
+			}
 			algo, val, ok := strings.Cut(startAttestationOpts.configSrcDigest, ":")
 			if ok {
-				att.Predicate.Invocation.ConfigSource.Digest = common.DigestSet{
-					algo: val,
-				}
+				confsource.Digest[algo] = val
 			}
+			att.Predicate.SetConfigSource(confsource)
 
 			json, err := att.ToJSON()
 			if err != nil {

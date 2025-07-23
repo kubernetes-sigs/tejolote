@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -35,14 +36,22 @@ type attestOptions struct {
 	vcsurl           string
 	encodedExisting  string
 	encodedSnapshots string
+	slsaVersion      string
 	artifacts        []string
 }
 
+var slsaVersions = []string{"1", "1.0", "0.2"}
+
 func (o *attestOptions) Verify() error {
+	errs := []error{}
 	if o.encodedExisting != "" && o.continueExisting != "" {
-		return errors.New("only --encoded-existing or --continue can be set at a time")
+		errs = append(errs, errors.New("only --encoded-existing or --continue can be set at a time"))
 	}
-	return nil
+
+	if !slices.Contains(slsaVersions, o.slsaVersion) {
+		errs = append(errs, fmt.Errorf("invalid slsa versions must be one of %v", slsaVersions))
+	}
+	return errors.Join(errs...)
 }
 
 func addAttest(parentCmd *cobra.Command) {
@@ -82,6 +91,8 @@ where they came from.
 			w.Builder.VCSURL = attestOpts.vcsurl
 
 			w.Options.WaitForBuild = attestOpts.waitForBuild
+			w.Options.SLSAVersion = attestOpts.slsaVersion
+
 			if !attestOpts.waitForBuild {
 				logrus.Warn("watcher will not wait for build, data may be incomplete")
 			}
@@ -101,7 +112,7 @@ where they came from.
 
 			// Watch the run run :)
 			if err := w.Watch(r); err != nil {
-				return fmt.Errorf("generating attestation: %w", err)
+				return fmt.Errorf("waiting for the run to finish: %w", err)
 			}
 
 			if attestOpts.encodedExisting != "" {
@@ -226,6 +237,13 @@ where they came from.
 		"encoded-snapshots",
 		"",
 		"encoded snapshots to continue",
+	)
+
+	attestCmd.PersistentFlags().StringVar(
+		&attestOpts.slsaVersion,
+		"slsa",
+		"1.0",
+		fmt.Sprintf("SLSA attestation version %v", slsaVersions),
 	)
 
 	_ = attestCmd.PersistentFlags().MarkHidden("encoded-attestation")
