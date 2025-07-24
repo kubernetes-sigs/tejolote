@@ -128,3 +128,7 @@ func (pred *SLSAPredicate) SetFinishedOn(d *time.Time) {
 func (pred *SLSAPredicate) Type() string {
 	return "https://slsa.dev/provenance/v0.2"
 }
+
+// This predicate type does not support external params
+func (pred *SLSAPredicate) AddExternalParameter(string, any) {
+}

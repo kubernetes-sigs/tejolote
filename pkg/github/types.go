@@ -29,19 +29,22 @@ type Artifact struct {
 }
 
 type Run struct {
-	ID              int64      `json:"id"`
-	Status          string     `json:"status"`
-	Conclusion      string     `json:"conclusion"`
-	HeadBranch      string     `json:"head_branch"`
-	HeadSHA         string     `json:"head_sha"`
-	Path            string     `json:"path"`
-	RunNumber       int64      `json:"run_number"`
-	WorkFlowID      int64      `json:"workflow_id"`
-	CreatedAt       *time.Time `json:"created_at"`
-	UpdatedAt       *time.Time `json:"updated_at"`
-	LogsURL         string     `json:"logs_url"`
-	Actor           Actor      `json:"actor"`
-	TriggeringActor Actor      `json:"triggering_actor"`
+	ID              int64         `json:"id"`
+	Status          string        `json:"status"`
+	Conclusion      string        `json:"conclusion"`
+	HeadBranch      string        `json:"head_branch"`
+	HeadSHA         string        `json:"head_sha"`
+	Path            string        `json:"path"`
+	RunNumber       int64         `json:"run_number"`
+	WorkFlowID      int64         `json:"workflow_id"`
+	RunAttempt      int64         `json:"run_attempt"`
+	CreatedAt       *time.Time    `json:"created_at"`
+	UpdatedAt       *time.Time    `json:"updated_at"`
+	LogsURL         string        `json:"logs_url"`
+	Event           string        `json:"event"`
+	Actor           Actor         `json:"actor"`
+	TriggeringActor Actor         `json:"triggering_actor"`
+	Repository      RunRepository `json:"repository"`
 }
 
 type Actor struct {
@@ -49,4 +52,16 @@ type Actor struct {
 	ID    int64  `json:"id"`
 	Type  string `json:"type"`
 	URL   string `json:"url"`
+}
+
+type RunRepository struct {
+	ID       int64        `json:"id"`
+	Name     string       `json:"name"`
+	FullName string       `json:"full_name"`
+	Owner    RunRepoOwner `json:"owner"`
+}
+
+type RunRepoOwner struct {
+	ID    int64  `json:"id"`
+	Login string `json:"login"`
 }
