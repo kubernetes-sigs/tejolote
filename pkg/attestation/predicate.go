@@ -30,6 +30,7 @@ type Predicate interface {
 	SetEntryPoint(string)
 	SetResolvedDependencies([]*v1.ResourceDescriptor)
 	SetInternalParameters(map[string]any)
+	AddExternalParameter(string, any)
 	AddDependency(*v1.ResourceDescriptor)
 	SetBuildConfig(map[string]any)
 	SetStartedOn(*time.Time)

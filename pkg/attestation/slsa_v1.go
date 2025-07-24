@@ -77,11 +77,20 @@ func (pred *SLSAPredicateV1) SetConfigSource(src *v1.ResourceDescriptor) {
 	if h, ok := src.GetDigest()["sha1"]; ok && h != "" {
 		lc8r += "@" + h
 	}
-	pred.BuildDefinition.ExternalParameters.Fields["source"] = structpb.NewStringValue(lc8r)
+	pred.AddExternalParameter("source", lc8r)
+}
+
+func (pred *SLSAPredicateV1) AddExternalParameter(key string, value any) {
+	leMap := pred.BuildDefinition.GetExternalParameters().AsMap()
+	leMap[key] = value
+	newStruct, err := structpb.NewStruct(leMap)
+	if err == nil {
+		pred.BuildDefinition.ExternalParameters = newStruct
+	}
 }
 
 func (pred *SLSAPredicateV1) SetEntryPoint(ep string) {
-	pred.BuildDefinition.ExternalParameters.Fields["entryPoint"] = structpb.NewStringValue(ep)
+	pred.AddExternalParameter("entryPoint", ep)
 }
 
 func (pred *SLSAPredicateV1) SetResolvedDependencies(deps []*v1.ResourceDescriptor) {

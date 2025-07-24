@@ -156,39 +156,68 @@ func (ghw *GitHubWorkflow) BuildPredicate(
 	}
 
 	predicate.SetBuilderID("https://github.com/Attestations/GitHubHostedActions@v1")
-	predicate.SetBuilderType("https://github.com/Attestations/GitHubActionsWorkflow@v1")
 
-	predicate.SetInvocationID(fmt.Sprintf("%d", runID))
+	predicate.SetBuilderType("https://actions.github.io/buildtypes/workflow/v1")
+
+	// Set the older builder type for SLSA 0.2:
+	if predicate.Type() == "https://slsa.dev/provenance/v0.2" {
+		predicate.SetBuilderType("https://github.com/Attestations/GitHubActionsWorkflow@v1")
+	}
 
 	confsource := &intoto.ResourceDescriptor{
 		Uri:    fmt.Sprintf("git+https://github.com/%s/%s", org, repo),
 		Digest: map[string]string{},
 	}
 
+	var event, repoId, ownerId string
 	if ghrun, ok := r.SystemData.(*github.Run); ok {
 		confsource.Digest["sha1"] = ghrun.HeadSHA
 		confsource.Digest["gitCommit"] = ghrun.HeadSHA
 		predicate.SetBuilderID(fmt.Sprintf("https://github.com/%s/%s/%s@%s", org, repo, ghrun.Path, ghrun.HeadSHA))
+		predicate.SetInvocationID(fmt.Sprintf("https://github.com/%s/%s/actions/runs/%d/attempts/%d", org, repo, runID, ghrun.RunAttempt))
 		predicate.SetEntryPoint(ghrun.Path)
 		predicate.SetStartedOn(ghrun.CreatedAt)
 		predicate.SetFinishedOn(ghrun.UpdatedAt)
+		event = ghrun.Event
+		repoId = fmt.Sprintf("%d", ghrun.Repository.ID)
+		ownerId = fmt.Sprintf("%d", ghrun.Repository.Owner.ID)
+
+		predicate.AddExternalParameter(
+			"workflow", map[string]any{
+				"path":       ghrun.Path,
+				"repository": fmt.Sprintf("https://github.com/%s/%s", org, repo),
+			},
+		)
 	}
 
 	predicate.SetConfigSource(confsource)
 
-	// TODO: I think we need to checkout the file from git to fill
 	predicate.SetInternalParameters(
 		map[string]any{
-			"arch": "",
-			"env":  map[string]string{},
-			"context": map[string]any{
-				"github": map[string]string{
-					"run_id": fmt.Sprintf("%d", runID),
-				},
-				"runner": map[string]string{},
+			"github": map[string]any{
+				"event_name":          event,
+				"repository_id":       repoId,
+				"repository_owner_id": ownerId,
+				"runner_environment":  "github-hosted",
 			},
 		},
 	)
+
+	// Compat with the old
+	if predicate.Type() == "https://slsa.dev/provenance/v0.2" {
+		predicate.SetInternalParameters(
+			map[string]any{
+				"arch": "",
+				"env":  map[string]string{},
+				"context": map[string]any{
+					"github": map[string]string{
+						"run_id": fmt.Sprintf("%d", runID),
+					},
+					"runner": map[string]string{},
+				},
+			},
+		)
+	}
 	return predicate, nil
 }
 
