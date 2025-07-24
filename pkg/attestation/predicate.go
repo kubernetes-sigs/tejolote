@@ -34,4 +34,5 @@ type Predicate interface {
 	SetBuildConfig(map[string]any)
 	SetStartedOn(*time.Time)
 	SetFinishedOn(*time.Time)
+	Type() string
 }

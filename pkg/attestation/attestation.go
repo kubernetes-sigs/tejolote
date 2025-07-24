@@ -36,9 +36,8 @@ type (
 func New() *Attestation {
 	attestation := &Attestation{
 		StatementHeader: intoto.StatementHeader{
-			Type:          intoto.StatementInTotoV01,
-			PredicateType: slsa.PredicateSLSAProvenance,
-			Subject:       []intoto.Subject{},
+			Type:    intoto.StatementInTotoV01,
+			Subject: []intoto.Subject{},
 		},
 	}
 	return attestation
@@ -46,11 +45,13 @@ func New() *Attestation {
 
 func (att *Attestation) SLSA() *Attestation {
 	att.Predicate = NewSLSAPredicate()
+	att.PredicateType = att.Predicate.Type()
 	return att
 }
 
 func (att *Attestation) SLSAv1() *Attestation {
 	att.Predicate = NewSLSAV1Predicate()
+	att.PredicateType = att.Predicate.Type()
 	return att
 }
 

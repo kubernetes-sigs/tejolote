@@ -124,3 +124,7 @@ func (pred *SLSAPredicate) SetStartedOn(d *time.Time) {
 func (pred *SLSAPredicate) SetFinishedOn(d *time.Time) {
 	pred.Metadata.BuildFinishedOn = d
 }
+
+func (pred *SLSAPredicate) Type() string {
+	return "https://slsa.dev/provenance/v0.2"
+}
