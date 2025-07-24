@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"maps"
 	"os"
 	"strings"
 	"time"
@@ -162,13 +163,12 @@ func (w *Watcher) AttestRun(r *run.Run) (att *attestation.Attestation, err error
 			Name:   a.Path,
 			Digest: common.DigestSet{},
 		}
-		for a, v := range a.Checksum {
-			s.Digest[a] = v
-		}
+		maps.Copy(s.Digest, a.Checksum)
 		att.Subject = append(att.Subject, s)
 	}
 
 	att.Predicate = predicate
+	att.PredicateType = att.Predicate.Type()
 	return att, nil
 }
 

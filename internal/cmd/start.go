@@ -165,6 +165,7 @@ attestation but with ".storage-snap.json" appended.
 			}
 
 			att.Predicate = predicate
+			att.PredicateType = att.Predicate.Type()
 
 			att.Predicate.SetBuilderID(startAttestationOpts.builder)
 			att.Predicate.SetEntryPoint(startAttestationOpts.configSrcEntry)

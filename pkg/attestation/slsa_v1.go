@@ -143,3 +143,7 @@ func (pred *SLSAPredicateV1) SetFinishedOn(d *time.Time) {
 	}
 	pred.RunDetails.Metadata.FinishedOn = timestamppb.New(*d)
 }
+
+func (pred *SLSAPredicateV1) Type() string {
+	return "https://slsa.dev/provenance/v1"
+}
