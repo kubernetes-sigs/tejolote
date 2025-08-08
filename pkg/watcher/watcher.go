@@ -28,7 +28,7 @@ import (
 	"strings"
 	"time"
 
-	"cloud.google.com/go/pubsub"
+	"cloud.google.com/go/pubsub/v2"
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 	"github.com/sirupsen/logrus"
@@ -319,7 +319,7 @@ func (w *Watcher) PublishToTopic(topicString string, message interface{}) (err e
 		log.Fatal(err)
 	}
 	defer client.Close()
-	topic := client.Topic(parts[3])
+	topic := client.Publisher(parts[3])
 
 	var data []byte
 	if m, ok := message.(StartMessage); ok {

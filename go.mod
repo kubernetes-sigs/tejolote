@@ -4,7 +4,7 @@ go 1.24.5
 
 require (
 	chainguard.dev/apko v0.30.2
-	cloud.google.com/go/pubsub v1.50.0
+	cloud.google.com/go/pubsub/v2 v2.0.0
 	cloud.google.com/go/storage v1.56.0
 	github.com/go-git/go-git/v5 v5.16.2
 	github.com/google/go-containerregistry v0.20.6
@@ -34,7 +34,6 @@ require (
 	cloud.google.com/go/iam v1.5.2 // indirect
 	cloud.google.com/go/longrunning v0.6.7 // indirect
 	cloud.google.com/go/monitoring v1.24.2 // indirect
-	cloud.google.com/go/pubsub/v2 v2.0.0 // indirect
 	cloud.google.com/go/spanner v1.82.0 // indirect
 	dario.cat/mergo v1.0.1 // indirect
 	github.com/AliyunContainerService/ack-ram-tool/pkg/credentials/provider v0.16.1 // indirect
@@ -234,6 +233,7 @@ require (
 	github.com/zeebo/errs v1.4.0 // indirect
 	gitlab.alpinelinux.org/alpine/go v0.10.1 // indirect
 	gitlab.com/gitlab-org/api/client-go v0.134.0 // indirect
+	go.einride.tech/aip v0.73.0 // indirect
 	go.mongodb.org/mongo-driver v1.17.3 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
