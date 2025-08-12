@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	gogit "github.com/go-git/go-git/v5"
-	"sigs.k8s.io/release-utils/util"
+	"sigs.k8s.io/release-utils/helpers"
 )
 
 const defaultRemote = "origin"
@@ -35,7 +35,7 @@ type Repository struct {
 
 // IsRepo return true is a directory is a git repo
 func IsRepo(path string) bool {
-	return util.Exists(filepath.Join(path, ".git"))
+	return helpers.Exists(filepath.Join(path, ".git"))
 }
 
 // NewRepository opens a git repository from the specified directory
