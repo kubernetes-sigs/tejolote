@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"sigs.k8s.io/bom/pkg/spdx"
-	"sigs.k8s.io/release-utils/util"
+	"sigs.k8s.io/release-utils/helpers"
 	"sigs.k8s.io/tejolote/pkg/run"
 )
 
@@ -45,7 +45,7 @@ func (parser *Parser) ReadArtifacts(path string) (*[]run.Artifact, error) {
 	for _, p := range doc.Packages {
 		artifactPath := filepath.Join(parser.Options.CWD, p.FileName)
 		// Only add files if the file exists
-		if !util.Exists(artifactPath) {
+		if !helpers.Exists(artifactPath) {
 			continue
 		}
 

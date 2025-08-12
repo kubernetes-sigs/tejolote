@@ -29,7 +29,7 @@ import (
 	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"sigs.k8s.io/release-utils/util"
+	"sigs.k8s.io/release-utils/helpers"
 	"sigs.k8s.io/tejolote/pkg/attestation"
 	"sigs.k8s.io/tejolote/pkg/watcher"
 )
@@ -194,7 +194,7 @@ attestation but with ".storage-snap.json" appended.
 
 			if startAttestationOpts.pubsub != "" {
 				var sdata []byte
-				if util.Exists(outputOps.FinalSnapshotStatePath(outputOps.OutputPath)) {
+				if helpers.Exists(outputOps.FinalSnapshotStatePath(outputOps.OutputPath)) {
 					sdata, err = os.ReadFile(outputOps.FinalSnapshotStatePath(outputOps.OutputPath))
 					if err != nil {
 						return fmt.Errorf("reading snapshot data: %w", err)
