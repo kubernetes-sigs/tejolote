@@ -21,7 +21,7 @@ require (
 	google.golang.org/api v0.246.0
 	google.golang.org/protobuf v1.36.7
 	sigs.k8s.io/bom v0.6.1-0.20250809182942-3af5abaeaa9e
-	sigs.k8s.io/release-sdk v0.12.4-0.20250809110342-befb0e4cde00
+	sigs.k8s.io/release-sdk v0.12.4
 	sigs.k8s.io/release-utils v0.12.1
 )
 
