@@ -1,6 +1,6 @@
 module sigs.k8s.io/tejolote
 
-go 1.24.5
+go 1.25
 
 require (
 	chainguard.dev/apko v0.30.6
