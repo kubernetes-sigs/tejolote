@@ -85,7 +85,7 @@ where they came from.
 
 			w, err := watcher.New(args[0])
 			if err != nil {
-				return fmt.Errorf("building watcher")
+				return fmt.Errorf("building watcher: %w", err)
 			}
 
 			w.Builder.VCSURL = attestOpts.vcsurl
