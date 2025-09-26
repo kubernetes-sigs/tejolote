@@ -59,7 +59,7 @@ func (att *Attestation) Sign() ([]byte, error) {
 		// FulcioAuthFlow:           "", //nolint: gocritic
 	}
 
-	sv, err := sign.SignerFromKeyOpts(ctx, certPath, certChainPath, ko)
+	sv, _, err := sign.SignerFromKeyOpts(ctx, certPath, certChainPath, ko)
 	if err != nil {
 		return nil, fmt.Errorf("getting signer: %w", err)
 	}
