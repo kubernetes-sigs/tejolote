@@ -3,7 +3,7 @@ module sigs.k8s.io/tejolote
 go 1.25
 
 require (
-	chainguard.dev/apko v0.30.12
+	chainguard.dev/apko v0.30.13
 	cloud.google.com/go/pubsub/v2 v2.0.0
 	cloud.google.com/go/storage v1.57.0
 	github.com/go-git/go-git/v5 v5.16.2
@@ -20,7 +20,7 @@ require (
 	golang.org/x/sync v0.17.0
 	google.golang.org/api v0.250.0
 	google.golang.org/protobuf v1.36.9
-	sigs.k8s.io/bom v0.7.0
+	sigs.k8s.io/bom v0.7.1
 	sigs.k8s.io/release-sdk v0.12.4
 	sigs.k8s.io/release-utils v0.12.2
 )
@@ -101,6 +101,7 @@ require (
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.16.3 // indirect
 	github.com/coreos/go-oidc/v3 v3.15.0 // indirect
+	github.com/creack/pty v1.1.24 // indirect
 	github.com/cyberphone/json-canonicalization v0.0.0-20241213102144-19d51d7fe467 // indirect
 	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
