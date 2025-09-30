@@ -18,11 +18,17 @@ jobs:
     steps:
       - name: Check out code onto GOPATH
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Extract version of Go to use
+        run: echo "GOVERSION=$(awk -F'[:@]' '/FROM golang/{print $2; exit}' Dockerfile.dev)" >> $GITHUB_ENV
 
       - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
         with:
-          go-version: '1.25'
+          go-version: '${{ env.GOVERSION }}'
           check-latest: true
+          cache: false
 
       - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6.4.0
@@ -39,4 +45,4 @@ jobs:
           args: buildBinariesSnapshot
 
       - name: check binary
-        run: ./dist/tejolote-amd64-linux version
+        run: ./dist/tejolote_linux_amd64_v1/tejolote version

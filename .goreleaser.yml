@@ -17,8 +17,6 @@ gomod:
 builds:
   - id: tejolote
     main: ./cmd/tejolote
-    no_unique_dist_dir: true
-    binary: tejolote-{{ .Arch }}-{{ .Os }}
     goos:
       - darwin
       - linux
@@ -46,8 +44,9 @@ builds:
       - "{{ .Env.TEJOLOTE_LDFLAGS }}"
 
 archives:
-  - format: binary
-    name_template: tejolote-{{ .Arch }}-{{ .Os }}
+  - formats:
+      - binary
+    name_template: "{{ .ProjectName }}-{{ .Arch }}-{{ .Os }}"
     allow_different_binary_count: true
 
 signs:
