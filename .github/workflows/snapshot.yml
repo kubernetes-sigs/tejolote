@@ -39,4 +39,4 @@ jobs:
           args: buildBinariesSnapshot
 
       - name: check binary
-        run: ./dist/tejolote-amd64-linux version
+        run: ./dist/tejolote_linux_amd64_v1/tejolote version
