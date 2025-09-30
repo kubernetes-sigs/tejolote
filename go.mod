@@ -4,7 +4,7 @@ go 1.25
 
 require (
 	chainguard.dev/apko v0.30.13
-	cloud.google.com/go/pubsub/v2 v2.0.0
+	cloud.google.com/go/pubsub/v2 v2.1.0
 	cloud.google.com/go/storage v1.57.0
 	github.com/go-git/go-git/v5 v5.16.2
 	github.com/google/go-containerregistry v0.20.6
@@ -246,7 +246,6 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	gitlab.alpinelinux.org/alpine/go v0.10.1 // indirect
 	gitlab.com/gitlab-org/api/client-go v0.143.3 // indirect
-	go.einride.tech/aip v0.73.0 // indirect
 	go.mongodb.org/mongo-driver v1.17.3 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
