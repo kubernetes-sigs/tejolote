@@ -33,7 +33,8 @@ type attestOptions struct {
 	waitForBuild     bool
 	sign             bool
 	continueExisting string
-	vcsurl           string
+	vcsurl           string // deprected
+	dependencyURIs   []string
 	encodedExisting  string
 	encodedSnapshots string
 	slsaVersion      string
@@ -60,16 +61,56 @@ func addAttest(parentCmd *cobra.Command) {
 
 	attestCmd := &cobra.Command{
 		Short: "Attest to a build system run",
-		Long: `tejolote attest buildsys://build-run/identifier
+		Long: `
+✨ tejolote attest buildsys://build-run/identifier
 	
-The run subcommand os tejolote executes a process intended to
-transform files. Generally this happens as part of a build, patching
-or cloning repositories.
+The attest subcommand queries a build system for information a about
+a run. Generally this happens as part of a build, patching or cloning
+repositories.
 
 Tejolote will monitor for changes that occurred during the command
-execution and will attest to them to generate provenance data of
-where they came from.
+execution and will attest them to generate provenance data of where 
+the changes originated.
+
+🔸 Artifact Data
+----------------
+
+Tejolote supports a number of artifact data sources. You specify them
+with the --artifact flag. For example, to read the artifacts uploaded
+to a github release you specify the source URI as follows:
+
+  --artifacts github://organization/repository/v1.0
+
+This URI instructs tejolote to read the artifacts from the v1.0 release
+page of the organization/repository repository. We support other sources
+such as GCS buckets, OCI registries and so on. Check the docs for more
+info.
+
+🔸 Dependency Data
+------------------
+
+Tejolote will record the source build point as a dependency in the
+SLSA predicate. If the build system reports more dependencies, these
+will be added to the predicate as well.
+
+You can manually add more dependencies using the --dependency flag:
+
+  tejolote attest buildsys://build-run/identifier \
+	--dependency=git+https://github.com/my/repo@shab81f221530e649... \
+	--dependency=container/image@sha256:616dbcba501fa7a170871e0c3... \
+	--dependency=https://example.com
 	
+As shown, you can add VCS locators image references that will get their
+hashes properly recorded or other strings which will be treated as URIs
+without interpreting them.
+
+🔸 Waiting for Run Jobs
+-----------------------
+
+If the --wait flag is specified, tejolote will keep polling the build system
+until the run is done. Once the build has concluded tejolote captures the
+build data and generates the provenance attestation.
+
 	`,
 		Use:               "attest",
 		SilenceUsage:      false,
@@ -88,7 +129,10 @@ where they came from.
 				return fmt.Errorf("building watcher: %w", err)
 			}
 
-			w.Builder.VCSURL = attestOpts.vcsurl
+			w.Builder.DependencyURIs = attestOpts.dependencyURIs
+			if attestOpts.vcsurl != "" {
+				w.Builder.DependencyURIs = append(w.Builder.DependencyURIs, attestOpts.vcsurl)
+			}
 
 			w.Options.WaitForBuild = attestOpts.waitForBuild
 			w.Options.SLSAVersion = attestOpts.slsaVersion
@@ -220,12 +264,23 @@ where they came from.
 		true,
 		"when watrching the run, wait for the build to finish",
 	)
+
+	// vcs-url is now deprecated but keep it hidden for compat
 	attestCmd.PersistentFlags().StringVar(
 		&attestOpts.vcsurl,
 		"vcs-url",
 		"",
-		"append a vcs URL to the atetstation materials",
+		"append a vcs URL to the attestation materials (deperected, use --dependency)",
 	)
+	_ = attestCmd.PersistentFlags().MarkHidden("vcs-url") //nolint:errcheck
+
+	attestCmd.PersistentFlags().StringSliceVar(
+		&attestOpts.dependencyURIs,
+		"dependency",
+		[]string{},
+		"append a URI to the attestation dependencies (parses VCS locators and image refs)",
+	)
+
 	attestCmd.PersistentFlags().StringVar(
 		&attestOpts.encodedExisting,
 		"encoded-attestation",

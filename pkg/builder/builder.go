@@ -29,9 +29,9 @@ import (
 )
 
 type Builder struct {
-	SpecURL string
-	VCSURL  string
-	driver  driver.BuildSystem
+	SpecURL        string
+	DependencyURIs []string
+	driver         driver.BuildSystem
 }
 
 // New returns a new builder loaded with the driver derived from
@@ -64,21 +64,22 @@ func (b *Builder) RefreshRun(r *run.Run) error {
 	return b.driver.RefreshRun(r)
 }
 
+// BuildPredicate builds the data struct for the configured predicate
 func (b *Builder) BuildPredicate(r *run.Run, draft attestation.Predicate) (attestation.Predicate, error) {
 	pred, err := b.driver.BuildPredicate(r, draft)
 	if err != nil {
 		return nil, err
 	}
-	// If there is a VCS URL set, add it to the predicate
-	if b.VCSURL != "" {
-		uri := b.VCSURL
+
+	// Add any dependency URIs to the predicate
+	for _, uri := range b.DependencyURIs {
 		u, commit, ok := strings.Cut(uri, "@")
 		des := &v1.ResourceDescriptor{
 			Uri:    u,
 			Digest: map[string]string{},
 		}
 		if ok {
-			// The thing after the @ may not be a commit but we also want to
+			// The string after the @ may not be a commit, but we also want to
 			// support other, non VCS URIs, such as image references.
 
 			// Cut the string, to check if its a digest string
