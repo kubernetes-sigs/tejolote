@@ -21,7 +21,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"sigs.k8s.io/bom/pkg/spdx"
+	"github.com/protobom/protobom/pkg/reader"
+	"github.com/protobom/protobom/pkg/sbom"
 	"sigs.k8s.io/release-utils/helpers"
 	"sigs.k8s.io/tejolote/pkg/run"
 )
@@ -31,31 +32,46 @@ type Parser struct {
 }
 
 type Options struct {
-	CWD string
+	CWD        string
+	CheckPaths bool
 }
 
+// ReadArtifacts reads the artifact list from an SBOM
 func (parser *Parser) ReadArtifacts(path string) (*[]run.Artifact, error) {
-	doc, err := spdx.OpenDoc(path)
+	r := reader.New()
+	doc, err := r.ParseFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("opening doc: %w", err)
+		return nil, fmt.Errorf("parsing SBOM from %q: %w", path, err)
 	}
 
 	list := []run.Artifact{}
 
-	for _, p := range doc.Packages {
-		artifactPath := filepath.Join(parser.Options.CWD, p.FileName)
+	// Return the top level nodes, avoiding dependencies. This probably shoould
+	// be more flexible but most SBOMs are structured this way.
+	for _, n := range doc.GetRootNodes() {
 		// Only add files if the file exists
-		if !helpers.Exists(artifactPath) {
-			continue
+		if parser.Options.CheckPaths {
+			if n.GetFileName() == "" {
+				continue
+			}
+			artifactPath := filepath.Join(parser.Options.CWD, n.GetFileName())
+			if !helpers.Exists(artifactPath) {
+				continue
+			}
 		}
 
 		// Prefer sha256 to match
-
-		list = append(list, run.Artifact{
-			Path:     p.FileName,
-			Checksum: p.Checksum,
+		artifact := run.Artifact{
+			Path:     n.GetFileName(),
+			Checksum: map[string]string{},
 			Time:     time.Time{},
-		})
+		}
+
+		for algoID, value := range n.GetHashes() {
+			artifact.Checksum[sbom.HashAlgorithm(algoID).String()] = value
+		}
+
+		list = append(list, artifact)
 	}
 	return &list, nil
 }
