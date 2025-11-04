@@ -62,7 +62,7 @@ func (att *Attestation) ToJSON() ([]byte, error) {
 	enc.SetEscapeHTML(false)
 
 	if err := enc.Encode(att); err != nil {
-		return nil, fmt.Errorf("encoding spdx sbom: %w", err)
+		return nil, fmt.Errorf("encoding attestation: %w", err)
 	}
 	return b.Bytes(), nil
 }

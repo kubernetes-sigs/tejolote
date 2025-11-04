@@ -22,8 +22,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/protobom/protobom/pkg/reader"
+	"github.com/protobom/protobom/pkg/sbom"
 	"github.com/sirupsen/logrus"
-	"sigs.k8s.io/bom/pkg/spdx"
 	"sigs.k8s.io/tejolote/pkg/run"
 	"sigs.k8s.io/tejolote/pkg/store/snapshot"
 )
@@ -32,6 +33,7 @@ type SPDX struct {
 	URL string
 }
 
+// NewSPDX creates a new SPDX storage
 func NewSPDX(specURL string) (*SPDX, error) {
 	u, err := url.Parse(specURL)
 	if err != nil {
@@ -45,7 +47,7 @@ func NewSPDX(specURL string) (*SPDX, error) {
 		"Initialized new SPDX SBOM storage backend (%s)", specURL,
 	)
 
-	// TODO: Check scheme to make sure it is valid
+	// TODO(puerco): Check scheme to make sure it is valid
 	return &SPDX{
 		URL: strings.TrimPrefix(specURL, "spdx+"),
 	}, nil
@@ -62,39 +64,34 @@ func (s *SPDX) Snap() (*snapshot.Snapshot, error) {
 		return nil, fmt.Errorf("downloading sbom to temp file: %w", err)
 	}
 
-	doc, err := spdx.OpenDoc(f.Name())
+	doc, err := reader.New().ParseFile(f.Name())
 	if err != nil {
-		return nil, fmt.Errorf("parsing spdx sbom: %w", err)
+		return nil, fmt.Errorf("parsing SBOM: %w", err)
 	}
 
 	snap := snapshot.Snapshot{}
 
 	// Add the spdx packages
-	for _, p := range doc.Packages {
-		// First, check to see if the SBOM has a purl
-		identifier := ""
-		for _, ref := range p.ExternalRefs {
-			if ref.Type == "purl" {
-				identifier = ref.Locator
-				break
-			}
-		}
+	for _, node := range doc.GetRootNodes() {
+		// First, check to see if the package has a purl
+		identifier := string(node.Purl())
 
 		// If not, try download location
-		if identifier == "" && p.DownloadLocation != "" {
-			identifier = p.DownloadLocation
+		if identifier == "" && node.GetUrlDownload() != "" {
+			identifier = node.GetUrlDownload()
 		}
 
 		// If else fails, use the package name
-		// TODO: Think if this works
+		// TODO(puerco): We should rather expand artifact to be a full resource
+		// descriptor and put the name there. Oh well.
 		if identifier == "" {
-			identifier = p.Name
+			identifier = node.GetName()
 		}
 
 		// Should we list packages without checksums?
 		// Leaving this commented because it breaks with the kubernetes sboms
 		// but perhaps we should be stricter here
-		if len(p.Checksum) == 0 {
+		if len(node.GetHashes()) == 0 {
 			logrus.Warnf("SPDX package %s has no checksum", identifier)
 			continue
 		}
@@ -103,8 +100,8 @@ func (s *SPDX) Snap() (*snapshot.Snapshot, error) {
 			Path:     identifier,
 			Checksum: map[string]string{},
 		}
-		for algo, c := range p.Checksum {
-			artifact.Checksum[algo] = c
+		for algoID, value := range node.GetHashes() {
+			artifact.Checksum[sbom.HashAlgorithm(algoID).String()] = value
 		}
 
 		snap[identifier] = artifact
