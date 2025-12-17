@@ -2,8 +2,8 @@ al.essio.dev/pkg/shellescape v1.6.0 h1:NxFcEqzFSEVCGN2yq7Huv/9hyCEGVa/TncnOOBBeX
 al.essio.dev/pkg/shellescape v1.6.0/go.mod h1:6sIqp7X2P6mThCQ7twERpZTuigpr6KbZWtls1U8I890=
 cel.dev/expr v0.24.0 h1:56OvJKSH3hDGL0ml5uSxZmz3/3Pq4tJ+fb1unVLAFcY=
 cel.dev/expr v0.24.0/go.mod h1:hLPLo1W4QUmuYdA72RBX06QTs6MXw941piREPl3Yfiw=
-chainguard.dev/apko v0.30.31 h1:7wWsCxdwLOEf4oOrKX7VkGmoibfvVaf3FhIDLoWjXVA=
-chainguard.dev/apko v0.30.31/go.mod h1:d9NfhhEs/0YTTXaasfeLsLiHGBIO5JPF7xTFl7sQtrQ=
+chainguard.dev/apko v0.30.32 h1:tmo2PgplEDQTWF0OKGq7qxRT4ptI819GPCsvUNmmPS0=
+chainguard.dev/apko v0.30.32/go.mod h1:d9NfhhEs/0YTTXaasfeLsLiHGBIO5JPF7xTFl7sQtrQ=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=
