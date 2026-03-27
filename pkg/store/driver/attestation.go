@@ -19,7 +19,6 @@ package driver
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -27,8 +26,9 @@ import (
 	"os"
 	"strings"
 
-	intoto "github.com/in-toto/in-toto-golang/in_toto"
+	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/encoding/protojson"
 	"sigs.k8s.io/tejolote/pkg/run"
 	"sigs.k8s.io/tejolote/pkg/store/snapshot"
 )
@@ -88,6 +88,7 @@ func downloadURL(sourceURL string, w io.Writer) error {
 
 func (att *Attestation) Snap() (*snapshot.Snapshot, error) {
 	inTotoAtt := intoto.Statement{}
+
 	// Parse the attestation
 	rawData, err := att.downloadAttestation()
 	if err != nil {
@@ -95,7 +96,7 @@ func (att *Attestation) Snap() (*snapshot.Snapshot, error) {
 	}
 
 	// Parse the json data
-	if err := json.Unmarshal(rawData, &inTotoAtt); err != nil {
+	if err := protojson.Unmarshal(rawData, &inTotoAtt); err != nil {
 		return nil, fmt.Errorf("unmarshalling attestation data: %w", err)
 	}
 	snap := snapshot.Snapshot{}
@@ -103,13 +104,13 @@ func (att *Attestation) Snap() (*snapshot.Snapshot, error) {
 		return &snap, nil
 	}
 
-	for _, s := range inTotoAtt.Subject {
-		snap[s.Name] = run.Artifact{
-			Path:     s.Name,
+	for _, s := range inTotoAtt.GetSubject() {
+		snap[s.GetName()] = run.Artifact{
+			Path:     s.GetName(),
 			Checksum: map[string]string{},
 		}
-		for h, val := range s.Digest {
-			snap[s.Name].Checksum[h] = val
+		for h, val := range s.GetDigest() {
+			snap[s.GetName()].Checksum[h] = val
 		}
 	}
 	return &snap, nil

@@ -17,28 +17,28 @@ limitations under the License.
 package attestation
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 
-	intoto "github.com/in-toto/in-toto-golang/in_toto"
-	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
+	intoto "github.com/in-toto/attestation/go/v1"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type (
 	Attestation struct {
-		intoto.StatementHeader
+		intoto.Statement
 		Predicate Predicate `json:"predicate"`
 	}
-	SLSAPredicate slsa.ProvenancePredicate
 )
 
 func New() *Attestation {
 	attestation := &Attestation{
-		StatementHeader: intoto.StatementHeader{
-			Type:    intoto.StatementInTotoV01,
-			Subject: []intoto.Subject{},
+		Statement: intoto.Statement{
+			Type:    intoto.StatementTypeUri,
+			Subject: []*intoto.ResourceDescriptor{},
 		},
+		Predicate: nil,
 	}
 	return attestation
 }
@@ -56,13 +56,33 @@ func (att *Attestation) SLSAv1() *Attestation {
 }
 
 func (att *Attestation) ToJSON() ([]byte, error) {
-	var b bytes.Buffer
-	enc := json.NewEncoder(&b)
-	enc.SetIndent("", "  ")
-	enc.SetEscapeHTML(false)
-
-	if err := enc.Encode(att); err != nil {
-		return nil, fmt.Errorf("encoding attestation: %w", err)
+	// Convert the typed Predicate into a *structpb.Struct so it is
+	// included in the protobuf Statement serialization.
+	if att.Predicate != nil {
+		predJSON, err := json.Marshal(att.Predicate)
+		if err != nil {
+			return nil, fmt.Errorf("marshaling predicate to JSON: %w", err)
+		}
+		var predMap map[string]interface{}
+		if err := json.Unmarshal(predJSON, &predMap); err != nil {
+			return nil, fmt.Errorf("unmarshaling predicate JSON: %w", err)
+		}
+		s, err := structpb.NewStruct(predMap)
+		if err != nil {
+			return nil, fmt.Errorf("converting predicate to structpb: %w", err)
+		}
+		att.Statement.Predicate = s
 	}
-	return b.Bytes(), nil
+
+	m := protojson.MarshalOptions{
+		Multiline: true,
+		Indent:    "  ",
+	}
+
+	jsonData, err := m.Marshal(&att.Statement)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling attestation: %w", err)
+	}
+
+	return jsonData, nil
 }

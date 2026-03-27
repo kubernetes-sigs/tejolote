@@ -18,6 +18,7 @@ package github
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -25,6 +26,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	khttp "sigs.k8s.io/release-utils/http"
 )
 
 // TokenScopes returns the scopes of token in the eviroment
@@ -81,35 +83,54 @@ func APIGetRequest(url string) (*http.Response, error) {
 }
 
 func Download(url string, f io.Writer) error {
-	client := &http.Client{}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
-	if err != nil {
-		return fmt.Errorf("creating http request: %w", err)
-	}
+	agent := NewAgent()
+	return agent.GetToWriter(f, url)
+}
 
+// NewAgent returns a new khttp.Agent configured with GitHub authentication.
+func NewAgent() *khttp.Agent {
+	agent := khttp.NewAgent().WithFailOnHTTPError(true)
+	agent.SetImplementation(&githubAgentImpl{})
+	return agent
+}
+
+// githubAgentImpl injects the GitHub token into requests.
+type githubAgentImpl struct{}
+
+func (g *githubAgentImpl) SendGetRequest(client *http.Client, u string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, u, nil)
+	if err != nil {
+		return nil, fmt.Errorf("creating http request: %w", err)
+	}
+	setGitHubAuth(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("executing http request: %w", err)
+	}
+	return resp, nil
+}
+
+func (g *githubAgentImpl) SendPostRequest(client *http.Client, u string, postData []byte, contentType string) (*http.Response, error) {
+	return nil, errors.New("POST not supported for GitHub agent")
+}
+
+func (g *githubAgentImpl) SendHeadRequest(client *http.Client, u string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodHead, u, nil)
+	if err != nil {
+		return nil, fmt.Errorf("creating http request: %w", err)
+	}
+	setGitHubAuth(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("executing http request: %w", err)
+	}
+	return resp, nil
+}
+
+func setGitHubAuth(req *http.Request) {
 	if os.Getenv("GITHUB_TOKEN") != "" {
 		req.Header.Set("Authorization", fmt.Sprintf("token %s", os.Getenv("GITHUB_TOKEN")))
 	} else {
 		logrus.Warn("making unauthenticated request to github")
 	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("executing http request to GitHub API: %w", err)
-	}
-
-	// Check server response
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("http error when downloading: %s", resp.Status)
-	}
-
-	defer resp.Body.Close()
-
-	// Writer the body to file
-	numBytes, err := io.Copy(f, resp.Body)
-	if err != nil {
-		return fmt.Errorf("writing http response to disk: %w", err)
-	}
-	logrus.Infof("%d MB downloaded from %s", (numBytes / 1024 / 1024), url)
-	return nil
 }

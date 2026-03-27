@@ -25,8 +25,8 @@ import (
 	"strings"
 
 	"chainguard.dev/apko/pkg/vcs"
-	v1 "github.com/in-toto/attestation/go/v1"
-	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
+	slsav02 "github.com/in-toto/attestation/go/predicates/provenance/v02"
+	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/release-utils/helpers"
@@ -146,8 +146,8 @@ attestation but with ".storage-snap.json" appended.
 			}
 
 			if vcsURL != "" {
-				material := common.ProvenanceMaterial{
-					URI:    vcsURL,
+				material := &slsav02.Material{
+					Uri:    vcsURL,
 					Digest: map[string]string{},
 				}
 				commithash := map[string]string{}
@@ -158,7 +158,7 @@ attestation but with ".storage-snap.json" appended.
 					} else {
 						repoURL = vcsURL
 					}
-					material.URI = repoURL
+					material.Uri = repoURL
 					material.Digest = commithash
 				}
 				predicate.Materials = append(predicate.Materials, material)
@@ -169,7 +169,7 @@ attestation but with ".storage-snap.json" appended.
 
 			att.Predicate.SetBuilderID(startAttestationOpts.builder)
 			att.Predicate.SetEntryPoint(startAttestationOpts.configSrcEntry)
-			confsource := &v1.ResourceDescriptor{
+			confsource := &intoto.ResourceDescriptor{
 				Uri: startAttestationOpts.configSrcURI,
 			}
 			algo, val, ok := strings.Cut(startAttestationOpts.configSrcDigest, ":")

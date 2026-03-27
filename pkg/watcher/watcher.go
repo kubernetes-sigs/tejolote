@@ -29,8 +29,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/pubsub/v2"
-	intoto "github.com/in-toto/in-toto-golang/in_toto"
-	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
+	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/tejolote/pkg/attestation"
 	"sigs.k8s.io/tejolote/pkg/builder"
@@ -138,9 +137,9 @@ func (w *Watcher) AttestRun(r *run.Run) (att *attestation.Attestation, err error
 	// Generate the attestation according to the required version
 	att = attestation.New()
 	switch w.Options.SLSAVersion {
-	case "1", "1.0":
+	case "1", "1.0", "v1":
 		att = att.SLSAv1()
-	case "0.2", "":
+	case "02", "0.2", "", "v02", "v0.2":
 		att = att.SLSA()
 	default:
 		return nil, fmt.Errorf("invalid SLSA version")
@@ -159,11 +158,11 @@ func (w *Watcher) AttestRun(r *run.Run) (att *attestation.Attestation, err error
 
 	// Add the run artifacts to the attestation
 	for _, a := range r.Artifacts {
-		s := intoto.Subject{
+		s := &intoto.ResourceDescriptor{
 			Name:   a.Path,
-			Digest: common.DigestSet{},
+			Digest: map[string]string{},
 		}
-		maps.Copy(s.Digest, a.Checksum)
+		maps.Copy(s.GetDigest(), a.Checksum)
 		att.Subject = append(att.Subject, s)
 	}
 

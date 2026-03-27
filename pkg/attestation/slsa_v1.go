@@ -21,41 +21,36 @@ import (
 
 	slsa1 "github.com/in-toto/attestation/go/predicates/provenance/v1"
 	v1 "github.com/in-toto/attestation/go/v1"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type SLSAPredicateV1 struct {
-	slsa1.Provenance
-}
+type SLSAPredicateV1 slsa1.Provenance
 
 func NewSLSAV1Predicate() *SLSAPredicateV1 {
 	return &SLSAPredicateV1{
-		Provenance: slsa1.Provenance{
-			BuildDefinition: &slsa1.BuildDefinition{
-				BuildType: "",
-				ExternalParameters: &structpb.Struct{
-					Fields: map[string]*structpb.Value{},
-				},
-				InternalParameters: &structpb.Struct{
-					Fields: map[string]*structpb.Value{},
-				},
-				ResolvedDependencies: []*v1.ResourceDescriptor{},
+		BuildDefinition: &slsa1.BuildDefinition{
+			BuildType: "",
+			ExternalParameters: &structpb.Struct{
+				Fields: map[string]*structpb.Value{},
 			},
-			RunDetails: &slsa1.RunDetails{
-				Builder: &slsa1.Builder{
-					Id:      "",
-					Version: map[string]string{},
-					// BuilderDependencies: []*v1.ResourceDescriptor{},
-				},
-				Metadata: &slsa1.BuildMetadata{
-					InvocationId: "",
-					StartedOn:    &timestamppb.Timestamp{},
-					FinishedOn:   &timestamppb.Timestamp{},
-				},
-				Byproducts: []*v1.ResourceDescriptor{},
+			InternalParameters: &structpb.Struct{
+				Fields: map[string]*structpb.Value{},
 			},
+			ResolvedDependencies: []*v1.ResourceDescriptor{},
+		},
+		RunDetails: &slsa1.RunDetails{
+			Builder: &slsa1.Builder{
+				Id:      "",
+				Version: map[string]string{},
+				// BuilderDependencies: []*v1.ResourceDescriptor{},
+			},
+			Metadata: &slsa1.BuildMetadata{
+				InvocationId: "",
+				StartedOn:    &timestamppb.Timestamp{},
+				FinishedOn:   &timestamppb.Timestamp{},
+			},
+			Byproducts: []*v1.ResourceDescriptor{},
 		},
 	}
 }
@@ -128,13 +123,6 @@ func (pred *SLSAPredicateV1) SetInternalParameters(params map[string]any) {
 
 func (pred *SLSAPredicateV1) AddDependency(dep *v1.ResourceDescriptor) {
 	pred.BuildDefinition.ResolvedDependencies = append(pred.BuildDefinition.ResolvedDependencies, dep)
-}
-
-func (pred *SLSAPredicateV1) MarshalJSON() ([]byte, error) {
-	return protojson.MarshalOptions{
-		Multiline: true,
-		Indent:    "  ",
-	}.Marshal(pred)
 }
 
 func (pred *SLSAPredicateV1) SetStartedOn(d *time.Time) {

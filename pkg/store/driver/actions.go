@@ -102,29 +102,41 @@ func (a *Actions) readArtifacts() ([]run.Artifact, error) {
 		return nil, fmt.Errorf("creating temp dir: %w", err)
 	}
 
-	ret := []run.Artifact{}
-
-	for _, a := range artifacts.Artifacts {
-		f, err := os.Create(filepath.Join(tmpdir, a.Name))
+	// Create files and writers for parallel download
+	urls := make([]string, len(artifacts.Artifacts))
+	files := make([]*os.File, len(artifacts.Artifacts))
+	writers := make([]io.Writer, len(artifacts.Artifacts))
+	for i, art := range artifacts.Artifacts {
+		f, err := os.Create(filepath.Join(tmpdir, art.Name))
 		if err != nil {
 			return nil, fmt.Errorf("creating artifact file: %w", err)
 		}
 		defer f.Close()
-		if err := github.Download(a.URL, f); err != nil {
-			return nil, fmt.Errorf(
-				"downloading artifact from %s: %w", a.URL, err,
-			)
-		}
-		shaVal, err := hash.SHA256ForFile(f.Name())
+		urls[i] = art.URL
+		files[i] = f
+		writers[i] = f
+	}
+
+	// Download all artifacts in parallel
+	agent := github.NewAgent()
+	errs := agent.GetToWriterGroup(writers, urls)
+	if err := errors.Join(errs...); err != nil {
+		return nil, fmt.Errorf("downloading artifacts: %w", err)
+	}
+
+	// Hash the downloaded files and build the result
+	ret := make([]run.Artifact, 0, len(artifacts.Artifacts))
+	for i, art := range artifacts.Artifacts {
+		shaVal, err := hash.SHA256ForFile(files[i].Name())
 		if err != nil {
 			return nil, fmt.Errorf("hashing file: %w", err)
 		}
 		ret = append(ret, run.Artifact{
-			Path: runURL + "/" + a.Name,
+			Path: runURL + "/" + art.Name,
 			Checksum: map[string]string{
 				string(intoto.AlgorithmSHA256): shaVal,
 			},
-			Time: a.UpdatedAt,
+			Time: art.UpdatedAt,
 		})
 	}
 	logrus.Infof("%d artifacts collected from run %d", len(ret), a.RunID)
