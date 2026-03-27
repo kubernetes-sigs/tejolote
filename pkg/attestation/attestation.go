@@ -17,28 +17,26 @@ limitations under the License.
 package attestation
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 
-	intoto "github.com/in-toto/in-toto-golang/in_toto"
-	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
+	intoto "github.com/in-toto/attestation/go/v1"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type (
 	Attestation struct {
-		intoto.StatementHeader
+		intoto.Statement
 		Predicate Predicate `json:"predicate"`
 	}
-	SLSAPredicate slsa.ProvenancePredicate
 )
 
 func New() *Attestation {
 	attestation := &Attestation{
-		StatementHeader: intoto.StatementHeader{
-			Type:    intoto.StatementInTotoV01,
-			Subject: []intoto.Subject{},
+		Statement: intoto.Statement{
+			Type:    intoto.StatementTypeUri,
+			Subject: []*intoto.ResourceDescriptor{},
 		},
+		Predicate: nil,
 	}
 	return attestation
 }
@@ -56,13 +54,15 @@ func (att *Attestation) SLSAv1() *Attestation {
 }
 
 func (att *Attestation) ToJSON() ([]byte, error) {
-	var b bytes.Buffer
-	enc := json.NewEncoder(&b)
-	enc.SetIndent("", "  ")
-	enc.SetEscapeHTML(false)
-
-	if err := enc.Encode(att); err != nil {
-		return nil, fmt.Errorf("encoding attestation: %w", err)
+	m := protojson.MarshalOptions{
+		Multiline: true,
+		Indent:    "  ",
 	}
-	return b.Bytes(), nil
+
+	jsonData, err := m.Marshal(att)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling predicate: %w", err)
+	}
+
+	return jsonData, nil
 }

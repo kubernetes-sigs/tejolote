@@ -8,7 +8,7 @@ require (
 	cloud.google.com/go/storage v1.59.1
 	github.com/go-git/go-git/v5 v5.16.4
 	github.com/google/go-containerregistry v0.20.7
-	github.com/in-toto/attestation v1.1.2
+	github.com/in-toto/attestation v1.2.0
 	github.com/in-toto/in-toto-golang v0.9.0
 	github.com/magefile/mage v1.15.0
 	github.com/protobom/protobom v0.5.4

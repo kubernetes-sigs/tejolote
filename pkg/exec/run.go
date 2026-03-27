@@ -17,16 +17,18 @@ limitations under the License.
 package exec
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
-	intoto "github.com/in-toto/in-toto-golang/in_toto"
-	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
-	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
+	slsav02 "github.com/in-toto/attestation/go/predicates/provenance/v02"
+	intoto "github.com/in-toto/attestation/go/v1"
+	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"sigs.k8s.io/release-utils/command"
+	"sigs.k8s.io/tejolote/pkg/attestation"
 	"sigs.k8s.io/tejolote/pkg/git"
 	"sigs.k8s.io/tejolote/pkg/run"
 )
@@ -52,27 +54,41 @@ type RunEnvironment struct {
 }
 
 // InvocationData return the invocation of the command in SLSA strcut
-func (r *Run) InvocationData() (slsa.ProvenanceInvocation, error) {
+func (r *Run) InvocationData() (*slsav02.Invocation, error) {
 	// Invocation
-	invocation := slsa.ProvenanceInvocation{
-		ConfigSource: slsa.ConfigSource{},
+	invocation := &slsav02.Invocation{
+		ConfigSource: &slsav02.ConfigSource{},
 	}
 
 	// Parameters
 	params := []string{r.Command}
 	params = append(params, r.Params...)
-	invocation.Parameters = params
+	paramsIface := make([]interface{}, len(params))
+	for i, p := range params {
+		paramsIface[i] = p
+	}
+	ps, err := structpb.NewStruct(map[string]interface{}{
+		"command": params[0],
+		"args":    paramsIface[1:],
+	})
+	if err != nil {
+		return nil, errors.New("unable to form parameters")
+	}
+	invocation.Parameters = ps
 
 	// Environment
-	env := map[string]string{}
+	envIface := map[string]interface{}{}
 	for _, e := range os.Environ() {
 		varData := strings.SplitN(e, "=", 2)
 		if len(varData) == 2 {
-			env[varData[0]] = varData[1]
+			envIface[varData[0]] = varData[1]
 		}
 	}
-	invocation.Environment = map[string]string{}
-
+	es, err := structpb.NewStruct(envIface)
+	if err != nil {
+		return nil, fmt.Errorf("forming environment data: %w", err)
+	}
+	invocation.Environment = es
 	// Read the git repo data
 	if git.IsRepo(r.Environment.Directory) {
 		repo, err := git.NewRepository(r.Environment.Directory)
@@ -88,7 +104,7 @@ func (r *Run) InvocationData() (slsa.ProvenanceInvocation, error) {
 		if err != nil {
 			return invocation, fmt.Errorf("fetching build point commit")
 		}
-		invocation.ConfigSource.URI = url + "@" + commit
+		invocation.ConfigSource.Uri = url + "@" + commit
 	}
 
 	return invocation, nil
@@ -102,21 +118,27 @@ func (r *Run) WriteAttestation(path string) error {
 		return fmt.Errorf("generating attestation: %w", err)
 	}
 
-	attestation := intoto.Statement{
-		StatementHeader: intoto.StatementHeader{
-			Type:          intoto.StatementInTotoV01,
-			PredicateType: slsa.PredicateSLSAProvenance,
-			Subject:       []intoto.Subject{},
+	// Generate the full attestation
+	att := attestation.Attestation{
+		Statement: intoto.Statement{
+			Type:          intoto.StatementTypeUri,
+			Subject:       []*intoto.ResourceDescriptor{},
+			PredicateType: predicate.Type(),
 		},
 		Predicate: predicate,
 	}
 
 	// Add the artifacts to the attestation
 	for _, m := range r.Artifacts {
-		attestation.Subject = append(attestation.Subject, intoto.Subject{
+		att.Subject = append(att.Subject, &intoto.ResourceDescriptor{
 			Name:   m.Path,
 			Digest: m.Checksum,
 		})
+	}
+
+	data, err := att.ToJSON()
+	if err != nil {
+		return err
 	}
 
 	// Create the file
@@ -126,40 +148,37 @@ func (r *Run) WriteAttestation(path string) error {
 	}
 	defer out.Close()
 
-	enc := json.NewEncoder(out)
-	enc.SetIndent("", "  ")
-	enc.SetEscapeHTML(false)
-
-	if err := enc.Encode(attestation); err != nil {
-		return fmt.Errorf("encoding spdx sbom: %w", err)
+	if _, err := out.Write(data); err != nil {
+		return fmt.Errorf("writing data to file: %w", err)
 	}
 	return nil
 }
 
-func (r *Run) Predicate() (*slsa.ProvenancePredicate, error) {
+func (r *Run) Predicate() (attestation.Predicate, error) {
 	invocation, err := r.InvocationData()
 	if err != nil {
 		return nil, fmt.Errorf("reading invocation data: %w", err)
 	}
-	predicate := slsa.ProvenancePredicate{
-		Builder: common.ProvenanceBuilder{
-			ID: "", // TODO: Read builder from trsuted environment
+
+	predicate := attestation.SLSAPredicate{
+		Builder: &slsav02.Builder{
+			Id: "", // TODO: Read builder from trsuted environment
 		},
 		BuildType:   TejoloteURI,
 		Invocation:  invocation,
 		BuildConfig: nil,
-		Metadata: &slsa.ProvenanceMetadata{
-			BuildInvocationID: "",
-			BuildStartedOn:    &r.StartTime,
-			BuildFinishedOn:   &r.EndTime,
-			Completeness: slsa.ProvenanceComplete{
+		Metadata: &slsav02.Metadata{
+			BuildInvocationId: "",
+			BuildStartedOn:    timestamppb.New(r.StartTime),
+			BuildFinishedOn:   timestamppb.New(r.EndTime),
+			Completeness: &slsav02.Completeness{
 				Parameters:  true,
 				Environment: false,
 				Materials:   false,
 			},
 			Reproducible: false,
 		},
-		Materials: []common.ProvenanceMaterial{},
+		Materials: []*slsav02.Material{},
 	}
 
 	return &predicate, nil

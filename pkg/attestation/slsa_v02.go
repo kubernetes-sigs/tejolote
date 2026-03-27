@@ -19,47 +19,46 @@ package attestation
 import (
 	"time"
 
+	slsav02 "github.com/in-toto/attestation/go/predicates/provenance/v02"
 	v1 "github.com/in-toto/attestation/go/v1"
-	"github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/common"
-	slsa "github.com/in-toto/in-toto-golang/in_toto/slsa_provenance/v0.2"
+	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+type SLSAPredicate slsav02.Provenance
 
 // NewSLSAPredicate returns a new SLSA predicate fully initialized
 func NewSLSAPredicate() *SLSAPredicate {
 	predicate := &SLSAPredicate{
-		Builder: common.ProvenanceBuilder{
-			ID: "", // TODO: Read builder from trusted environment
+		Builder: &slsav02.Builder{
+			Id: "",
 		},
 		BuildType: "",
-		Invocation: slsa.ProvenanceInvocation{
-			ConfigSource: slsa.ConfigSource{
-				URI:        "",
+		Invocation: &slsav02.Invocation{
+			ConfigSource: &slsav02.ConfigSource{
+				Uri:        "",
 				Digest:     map[string]string{},
 				EntryPoint: "",
 			},
-			Parameters:  nil,
-			Environment: nil,
 		},
 		BuildConfig: nil,
-		Metadata: &slsa.ProvenanceMetadata{
-			BuildInvocationID: "",
-			BuildStartedOn:    nil,
-			BuildFinishedOn:   nil,
-			Completeness: slsa.ProvenanceComplete{
+		Metadata: &slsav02.Metadata{
+			BuildInvocationId: "",
+			Completeness: &slsav02.Completeness{
 				Parameters:  true,
 				Environment: false,
 				Materials:   false,
 			},
 			Reproducible: false,
 		},
-		Materials: []common.ProvenanceMaterial{},
+		Materials: []*slsav02.Material{},
 	}
 
 	return predicate
 }
 
 func (pred *SLSAPredicate) SetBuilderID(id string) {
-	pred.Builder.ID = id
+	pred.Builder.Id = id
 }
 
 func (pred *SLSAPredicate) SetBuilderType(id string) {
@@ -67,14 +66,14 @@ func (pred *SLSAPredicate) SetBuilderType(id string) {
 }
 
 func (pred *SLSAPredicate) SetInvocationID(id string) {
-	pred.Metadata.BuildInvocationID = id
+	pred.Metadata.BuildInvocationId = id
 }
 
 func (pred *SLSAPredicate) SetConfigSource(src *v1.ResourceDescriptor) {
 	for algo, val := range src.GetDigest() {
 		pred.Invocation.ConfigSource.Digest[algo] = val
 	}
-	pred.Invocation.ConfigSource.URI = src.GetUri()
+	pred.Invocation.ConfigSource.Uri = src.GetUri()
 }
 
 func (pred *SLSAPredicate) SetEntryPoint(ep string) {
@@ -82,10 +81,10 @@ func (pred *SLSAPredicate) SetEntryPoint(ep string) {
 }
 
 func (pred *SLSAPredicate) SetResolvedDependencies(deps []*v1.ResourceDescriptor) {
-	pred.Materials = []common.ProvenanceMaterial{}
+	pred.Materials = []*slsav02.Material{}
 	for _, dep := range deps {
-		pred.Materials = append(pred.Materials, common.ProvenanceMaterial{
-			URI:    dep.GetUri(),
+		pred.Materials = append(pred.Materials, &slsav02.Material{
+			Uri:    dep.GetUri(),
 			Digest: dep.GetDigest(),
 		})
 	}
@@ -94,14 +93,14 @@ func (pred *SLSAPredicate) SetResolvedDependencies(deps []*v1.ResourceDescriptor
 // AddMaterial add an entry to the materials
 func (pred *SLSAPredicate) AddDependency(dep *v1.ResourceDescriptor) {
 	if pred.Materials == nil {
-		pred.Materials = []common.ProvenanceMaterial{}
+		pred.Materials = []*slsav02.Material{}
 	}
-	mat := common.ProvenanceMaterial{
-		URI:    dep.GetUri(),
+	mat := &slsav02.Material{
+		Uri:    dep.GetUri(),
 		Digest: dep.GetDigest(),
 	}
 	for i, m := range pred.Materials {
-		if m.URI == dep.GetUri() {
+		if m.GetUri() == dep.GetUri() {
 			pred.Materials[i] = mat
 			return
 		}
@@ -110,19 +109,33 @@ func (pred *SLSAPredicate) AddDependency(dep *v1.ResourceDescriptor) {
 }
 
 func (pred *SLSAPredicate) SetBuildConfig(conf map[string]any) {
-	pred.BuildConfig = conf
+	s, err := structpb.NewStruct(conf)
+	if err != nil {
+		return
+	}
+	pred.BuildConfig = s
 }
 
 func (pred *SLSAPredicate) SetInternalParameters(params map[string]any) {
-	pred.Invocation.Environment = params
+	s, err := structpb.NewStruct(params)
+	if err != nil {
+		return
+	}
+	pred.Invocation.Environment = s
 }
 
 func (pred *SLSAPredicate) SetStartedOn(d *time.Time) {
-	pred.Metadata.BuildStartedOn = d
+	if d == nil {
+		return
+	}
+	pred.Metadata.BuildStartedOn = timestamppb.New(*d)
 }
 
 func (pred *SLSAPredicate) SetFinishedOn(d *time.Time) {
-	pred.Metadata.BuildFinishedOn = d
+	if d == nil {
+		return
+	}
+	pred.Metadata.BuildFinishedOn = timestamppb.New(*d)
 }
 
 func (pred *SLSAPredicate) Type() string {
