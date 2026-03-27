@@ -21,6 +21,7 @@ import (
 
 	slsav02 "github.com/in-toto/attestation/go/predicates/provenance/v02"
 	v1 "github.com/in-toto/attestation/go/v1"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -140,6 +141,14 @@ func (pred *SLSAPredicate) SetFinishedOn(d *time.Time) {
 
 func (pred *SLSAPredicate) Type() string {
 	return "https://slsa.dev/provenance/v0.2"
+}
+
+func (pred *SLSAPredicate) MarshalJSON() ([]byte, error) {
+	p := (*slsav02.Provenance)(pred)
+	return protojson.MarshalOptions{
+		Multiline: true,
+		Indent:    "  ",
+	}.Marshal(p)
 }
 
 // This predicate type does not support external params

@@ -17,10 +17,12 @@ limitations under the License.
 package attestation
 
 import (
+	"encoding/json"
 	"fmt"
 
 	intoto "github.com/in-toto/attestation/go/v1"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type (
@@ -54,14 +56,32 @@ func (att *Attestation) SLSAv1() *Attestation {
 }
 
 func (att *Attestation) ToJSON() ([]byte, error) {
+	// Convert the typed Predicate into a *structpb.Struct so it is
+	// included in the protobuf Statement serialization.
+	if att.Predicate != nil {
+		predJSON, err := json.Marshal(att.Predicate)
+		if err != nil {
+			return nil, fmt.Errorf("marshaling predicate to JSON: %w", err)
+		}
+		var predMap map[string]interface{}
+		if err := json.Unmarshal(predJSON, &predMap); err != nil {
+			return nil, fmt.Errorf("unmarshaling predicate JSON: %w", err)
+		}
+		s, err := structpb.NewStruct(predMap)
+		if err != nil {
+			return nil, fmt.Errorf("converting predicate to structpb: %w", err)
+		}
+		att.Statement.Predicate = s
+	}
+
 	m := protojson.MarshalOptions{
 		Multiline: true,
 		Indent:    "  ",
 	}
 
-	jsonData, err := m.Marshal(att)
+	jsonData, err := m.Marshal(&att.Statement)
 	if err != nil {
-		return nil, fmt.Errorf("marshaling predicate: %w", err)
+		return nil, fmt.Errorf("marshaling attestation: %w", err)
 	}
 
 	return jsonData, nil
