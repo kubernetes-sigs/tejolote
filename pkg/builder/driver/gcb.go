@@ -195,7 +195,7 @@ func (gcb *GCB) BuildPredicate(r *run.Run, draft attestation.Predicate) (predica
 	predicate.SetBuilderType("https://cloudbuild.googleapis.com/CloudBuildYaml@v1")
 	buildconfig := map[string]any{}
 
-	steps := []stepData{}
+	steps := make([]stepData, 0, len(r.Steps))
 
 	for _, s := range r.Steps {
 		buildconfig["steps"] = append(steps, stepData{

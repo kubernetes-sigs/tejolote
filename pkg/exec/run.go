@@ -61,7 +61,8 @@ func (r *Run) InvocationData() (*slsav02.Invocation, error) {
 	}
 
 	// Parameters
-	params := []string{r.Command}
+	params := make([]string, 0, 1+len(r.Params))
+	params = append(params, r.Command)
 	params = append(params, r.Params...)
 	paramsIface := make([]interface{}, len(params))
 	for i, p := range params {
