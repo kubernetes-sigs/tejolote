@@ -1,6 +1,6 @@
 module sigs.k8s.io/tejolote
 
-go 1.25.0
+go 1.26.1
 
 require (
 	chainguard.dev/apko v1.0.4
@@ -9,7 +9,6 @@ require (
 	github.com/go-git/go-git/v5 v5.16.4
 	github.com/google/go-containerregistry v0.20.7
 	github.com/in-toto/attestation v1.2.0
-	github.com/in-toto/in-toto-golang v0.9.0
 	github.com/magefile/mage v1.15.0
 	github.com/protobom/protobom v0.5.4
 	github.com/sigstore/cosign/v2 v2.6.2
@@ -168,6 +167,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
+	github.com/in-toto/in-toto-golang v0.9.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jedisct1/go-minisign v0.0.0-20241212093149-d2f9f49435c7 // indirect
