@@ -94,6 +94,5 @@ jobs:
           "${{ runner.temp }}/tejolote" attest \
             --artifacts github://kubernetes-sigs/tejolote/${{ steps.tag.outputs.tag_name }} \
             github://kubernetes-sigs/tejolote/"${GITHUB_RUN_ID}" --output provenance.json
-
-          bnd statement provenance.json -o tejolote-${{ steps.tag.outputs.tag_name }}.provenance.json \
+          bnd statement provenance.json -o tejolote-${{ steps.tag.outputs.tag_name }}.provenance.json
           gh release upload ${{ steps.tag.outputs.tag_name }} tejolote-${{ steps.tag.outputs.tag_name }}.provenance.json
