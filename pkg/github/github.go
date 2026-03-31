@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	khttp "sigs.k8s.io/release-utils/http"
@@ -89,7 +90,7 @@ func Download(url string, f io.Writer) error {
 
 // NewAgent returns a new khttp.Agent configured with GitHub authentication.
 func NewAgent() *khttp.Agent {
-	agent := khttp.NewAgent().WithFailOnHTTPError(true)
+	agent := khttp.NewAgent().WithTimeout(5 * time.Minute).WithFailOnHTTPError(true)
 	agent.SetImplementation(&githubAgentImpl{})
 	return agent
 }
