@@ -4,12 +4,12 @@ go 1.26.1
 
 require (
 	chainguard.dev/apko v1.2.0
-	cloud.google.com/go/pubsub/v2 v2.5.0
+	cloud.google.com/go/pubsub/v2 v2.5.1
 	cloud.google.com/go/storage v1.61.3
-	github.com/go-git/go-git/v5 v5.17.1
+	github.com/go-git/go-git/v5 v5.17.2
 	github.com/google/go-containerregistry v0.21.3
 	github.com/in-toto/attestation v1.2.0
-	github.com/magefile/mage v1.17.0
+	github.com/magefile/mage v1.17.1
 	github.com/protobom/protobom v0.5.4
 	github.com/sigstore/cosign/v2 v2.6.2
 	github.com/sigstore/sigstore v1.10.5
@@ -18,7 +18,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/uwu-tools/magex v0.10.1
 	golang.org/x/sync v0.20.0
-	google.golang.org/api v0.273.0
+	google.golang.org/api v0.273.1
 	google.golang.org/protobuf v1.36.11
 	sigs.k8s.io/release-sdk v0.12.6
 	sigs.k8s.io/release-utils v0.12.4
