@@ -52,16 +52,11 @@ archives:
 signs:
   # Keyless
   - id: tejolote-keyless
-    signature: "${artifact}.sig"
-    certificate: "${artifact}.pem"
+    signature: "${artifact}.sigstore.json"
     cmd: cosign
     args:
       - "sign-blob"
-      - "--new-bundle-format=false"
-      - "--output-signature"
-      - "${artifact}.sig"
-      - "--output-certificate"
-      - "${artifact}.pem"
+      - "--bundle=${signature}"
       - "${artifact}"
     artifacts: all
 
