@@ -34,8 +34,18 @@ func NewDirectory(specURL string) (*Directory, error) {
 	if err != nil {
 		return nil, fmt.Errorf("parsing SpecURL %s: %w", specURL, err)
 	}
+	p := u.Path
+	if p == "" {
+		p = u.Opaque
+	}
+	if !filepath.IsAbs(p) {
+		p, err = filepath.Abs(p)
+		if err != nil {
+			return nil, fmt.Errorf("resolving relative path %s: %w", u.Path, err)
+		}
+	}
 	return &Directory{
-		Path: u.Path,
+		Path: p,
 	}, nil
 }
 

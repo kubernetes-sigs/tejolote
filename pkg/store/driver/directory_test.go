@@ -26,6 +26,39 @@ import (
 	"sigs.k8s.io/tejolote/pkg/run"
 )
 
+func TestNewDirectory(t *testing.T) {
+	cwd, err := os.Getwd()
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		name     string
+		specURL  string
+		expected string
+	}{
+		{
+			name:     "absolute path",
+			specURL:  "file:///tmp/artifacts",
+			expected: "/tmp/artifacts",
+		},
+		{
+			name:     "relative path",
+			specURL:  "file:docs/",
+			expected: filepath.Join(cwd, "docs/"),
+		},
+		{
+			name:     "relative path no trailing slash",
+			specURL:  "file:some/nested/dir",
+			expected: filepath.Join(cwd, "some/nested/dir"),
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			d, err := NewDirectory(tc.specURL)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, d.Path)
+		})
+	}
+}
+
 func TestDirectorySnap(t *testing.T) {
 	// Create a fixed time to make the times deterministic
 	fixedTime := time.Date(1976, time.Month(2), 10, 23, 30, 30, 0, time.Local)
