@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"chainguard.dev/apko/pkg/vcs"
+	"github.com/carabiner-dev/vcslocator"
 	slsav02 "github.com/in-toto/attestation/go/predicates/provenance/v02"
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
@@ -314,9 +314,9 @@ func readVCSURL(outputOpts *outputOptions, opts *startAttestationOptions) (strin
 		return "", fmt.Errorf("resolving absolute path to repo: %w", err)
 	}
 
-	urlString, err := vcs.ProbeDirForVCSUrl(repoPath, repoPath)
+	loc, err := vcslocator.ReadFromRepo(repoPath)
 	if err != nil {
 		return "", fmt.Errorf("probing VCS URL: %w", err)
 	}
-	return urlString, nil
+	return string(loc), nil
 }
