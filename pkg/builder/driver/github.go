@@ -188,6 +188,19 @@ func (ghw *GitHubWorkflow) BuildPredicate(
 				"repository": fmt.Sprintf("https://github.com/%s/%s", org, repo),
 			},
 		)
+
+		// Fetch the workflow YAML and compute effective inputs
+		definedInputs, err := github.FetchWorkflowInputs(org, repo, ghrun.Path, ghrun.HeadSHA)
+		if err != nil {
+			return nil, fmt.Errorf("fetching workflow inputs: %w", err)
+		}
+
+		if len(definedInputs) > 0 {
+			effective := github.EffectiveInputs(definedInputs, ghrun.Inputs)
+			for k, v := range effective {
+				predicate.AddExternalParameter(k, v)
+			}
+		}
 	}
 
 	predicate.SetConfigSource(confsource)
