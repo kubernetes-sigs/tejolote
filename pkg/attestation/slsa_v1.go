@@ -21,6 +21,7 @@ import (
 
 	slsa1 "github.com/in-toto/attestation/go/predicates/provenance/v1"
 	v1 "github.com/in-toto/attestation/go/v1"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -139,6 +140,14 @@ func (pred *SLSAPredicateV1) SetFinishedOn(d *time.Time) {
 		return
 	}
 	pred.RunDetails.Metadata.FinishedOn = timestamppb.New(*d)
+}
+
+func (pred *SLSAPredicateV1) MarshalJSON() ([]byte, error) {
+	p := (*slsa1.Provenance)(pred)
+	return protojson.MarshalOptions{
+		Multiline: true,
+		Indent:    "  ",
+	}.Marshal(p)
 }
 
 func (pred *SLSAPredicateV1) Type() string {
