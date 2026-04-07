@@ -37,7 +37,7 @@ jobs:
         uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 # v4.1.1
 
       - name: Install bom
-        uses: kubernetes-sigs/release-actions/setup-bom@cbe0488670ad0c0ff422fbef963da3bfe451a891 # v0.4.2
+        uses: kubernetes-sigs/release-actions/setup-bom@8753ea6bdadb814d779c6ec34eaca689dbfb492b # v0.4.3
 
       - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
@@ -82,7 +82,7 @@ jobs:
           cache: false
 
       - name: Setup bnd
-        uses: carabiner-dev/actions/install/bnd@ba6f58b7120233bc312a76fb6bf3397704bcdcef # v1.1.5
+        uses: carabiner-dev/actions/install/bnd@360ffa1eb909b0105d4eccb6d6ef337911c34952 # v1.1.6
 
       - name: Build tejolote from source
         run: go build -o "${{ runner.temp }}/tejolote" ./cmd/tejolote/
