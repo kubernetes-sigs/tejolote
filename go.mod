@@ -8,6 +8,7 @@ require (
 	github.com/carabiner-dev/vcslocator v0.4.2
 	github.com/go-git/go-git/v5 v5.17.2
 	github.com/google/go-containerregistry v0.21.4
+	github.com/google/go-github/v84 v84.0.0
 	github.com/in-toto/attestation v1.2.0
 	github.com/magefile/mage v1.17.1
 	github.com/protobom/protobom v0.5.4
@@ -158,7 +159,6 @@ require (
 	github.com/google/gnostic-models v0.7.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-github/v73 v73.0.0 // indirect
-	github.com/google/go-github/v84 v84.0.0 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/google/uuid v1.6.0 // indirect
