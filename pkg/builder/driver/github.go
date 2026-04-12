@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	gogithub "github.com/google/go-github/v84/github"
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/tejolote/pkg/attestation"
@@ -41,6 +42,10 @@ type GitHubWorkflow struct {
 	Organization string
 	Repository   string
 	RunID        int
+
+	// workflow caches the parsed workflow YAML data to avoid
+	// repeated fetches when building predicates or discovering jobs.
+	workflow *github.WorkflowData
 }
 
 func parseGitHubURL(specURL string) (org, repo string, runID int64, err error) {
@@ -139,6 +144,37 @@ func (ghw *GitHubWorkflow) RefreshRun(r *run.Run) error {
 	return nil
 }
 
+// GetWorkflow returns the parsed workflow YAML data, fetching and caching
+// it on first call. Requires that RefreshRun has been called at least once
+// so that Organization, Repository and the run's SystemData are populated.
+func (ghw *GitHubWorkflow) GetWorkflow(r *run.Run) (*github.WorkflowData, error) {
+	if ghw.workflow != nil {
+		return ghw.workflow, nil
+	}
+
+	ghrun, ok := r.SystemData.(*github.Run)
+	if !ok {
+		return nil, fmt.Errorf("run system data is not a GitHub run")
+	}
+
+	wf, err := github.FetchWorkflow(
+		ghw.Organization, ghw.Repository, ghrun.Path, ghrun.HeadSHA,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("fetching workflow: %w", err)
+	}
+
+	ghw.workflow = wf
+	return wf, nil
+}
+
+// GetRunJobs fetches the jobs for this workflow run from the GitHub API.
+func (ghw *GitHubWorkflow) GetRunJobs() ([]*gogithub.WorkflowJob, error) {
+	return github.GetRunJobs(
+		ghw.Organization, ghw.Repository, int64(ghw.RunID),
+	)
+}
+
 // BuildPredicate builds a predicate from the run data
 func (ghw *GitHubWorkflow) BuildPredicate(
 	r *run.Run, draft attestation.Predicate,
@@ -189,12 +225,13 @@ func (ghw *GitHubWorkflow) BuildPredicate(
 			},
 		)
 
-		// Fetch the workflow YAML and compute effective inputs
-		definedInputs, err := github.FetchWorkflowInputs(org, repo, ghrun.Path, ghrun.HeadSHA)
+		// Fetch the workflow YAML (cached) and compute effective inputs
+		wf, err := ghw.GetWorkflow(r)
 		if err != nil {
-			return nil, fmt.Errorf("fetching workflow inputs: %w", err)
+			return nil, fmt.Errorf("fetching workflow: %w", err)
 		}
 
+		definedInputs := wf.Inputs()
 		if len(definedInputs) > 0 {
 			effective := github.EffectiveInputs(definedInputs, ghrun.Inputs)
 			for k, v := range effective {
@@ -232,6 +269,60 @@ func (ghw *GitHubWorkflow) BuildPredicate(
 		)
 	}
 	return predicate, nil
+}
+
+// AreJobsCompleted checks whether the specified jobs (by name) have all
+// completed. If jobNames is empty, all jobs in the run are checked except
+// the one matching excludeJob (useful for excluding the attester's own job).
+// Job name matching is prefix-based to handle reusable workflow jobs whose
+// API names are formatted as "caller_job / inner_job".
+func (ghw *GitHubWorkflow) AreJobsCompleted(jobNames []string, excludeJob string) (bool, error) {
+	jobs, err := ghw.GetRunJobs()
+	if err != nil {
+		return false, fmt.Errorf("fetching run jobs: %w", err)
+	}
+
+	for _, job := range jobs {
+		name := job.GetName()
+		status := job.GetStatus()
+
+		// Skip the excluded job (our own attester job)
+		if excludeJob != "" && matchJobName(name, excludeJob) {
+			logrus.Debugf("Skipping excluded job %q", name)
+			continue
+		}
+
+		// If specific jobs were requested, only check those
+		if len(jobNames) > 0 && !matchesAnyJobName(name, jobNames) {
+			continue
+		}
+
+		if status != "completed" {
+			logrus.Infof("Job %q status: %s — still running", name, status)
+			return false, nil
+		}
+
+		logrus.Debugf("Job %q completed with conclusion: %s", name, job.GetConclusion())
+	}
+
+	return true, nil
+}
+
+// matchJobName checks if an API job name matches a YAML job key.
+// GitHub Actions formats reusable workflow job names as "caller_key / inner_job",
+// so we match if the API name equals the key or starts with "key / ".
+func matchJobName(apiName, yamlKey string) bool {
+	return apiName == yamlKey || strings.HasPrefix(apiName, yamlKey+" / ")
+}
+
+// matchesAnyJobName checks if an API job name matches any of the provided names.
+func matchesAnyJobName(apiName string, names []string) bool {
+	for _, n := range names {
+		if matchJobName(apiName, n) {
+			return true
+		}
+	}
+	return false
 }
 
 // ArtifactStores returns the native artifact store of github actions
