@@ -47,11 +47,43 @@ type workflowTriggerInputs struct {
 	Inputs map[string]WorkflowInput `json:"inputs"`
 }
 
-// workflowFile is a minimal representation of a GitHub Actions workflow YAML.
+// WorkflowJob represents a job definition in a workflow YAML file.
+type WorkflowJob struct {
+	Uses string `json:"uses"` // Non-empty when job is a reusable workflow call
+}
+
+// WorkflowData is a parsed representation of a GitHub Actions workflow YAML.
 // Note: in YAML, "on" is a boolean keyword that gets converted to "true" by
 // sigs.k8s.io/yaml's YAML-to-JSON conversion, so we use json:"true" here.
-type workflowFile struct {
-	On workflowTrigger `json:"true"`
+type WorkflowData struct {
+	On   workflowTrigger        `json:"true"`
+	Jobs map[string]WorkflowJob `json:"jobs"`
+}
+
+// Inputs returns the defined inputs from workflow_dispatch and workflow_call
+// triggers, merged into a single map.
+func (wd *WorkflowData) Inputs() map[string]WorkflowInput {
+	inputs := map[string]WorkflowInput{}
+	if wd.On.WorkflowDispatch != nil {
+		for k, v := range wd.On.WorkflowDispatch.Inputs {
+			inputs[k] = v
+		}
+	}
+	if wd.On.WorkflowCall != nil {
+		for k, v := range wd.On.WorkflowCall.Inputs {
+			inputs[k] = v
+		}
+	}
+	return inputs
+}
+
+// JobKeys returns the YAML keys of all jobs defined in the workflow.
+func (wd *WorkflowData) JobKeys() []string {
+	keys := make([]string, 0, len(wd.Jobs))
+	for k := range wd.Jobs {
+		keys = append(keys, k)
+	}
+	return keys
 }
 
 // contentsResponse represents the GitHub contents API response.
@@ -60,9 +92,8 @@ type contentsResponse struct {
 	Encoding string `json:"encoding"`
 }
 
-// FetchWorkflowInputs fetches the workflow YAML from the GitHub contents API
-// and returns the defined inputs (from workflow_dispatch and workflow_call triggers).
-func FetchWorkflowInputs(org, repo, path, ref string) (map[string]WorkflowInput, error) {
+// FetchWorkflow fetches and parses a workflow YAML from the GitHub contents API.
+func FetchWorkflow(org, repo, path, ref string) (*WorkflowData, error) {
 	apiURL := fmt.Sprintf(ghContentsURL, org, repo, url.PathEscape(path), url.QueryEscape(ref))
 
 	res, err := APIGetRequest(apiURL)
@@ -94,24 +125,22 @@ func FetchWorkflowInputs(org, repo, path, ref string) (map[string]WorkflowInput,
 		return nil, fmt.Errorf("decoding base64 content: %w", err)
 	}
 
-	var wf workflowFile
+	var wf WorkflowData
 	if err := yaml.Unmarshal(yamlData, &wf); err != nil {
 		return nil, fmt.Errorf("parsing workflow YAML: %w", err)
 	}
 
-	inputs := map[string]WorkflowInput{}
-	if wf.On.WorkflowDispatch != nil {
-		for k, v := range wf.On.WorkflowDispatch.Inputs {
-			inputs[k] = v
-		}
-	}
-	if wf.On.WorkflowCall != nil {
-		for k, v := range wf.On.WorkflowCall.Inputs {
-			inputs[k] = v
-		}
-	}
+	return &wf, nil
+}
 
-	return inputs, nil
+// FetchWorkflowInputs fetches the workflow YAML and returns the defined inputs.
+// This is a convenience wrapper around FetchWorkflow for callers that only need inputs.
+func FetchWorkflowInputs(org, repo, path, ref string) (map[string]WorkflowInput, error) {
+	wf, err := FetchWorkflow(org, repo, path, ref)
+	if err != nil {
+		return nil, err
+	}
+	return wf.Inputs(), nil
 }
 
 // EffectiveInputs computes the effective input values by merging actual run
