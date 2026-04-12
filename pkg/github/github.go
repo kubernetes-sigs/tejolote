@@ -18,6 +18,7 @@ package github
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -26,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	gogithub "github.com/google/go-github/v84/github"
 	"github.com/sirupsen/logrus"
 	khttp "sigs.k8s.io/release-utils/http"
 )
@@ -81,6 +83,31 @@ func APIGetRequest(url string) (*http.Response, error) {
 		)
 	}
 	return res, nil
+}
+
+// GetRunJobs fetches the jobs for a given workflow run from the GitHub API.
+func GetRunJobs(org, repo string, runID int64) ([]*gogithub.WorkflowJob, error) {
+	u := fmt.Sprintf(
+		"https://api.github.com/repos/%s/%s/actions/runs/%d/jobs",
+		org, repo, runID,
+	)
+	res, err := APIGetRequest(u)
+	if err != nil {
+		return nil, fmt.Errorf("querying jobs API: %w", err)
+	}
+	defer res.Body.Close()
+
+	rawData, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reading jobs response: %w", err)
+	}
+
+	var jobsResp gogithub.Jobs
+	if err := json.Unmarshal(rawData, &jobsResp); err != nil {
+		return nil, fmt.Errorf("unmarshalling jobs response: %w", err)
+	}
+
+	return jobsResp.Jobs, nil
 }
 
 func Download(url string, f io.Writer) error {
