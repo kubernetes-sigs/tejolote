@@ -38,6 +38,14 @@ type BuildSystem interface {
 	ArtifactStores() []store.Store
 }
 
+// JobWatcher is an optional interface that ba uild system can implement
+// to support watching individual jobs rather than the entire run.
+type JobWatcher interface {
+	// AreJobsCompleted checks if the specified jobs are done. If jobNames
+	// is empty, it checks all jobs except excludeJob.
+	AreJobsCompleted(jobNames []string, excludeJob string) (completed bool, err error)
+}
+
 func NewFromSpecURL(specURL string) (BuildSystem, error) {
 	u, err := url.Parse(specURL)
 	if err != nil {

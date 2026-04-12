@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -39,7 +40,15 @@ type attestOptions struct {
 	encodedSnapshots string
 	slsaVersion      string
 	artifacts        []string
+	watchJobs        []string
 }
+
+const (
+	githubEnvVarJob     = "GITHUB_JOB"
+	githubEnvVarActions = "GITHUB_ACTIONS"
+	githubEnvVarRepo    = "GITHUB_REPOSITORY"
+	githubEnvVarRunID   = "GITHUB_RUN_ID"
+)
 
 var slsaVersions = []string{"1", "1.0", "0.2"}
 
@@ -136,6 +145,22 @@ build data and generates the provenance attestation.
 
 			w.Options.WaitForBuild = attestOpts.waitForBuild
 			w.Options.SLSAVersion = attestOpts.slsaVersion
+			w.Options.WatchJobs = attestOpts.watchJobs
+
+			// Auto detect if tejolote is running inside a GitHub Actions
+			// workflow and the spec URL points to the same run. The we automatically
+			// enable job-level watching to avoid deadlock where the run never
+			// completes because the attester job is part of it.
+			if isSameActionsRun(args[0]) {
+				// Get our own job name:
+				currentJob := os.Getenv(githubEnvVarJob)
+				if len(w.Options.WatchJobs) == 0 {
+					logrus.Infof("Same-run detected (job: %q), will watch all other jobs", currentJob)
+				} else {
+					logrus.Infof("Same-run detected (job: %q), watching specified jobs: %v", currentJob, w.Options.WatchJobs)
+				}
+				w.Options.ExcludeJob = currentJob
+			}
 
 			if !attestOpts.waitForBuild {
 				logrus.Warn("watcher will not wait for build, data may be incomplete")
@@ -154,7 +179,7 @@ build data and generates the provenance attestation.
 				return fmt.Errorf("fetching run: %w", err)
 			}
 
-			// Watch the run run :)
+			// Watch the run, run :)
 			if err := w.Watch(r); err != nil {
 				return fmt.Errorf("waiting for the run to finish: %w", err)
 			}
@@ -304,5 +329,45 @@ build data and generates the provenance attestation.
 	_ = attestCmd.PersistentFlags().MarkHidden("encoded-attestation")
 	_ = attestCmd.PersistentFlags().MarkHidden("encoded-snapshots")
 
+	attestCmd.PersistentFlags().StringSliceVar(
+		&attestOpts.watchJobs,
+		"watch-jobs",
+		[]string{},
+		"watch specific jobs (by name) instead of the entire run",
+	)
+
 	parentCmd.AddCommand(attestCmd)
+}
+
+// isSameActionsRun checks if tejolote is running inside the same GitHub Actions
+// workflow run that it is being asked to observe.
+//
+// It compares the spec URL against the GITHUB_REPOSITORY and GITHUB_RUN_ID
+// environment variables set by the runner.
+func isSameActionsRun(specURL string) bool {
+	if os.Getenv(githubEnvVarActions) != "true" {
+		return false
+	}
+
+	ghRepo := os.Getenv(githubEnvVarRepo)
+	ghRunID := os.Getenv(githubEnvVarRunID)
+	if ghRepo == "" || ghRunID == "" {
+		return false
+	}
+
+	// Parse org/repo and run ID from the spec URL (e.g. github://org/repo/12345)
+	parts := strings.SplitN(specURL, "://", 2)
+	if len(parts) != 2 || parts[0] != "github" {
+		return false
+	}
+
+	pathParts := strings.SplitN(parts[1], "/", 3)
+	if len(pathParts) != 3 {
+		return false
+	}
+
+	specRepo := pathParts[0] + "/" + pathParts[1]
+	specRunID := strings.TrimSuffix(pathParts[2], "/")
+
+	return specRepo == ghRepo && specRunID == ghRunID
 }
