@@ -54,6 +54,12 @@ func (b *Builder) Snap() error {
 	return nil
 }
 
+// Driver returns the underlying build system driver. This allows callers
+// to type-assert for optional interfaces like driver.JobWatcher.
+func (b *Builder) Driver() driver.BuildSystem {
+	return b.driver
+}
+
 func (b *Builder) GetRun(identifier string) (*run.Run, error) {
 	return b.driver.GetRun(identifier)
 }

@@ -33,6 +33,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/tejolote/pkg/attestation"
 	"sigs.k8s.io/tejolote/pkg/builder"
+	"sigs.k8s.io/tejolote/pkg/builder/driver"
 	"sigs.k8s.io/tejolote/pkg/run"
 	"sigs.k8s.io/tejolote/pkg/store"
 	"sigs.k8s.io/tejolote/pkg/store/snapshot"
@@ -47,8 +48,10 @@ type Watcher struct {
 }
 
 type Options struct {
-	WaitForBuild bool   // When true, the watcher will keep observing the run until it's done
-	SLSAVersion  string // SLSA version for the attestation predicate
+	WaitForBuild bool     // When true, the watcher will keep observing the run until it's done
+	SLSAVersion  string   // SLSA version for the attestation predicate
+	WatchJobs    []string // When set, watch these specific jobs instead of the whole run
+	ExcludeJob   string   // Job name to exclude from watching (typically the attester's own job)
 }
 
 func New(uri string) (w *Watcher, err error) {
@@ -77,23 +80,67 @@ func (w *Watcher) GetRun(specURL string) (*run.Run, error) {
 	return r, nil
 }
 
-// Watch watches a run, updating the run data as it runs
+// Watch watches a run, updating the run data as it runs.
+//
+// If WatchJobs is configured, it polls individual jobs instead of waiting
+// for the entire run to complete. This avoids deadlocking when the
+// attester runs as a job within the same workflow run it is observing.
 func (w *Watcher) Watch(r *run.Run) error {
+	if !w.Options.WaitForBuild {
+		logrus.Warn("watcher will not wait for build, data may be incomplete")
+
+		// Refresh once to get the latest state, then return
+		if err := w.Builder.RefreshRun(r); err != nil {
+			return fmt.Errorf("refreshing run data: %w", err)
+		}
+		return nil
+	}
+
+	// If job-level watching is configured, watch the jobs instead of waiting
+	// for the runs.
+	if len(w.Options.WatchJobs) > 0 || w.Options.ExcludeJob != "" {
+		return w.watchJobs(r)
+	}
+
 	for {
 		if !r.IsRunning {
 			return nil
 		}
 
-		if !w.Options.WaitForBuild {
-			logrus.Warn("run is still running but watcher won't wait (WaitForBuild = false)")
-		}
-
-		// Sleep to wait for a status change
 		if err := w.Builder.RefreshRun(r); err != nil {
 			return fmt.Errorf("refreshing run data: %w", err)
 		}
 
-		// Sleep
+		time.Sleep(3 * time.Second)
+	}
+}
+
+// watchJobs polls the build system for the completion of specific jobs
+// rather than waiting for the entire run to complete.
+func (w *Watcher) watchJobs(r *run.Run) error {
+	jw, ok := w.Builder.Driver().(driver.JobWatcher)
+	if !ok {
+		return fmt.Errorf("build system driver does not support job-level watching")
+	}
+
+	logrus.Infof("Watching jobs: %v (excluding: %q)", w.Options.WatchJobs, w.Options.ExcludeJob)
+
+	for {
+		completed, err := jw.AreJobsCompleted(w.Options.WatchJobs, w.Options.ExcludeJob)
+		if err != nil {
+			return fmt.Errorf("checking job status: %w", err)
+		}
+
+		if completed {
+			logrus.Info("All watched jobs completed")
+
+			// Do a final refresh to get the latest run data
+			if err := w.Builder.RefreshRun(r); err != nil {
+				return fmt.Errorf("final refresh of run data: %w", err)
+			}
+			return nil
+		}
+
 		time.Sleep(3 * time.Second)
 	}
 }
