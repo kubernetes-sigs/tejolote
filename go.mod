@@ -10,7 +10,7 @@ require (
 	github.com/google/go-containerregistry v0.21.5
 	github.com/google/go-github/v84 v84.0.0
 	github.com/in-toto/attestation v1.2.0
-	github.com/magefile/mage v1.17.1
+	github.com/magefile/mage v1.17.2
 	github.com/protobom/protobom v0.5.5
 	github.com/sigstore/cosign/v2 v2.6.3
 	github.com/sigstore/sigstore v1.10.5
