@@ -19,7 +19,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/uwu-tools/magex v0.10.1
 	golang.org/x/sync v0.20.0
-	google.golang.org/api v0.277.0
+	google.golang.org/api v0.278.0
 	google.golang.org/protobuf v1.36.11
 	sigs.k8s.io/release-sdk v0.12.6
 	sigs.k8s.io/release-utils v0.12.4
