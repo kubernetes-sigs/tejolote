@@ -82,7 +82,7 @@ jobs:
           cache: false
 
       - name: Setup bnd
-        uses: carabiner-dev/actions/install/bnd@360ffa1eb909b0105d4eccb6d6ef337911c34952 # v1.1.6
+        uses: carabiner-dev/actions/install/bnd@e0e3b8149dafed833431095bc148d50e7eade4e8 # v1.2.0
 
       - name: Build tejolote from source
         run: go build -o "${{ runner.temp }}/tejolote" ./cmd/tejolote/
