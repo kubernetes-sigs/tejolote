@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Check out code onto GOPATH
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 1
 
@@ -68,7 +68,7 @@ jobs:
 
     steps:
       - name: Check out code onto GOPATH
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 1
 
@@ -82,7 +82,7 @@ jobs:
           cache: false
 
       - name: Setup bnd
-        uses: carabiner-dev/actions/install/bnd@e0e3b8149dafed833431095bc148d50e7eade4e8 # v1.2.0
+        uses: carabiner-dev/actions/install/bnd@94f29392187fe5082d1195a7d4cae3a7ddf09d9c # v1.2.1
 
       - name: Build tejolote from source
         run: go build -o "${{ runner.temp }}/tejolote" ./cmd/tejolote/
