@@ -18,7 +18,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
 	github.com/uwu-tools/magex v0.10.1
-	golang.org/x/sync v0.20.0
+	golang.org/x/sync v0.21.0
 	google.golang.org/api v0.283.0
 	google.golang.org/protobuf v1.36.11
 	sigs.k8s.io/release-sdk v0.12.6
