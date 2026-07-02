@@ -626,8 +626,8 @@ github.com/prometheus/common v0.67.5 h1:pIgK94WWlQt1WLwAC5j2ynLaBRDiinoAb86HZHTU
 github.com/prometheus/common v0.67.5/go.mod h1:SjE/0MzDEEAyrdr5Gqc6G+sXI67maCxzaT3A2+HqjUw=
 github.com/prometheus/procfs v0.17.0 h1:FuLQ+05u4ZI+SS/w9+BWEM2TXiHKsUQ9TADiRH7DuK0=
 github.com/prometheus/procfs v0.17.0/go.mod h1:oPQLaDAMRbA+u8H5Pbfq+dl3VDAvHxMUOVhe0wYB2zw=
-github.com/protobom/protobom v0.5.6 h1:X8NzX9PzSUdNM/0wfeq+WMbblfc6hngIU0kaFUlX44I=
-github.com/protobom/protobom v0.5.6/go.mod h1:0qUbAUOKKg/m1RLibtom+IFXkiBz/x1MqxpWbDL3lQw=
+github.com/protobom/protobom v0.5.8 h1:RNvNF0Wltj29izbx4HPtdRabRQcBPhLfZzYrzdNjFFU=
+github.com/protobom/protobom v0.5.8/go.mod h1:0qUbAUOKKg/m1RLibtom+IFXkiBz/x1MqxpWbDL3lQw=
 github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=
 github.com/rogpeppe/go-internal v1.14.1/go.mod h1:MaRKkUm5W0goXpeCfT7UZI6fk/L7L7so1lCWt35ZSgc=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
