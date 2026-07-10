@@ -34,7 +34,7 @@ import (
 // transparency log unlike the previous detached-DSSE output, which embedded neither
 // the certificate nor a transparency-log proof and was therefore not independently
 // verifiable.
-func (att *Attestation) Sign() ([]byte, error) {
+func (att *Attestation) Sign(envelopeFormat string) ([]byte, error) {
 	statement, err := att.ToJSON()
 	if err != nil {
 		return nil, fmt.Errorf("serializing attestation to json: %w", err)
@@ -48,8 +48,25 @@ func (att *Attestation) Sign() ([]byte, error) {
 	}
 
 	var buf bytes.Buffer
-	if err := s.WriteBundle(bndl, &buf); err != nil {
-		return nil, fmt.Errorf("marshaling sigstore bundle: %w", err)
+	switch envelopeFormat {
+	case "", "bundle":
+		if err := s.WriteBundle(bndl, &buf); err != nil {
+			return nil, fmt.Errorf("marshaling sigstore bundle: %w", err)
+		}
+	case "dsse":
+		// Not recommended: strip the signed material down to the bare DSSE
+		// envelope carried inside the bundle, dropping the Fulcio certificate
+		// and the Rekor inclusion proof. Only for consumers that cannot read
+		// sigstore bundles yet.
+		env := bndl.GetDsseEnvelope()
+		if env == nil {
+			return nil, fmt.Errorf("signed bundle contains no DSSE envelope")
+		}
+		if err := s.WriteDSSEEnvelope(env, &buf); err != nil {
+			return nil, fmt.Errorf("marshaling dsse envelope: %w", err)
+		}
+	default:
+		return nil, fmt.Errorf("unknown envelope format %q (want \"bundle\" or \"dsse\")", envelopeFormat)
 	}
 	return buf.Bytes(), nil
 }

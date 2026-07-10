@@ -44,6 +44,7 @@ type attestOptions struct {
 	watchJobs        []string
 	expandArtifacts  bool
 	artifactsFilter  string
+	envelope         string
 }
 
 const (
@@ -54,6 +55,8 @@ const (
 )
 
 var slsaVersions = []string{"1", "1.0", "0.2"}
+
+var envelopeFormats = []string{"bundle", "dsse"}
 
 func (o *attestOptions) Verify() error {
 	errs := []error{}
@@ -71,6 +74,10 @@ func (o *attestOptions) Verify() error {
 		if _, err := path.Match(o.artifactsFilter, ""); err != nil {
 			errs = append(errs, fmt.Errorf("invalid artifacts filter %q: %w", o.artifactsFilter, err))
 		}
+	}
+
+	if !slices.Contains(envelopeFormats, o.envelope) {
+		errs = append(errs, fmt.Errorf("invalid envelope format %q, must be one of %v", o.envelope, envelopeFormats))
 	}
 	return errors.Join(errs...)
 }
@@ -267,7 +274,7 @@ build data and generates the provenance attestation.
 			var json []byte
 
 			if attestOpts.sign {
-				json, err = attestation.Sign()
+				json, err = attestation.Sign(attestOpts.envelope)
 			} else {
 				json, err = attestation.ToJSON()
 			}
@@ -302,6 +309,13 @@ build data and generates the provenance attestation.
 		"sign",
 		false,
 		"sign the attestation",
+	)
+
+	attestCmd.PersistentFlags().StringVar(
+		&attestOpts.envelope,
+		"envelope",
+		"bundle",
+		`signed output format: "bundle" (sigstore bundle, recommended) or "dsse" (bare DSSE envelope, legacy compat)`,
 	)
 
 	attestCmd.PersistentFlags().StringSliceVar(
