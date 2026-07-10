@@ -110,6 +110,38 @@ func GetRunJobs(org, repo string, runID int64) ([]*gogithub.WorkflowJob, error) 
 	return jobsResp.Jobs, nil
 }
 
+// GetCurrentJob returns the WorkflowJob for the job currently executing inside a
+// GitHub Actions runner.
+// It identifies the job by matching the given runner name (from the RUNNER_NAME
+// environment variable) against the run's jobs, restricted to those that are still
+// in progress. This uniquely identifies the caller even when the job definition
+// sets a custom name: GITHUB_JOB only exposes the job key, while the jobs API
+// reports the display name, so the two differ in that case. It returns (nil, nil)
+// when there is no unique match (eg when the RUNNER_NAME is unset or more than
+// one job in progress shares the runner name).
+func GetCurrentJob(org, repo string, runID int64, runnerName string) (*gogithub.WorkflowJob, error) {
+	if runnerName == "" {
+		return nil, nil
+	}
+
+	jobs, err := GetRunJobs(org, repo, runID)
+	if err != nil {
+		return nil, fmt.Errorf("fetching run jobs: %w", err)
+	}
+
+	var match *gogithub.WorkflowJob
+	for _, job := range jobs {
+		if job.GetStatus() == "in_progress" && job.GetRunnerName() == runnerName {
+			if match != nil {
+				// Ambiguous: more than one in-progress job on this runner name.
+				return nil, nil
+			}
+			match = job
+		}
+	}
+	return match, nil
+}
+
 func Download(url string, f io.Writer) error {
 	agent := NewAgent()
 	return agent.GetToWriter(f, url)

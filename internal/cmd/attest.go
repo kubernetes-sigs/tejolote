@@ -23,11 +23,14 @@ import (
 	"os"
 	"path"
 	"slices"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/release-utils/helpers"
+	"sigs.k8s.io/tejolote/pkg/github"
 	"sigs.k8s.io/tejolote/pkg/watcher"
 )
 
@@ -45,6 +48,7 @@ type attestOptions struct {
 	expandArtifacts  bool
 	artifactsFilter  string
 	envelope         string
+	watchTimeout     time.Duration
 }
 
 const (
@@ -52,6 +56,7 @@ const (
 	githubEnvVarActions = "GITHUB_ACTIONS"
 	githubEnvVarRepo    = "GITHUB_REPOSITORY"
 	githubEnvVarRunID   = "GITHUB_RUN_ID"
+	githubEnvVarRunner  = "RUNNER_NAME"
 )
 
 var (
@@ -181,20 +186,36 @@ build data and generates the provenance attestation.
 			w.Options.WatchJobs = attestOpts.watchJobs
 			w.Options.ExpandArtifacts = attestOpts.expandArtifacts
 			w.Options.ArtifactsFilter = attestOpts.artifactsFilter
+			w.Options.WatchTimeout = attestOpts.watchTimeout
 
 			// Auto detect if tejolote is running inside a GitHub Actions
-			// workflow and the spec URL points to the same run. The we automatically
-			// enable job-level watching to avoid deadlock where the run never
-			// completes because the attester job is part of it.
+			// workflow and the spec URL points to the same run. If so, switch to
+			// job-level watching and exclude our own job; otherwise the run could
+			// never complete because the attester job is part of it.
 			if isSameActionsRun(args[0]) {
-				// Get our own job name:
-				currentJob := os.Getenv(githubEnvVarJob)
-				if len(w.Options.WatchJobs) == 0 {
-					logrus.Infof("Same-run detected (job: %q), will watch all other jobs", currentJob)
-				} else {
-					logrus.Infof("Same-run detected (job: %q), watching specified jobs: %v", currentJob, w.Options.WatchJobs)
+				// $GITHUB_JOB is only the job *key*, but the jobs API reports the
+				// display name, so a job with a custom `name:` would not match.
+				// Resolve our own job via the runner name and exclude it by its
+				// real name, falling back to the key if detection is ambiguous.
+				excludeJob := os.Getenv(githubEnvVarJob)
+				repoParts := strings.SplitN(os.Getenv(githubEnvVarRepo), "/", 2)
+				runID, _ := strconv.ParseInt(os.Getenv(githubEnvVarRunID), 10, 64)
+				if len(repoParts) == 2 && runID != 0 {
+					job, derr := github.GetCurrentJob(repoParts[0], repoParts[1], runID, os.Getenv(githubEnvVarRunner))
+					switch {
+					case derr != nil:
+						logrus.Warnf("resolving own job, falling back to $GITHUB_JOB %q: %v", excludeJob, derr)
+					case job != nil:
+						excludeJob = job.GetName()
+						logrus.Infof("Same-run detected; excluding own job %q (id %d)", job.GetName(), job.GetID())
+					default:
+						logrus.Infof("Same-run detected; could not uniquely resolve own job, excluding by key %q", excludeJob)
+					}
 				}
-				w.Options.ExcludeJob = currentJob
+				if len(w.Options.WatchJobs) > 0 {
+					logrus.Infof("Watching specified jobs: %v", w.Options.WatchJobs)
+				}
+				w.Options.ExcludeJob = excludeJob
 			}
 
 			if !attestOpts.waitForBuild {
@@ -390,6 +411,13 @@ build data and generates the provenance attestation.
 		"watch-jobs",
 		[]string{},
 		"watch specific jobs (by name) instead of the entire run",
+	)
+
+	attestCmd.PersistentFlags().DurationVar(
+		&attestOpts.watchTimeout,
+		"watch-timeout",
+		20*time.Minute,
+		"max time to wait for the watched jobs/run to complete (0 = no timeout)",
 	)
 
 	parentCmd.AddCommand(attestCmd)
