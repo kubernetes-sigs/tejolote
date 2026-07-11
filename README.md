@@ -72,6 +72,24 @@ artifacts produced after a run, Tejolote sits one level above and
 will expect artifacts to appear in the storage location(s) you
 tell it to monitor.
 
+### GitHub Actions artifacts
+
+When attesting a GitHub Actions run, Tejolote collects the run's uploaded
+artifacts automatically. Because the Actions API serves each artifact as a zip
+archive, Tejolote unpacks them by default and records one subject per contained
+file, hashed by its content and named by its path within the zip. Pass
+`--expand-artifacts=false` to attest each archive as a single subject instead.
+
+`--artifacts-filter` limits what gets attested from **any** source: pass a glob
+(`path.Match` syntax) matched against each artifact's name (the last element of
+its path). For GitHub Actions the match is applied to the artifact name before
+download; for other sources it is applied to the collected artifact names:
+
+```bash
+tejolote attest github://my-org/my-repo/12345 \
+   --artifacts-filter='release-*'
+```
+
 ## Example
 
 Let's say for example you want to attest a Cloud Build job that produces
