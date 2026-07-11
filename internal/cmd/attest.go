@@ -41,6 +41,8 @@ type attestOptions struct {
 	slsaVersion      string
 	artifacts        []string
 	watchJobs        []string
+	expandArtifacts  bool
+	artifactsFilter  string
 }
 
 const (
@@ -95,6 +97,16 @@ page of the organization/repository repository. We support other sources
 such as GCS buckets, OCI registries and so on. Check the docs for more
 info.
 
+GitHub Actions artifacts are downloaded as zip archives. By default tejolote
+unpacks them and records one subject per contained file, hashed by its content
+and named by its path within the zip. Pass --expand-artifacts=false to instead
+attest each archive as a single subject.
+
+Use --artifacts-filter to attest only a subset of the run's artifacts. The flag
+takes a glob (path.Match syntax) matched against the artifact names, for example:
+
+  tejolote attest github://org/repo/12345 --artifacts-filter='release-*'
+
 🔸 Dependency Data
 ------------------
 
@@ -146,6 +158,8 @@ build data and generates the provenance attestation.
 			w.Options.WaitForBuild = attestOpts.waitForBuild
 			w.Options.SLSAVersion = attestOpts.slsaVersion
 			w.Options.WatchJobs = attestOpts.watchJobs
+			w.Options.ExpandArtifacts = attestOpts.expandArtifacts
+			w.Options.ArtifactsFilter = attestOpts.artifactsFilter
 
 			// Auto detect if tejolote is running inside a GitHub Actions
 			// workflow and the spec URL points to the same run. The we automatically
@@ -282,6 +296,20 @@ build data and generates the provenance attestation.
 		"artifacts",
 		[]string{},
 		"a storage URL to monitor for files",
+	)
+
+	attestCmd.PersistentFlags().BoolVar(
+		&attestOpts.expandArtifacts,
+		"expand-artifacts",
+		true,
+		"unpack actions artifacts and attest each file, or attest archive when false",
+	)
+
+	attestCmd.PersistentFlags().StringVar(
+		&attestOpts.artifactsFilter,
+		"artifacts-filter",
+		"",
+		"only attest artifacts whose name matches this glob",
 	)
 	attestCmd.PersistentFlags().BoolVar(
 		&attestOpts.waitForBuild,
