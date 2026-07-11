@@ -80,6 +80,10 @@ archive, Tejolote unpacks them by default and records one subject per contained
 file, hashed by its content and named by its path within the zip. Pass
 `--expand-artifacts=false` to attest each archive as a single subject instead.
 
+If you pass one or more `--artifacts` sources, Tejolote collects only from those
+and skips the run's native artifacts — so you can point it at a directory of
+files you prepared yourself instead of the automatically-collected artifacts.
+
 `--artifacts-filter` limits what gets attested from **any** source: pass a glob
 (`path.Match` syntax) matched against each artifact's name (the last element of
 its path). For GitHub Actions the match is applied to the artifact name before

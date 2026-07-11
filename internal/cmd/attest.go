@@ -97,6 +97,10 @@ page of the organization/repository repository. We support other sources
 such as GCS buckets, OCI registries and so on. Check the docs for more
 info.
 
+When you specify one or more --artifacts sources, tejolote collects only from
+those and skips the build system's native artifact store. With no --artifacts
+flag it collects the run's native artifacts automatically.
+
 GitHub Actions artifacts are downloaded as zip archives. By default tejolote
 unpacks them and records one subject per contained file, hashed by its content
 and named by its path within the zip. Pass --expand-artifacts=false to instead

@@ -237,9 +237,15 @@ func (w *Watcher) AddArtifactSource(specURL string) error {
 // collects any artifacts found after the build is done
 func (w *Watcher) CollectArtifacts(r *run.Run) error {
 	r.Artifacts = nil
+
+	// If explicit artifact sources were configured (via --artifacts), collect
+	// only from those. Otherwise fall back to the build system's native artifact
+	// store (e.g. the run's GitHub Actions artifacts).
 	artifactStores := w.ArtifactStores
-	// TODO: Support disabling the native driver
-	artifactStores = append(artifactStores, w.Builder.ArtifactStores()...)
+	if len(artifactStores) == 0 {
+		artifactStores = append(artifactStores, w.Builder.ArtifactStores()...)
+	}
+
 	for _, s := range artifactStores {
 		// The GitHub Actions store filters and expands internally, before
 		// downloading, matching the filter against the artifact name. Other
@@ -268,7 +274,7 @@ func (w *Watcher) CollectArtifacts(r *run.Run) error {
 	}
 	logrus.Infof(
 		"Run produced %d artifacts collected from %d sources",
-		len(r.Artifacts), len(w.ArtifactStores),
+		len(r.Artifacts), len(artifactStores),
 	)
 	return nil
 }
