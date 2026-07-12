@@ -28,6 +28,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/release-utils/helpers"
+	"sigs.k8s.io/tejolote/pkg/attestation"
 	"sigs.k8s.io/tejolote/pkg/watcher"
 )
 
@@ -56,8 +57,6 @@ const (
 
 var slsaVersions = []string{"1", "1.0", "0.2"}
 
-var envelopeFormats = []string{"bundle", "dsse"}
-
 func (o *attestOptions) Verify() error {
 	errs := []error{}
 	if o.encodedExisting != "" && o.continueExisting != "" {
@@ -76,8 +75,8 @@ func (o *attestOptions) Verify() error {
 		}
 	}
 
-	if !slices.Contains(envelopeFormats, o.envelope) {
-		errs = append(errs, fmt.Errorf("invalid envelope format %q, must be one of %v", o.envelope, envelopeFormats))
+	if !slices.Contains(attestation.EnvelopeFormats, o.envelope) {
+		errs = append(errs, fmt.Errorf("invalid envelope format %q, must be one of %v", o.envelope, attestation.EnvelopeFormats))
 	}
 	return errors.Join(errs...)
 }
