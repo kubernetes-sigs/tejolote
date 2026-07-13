@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"slices"
 	"strings"
 
@@ -62,6 +63,14 @@ func (o *attestOptions) Verify() error {
 
 	if !slices.Contains(slsaVersions, o.slsaVersion) {
 		errs = append(errs, fmt.Errorf("invalid slsa versions must be one of %v", slsaVersions))
+	}
+
+	// Validate the artifacts filter glob up front so a bad pattern fails fast
+	// instead of surfacing only once artifacts are processed, minutes into a run.
+	if o.artifactsFilter != "" {
+		if _, err := path.Match(o.artifactsFilter, ""); err != nil {
+			errs = append(errs, fmt.Errorf("invalid artifacts filter %q: %w", o.artifactsFilter, err))
+		}
 	}
 	return errors.Join(errs...)
 }

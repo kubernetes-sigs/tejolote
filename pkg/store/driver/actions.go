@@ -24,7 +24,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"net/url"
 	"os"
 	"path"
@@ -227,6 +226,11 @@ func hashArtifactZip(zipPath, artifactName string, updated time.Time) ([]run.Art
 	return subjects, nil
 }
 
+// maxZipEntrySize caps how many bytes tejolote will read and hash from a single
+// file inside a GitHub Actions artifact zip. Real artifacts are far smaller and
+// a larger declared size may be a decompression bomb
+const maxZipEntrySize = 10 << 30 // 10 GiB
+
 // sha256ZipEntry returns the hex-encoded SHA256 of a zip entry's contents.
 func sha256ZipEntry(zf *zip.File) (string, error) {
 	rc, err := zf.Open()
@@ -235,11 +239,14 @@ func sha256ZipEntry(zf *zip.File) (string, error) {
 	}
 	defer rc.Close()
 
-	// Bound the copy to the entry's declared uncompressed size to guard against
-	// a decompression bomb (gosec G110).
+	// Reject entries declaring a size larger than maxZipEntrySize and then only
+	// copy up to those bytes (gosec G110).
 	size := zf.UncompressedSize64
-	if size > math.MaxInt64 {
-		return "", fmt.Errorf("zip entry %q declares an implausible size", zf.Name)
+	if size > maxZipEntrySize {
+		return "", fmt.Errorf(
+			"zip entry %q declares uncompressed size %d bytes, exceeding the %d byte limit",
+			zf.Name, size, uint64(maxZipEntrySize),
+		)
 	}
 
 	h := sha256.New()
