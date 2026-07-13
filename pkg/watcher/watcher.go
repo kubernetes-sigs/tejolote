@@ -212,6 +212,7 @@ func (w *Watcher) AttestRun(r *run.Run) (att *attestation.Attestation, err error
 	for _, a := range r.Artifacts {
 		s := &intoto.ResourceDescriptor{
 			Name:   a.Path,
+			Uri:    a.URL,
 			Digest: map[string]string{},
 		}
 		maps.Copy(s.GetDigest(), a.Checksum)

@@ -161,11 +161,12 @@ func (a *Actions) readArtifacts() ([]run.Artifact, error) {
 	// download API always returns a zip wrapping the uploaded files). When Expand
 	// is set we unpack each one and emit a subject per contained file, hashed by
 	// its content and named by its path within the zip. Otherwise we hash the
-	// archive itself as a single subject named by the artifact.
+	// archive itself as a single subject, keeping the prior subject name (the
+	// artifacts API URL joined with the artifact name) for compatibility.
 	ret := make([]run.Artifact, 0, len(selected))
 	for i, art := range selected {
 		if a.Expand {
-			subjects, err := hashArtifactZip(files[i].Name(), art.Name, art.UpdatedAt)
+			subjects, err := hashArtifactZip(files[i].Name(), art.Name, art.URL, art.UpdatedAt)
 			if err != nil {
 				return nil, fmt.Errorf("hashing artifact %q: %w", art.Name, err)
 			}
@@ -178,7 +179,8 @@ func (a *Actions) readArtifacts() ([]run.Artifact, error) {
 			return nil, fmt.Errorf("hashing artifact %q: %w", art.Name, err)
 		}
 		ret = append(ret, run.Artifact{
-			Path:     art.Name,
+			Path:     runURL + "/" + art.Name,
+			URL:      art.URL,
 			Checksum: map[string]string{string(intoto.AlgorithmSHA256): shaVal},
 			Time:     art.UpdatedAt,
 		})
@@ -191,7 +193,7 @@ func (a *Actions) readArtifacts() ([]run.Artifact, error) {
 // and returns one subject per contained file, each hashed by its content and
 // named by its path within the zip. If the payload is not a valid zip it falls
 // back to hashing the raw blob as a single subject.
-func hashArtifactZip(zipPath, artifactName string, updated time.Time) ([]run.Artifact, error) {
+func hashArtifactZip(zipPath, artifactName, artifactURL string, updated time.Time) ([]run.Artifact, error) {
 	zr, err := zip.OpenReader(zipPath)
 	if err != nil {
 		// Not a zip (should not happen for Actions artifacts): hash the blob.
@@ -202,6 +204,7 @@ func hashArtifactZip(zipPath, artifactName string, updated time.Time) ([]run.Art
 		}
 		return []run.Artifact{{
 			Path:     artifactName,
+			URL:      artifactURL,
 			Checksum: map[string]string{string(intoto.AlgorithmSHA256): shaVal},
 			Time:     updated,
 		}}, nil
@@ -219,6 +222,7 @@ func hashArtifactZip(zipPath, artifactName string, updated time.Time) ([]run.Art
 		}
 		subjects = append(subjects, run.Artifact{
 			Path:     zf.Name,
+			URL:      artifactURL,
 			Checksum: map[string]string{string(intoto.AlgorithmSHA256): shaVal},
 			Time:     updated,
 		})
