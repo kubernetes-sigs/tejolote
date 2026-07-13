@@ -48,6 +48,7 @@ func (att *Attestation) Sign(envelopeFormat string) ([]byte, error) {
 	}
 
 	s := signer.NewSigner()
+	defer s.Close()
 
 	bndl, err := s.SignStatementBundle(statement)
 	if err != nil {
@@ -56,7 +57,7 @@ func (att *Attestation) Sign(envelopeFormat string) ([]byte, error) {
 
 	var buf bytes.Buffer
 	switch envelopeFormat {
-	case "", "bundle":
+	case "bundle":
 		if err := s.WriteBundle(bndl, &buf); err != nil {
 			return nil, fmt.Errorf("marshaling sigstore bundle: %w", err)
 		}
@@ -72,8 +73,6 @@ func (att *Attestation) Sign(envelopeFormat string) ([]byte, error) {
 		if err := s.WriteDSSEEnvelope(env, &buf); err != nil {
 			return nil, fmt.Errorf("marshaling dsse envelope: %w", err)
 		}
-	default:
-		return nil, fmt.Errorf("unknown envelope format %q (want \"bundle\" or \"dsse\")", envelopeFormat)
 	}
 	return buf.Bytes(), nil
 }

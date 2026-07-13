@@ -75,7 +75,7 @@ func (o *attestOptions) Verify() error {
 		}
 	}
 
-	if !slices.Contains(attestation.EnvelopeFormats, o.envelope) {
+	if o.sign && !slices.Contains(attestation.EnvelopeFormats, o.envelope) {
 		errs = append(errs, fmt.Errorf("invalid envelope format %q, must be one of %v", o.envelope, attestation.EnvelopeFormats))
 	}
 	return errors.Join(errs...)
