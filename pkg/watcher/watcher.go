@@ -116,16 +116,20 @@ func (w *Watcher) Watch(r *run.Run) error {
 	}
 
 	for {
+		if err := w.Builder.RefreshRun(r); err != nil {
+			return fmt.Errorf("refreshing run data: %w", err)
+		}
+
 		if !r.IsRunning {
 			return nil
 		}
 
+		// Check the deadline only after a fresh refresh so a run that
+		// completed during the last poll interval is reported as done rather
+		// than as a timeout (mirrors watchJobs, which fetches fresh state
+		// before its own deadline check).
 		if !deadline.IsZero() && time.Now().After(deadline) {
 			return fmt.Errorf("timed out after %s waiting for run to complete", w.Options.WatchTimeout)
-		}
-
-		if err := w.Builder.RefreshRun(r); err != nil {
-			return fmt.Errorf("refreshing run data: %w", err)
 		}
 
 		time.Sleep(3 * time.Second)
