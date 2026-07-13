@@ -190,9 +190,11 @@ func (a *Actions) readArtifacts() ([]run.Artifact, error) {
 }
 
 // hashArtifactZip unpacks a downloaded GitHub Actions artifact (always a zip)
-// and returns one subject per contained file, each hashed by its content and
-// named by its path within the zip. If the payload is not a valid zip it falls
-// back to hashing the raw blob as a single subject.
+// and returns one subject per contained file, each hashed by its content. Each
+// subject is named "<artifactName>/<path within the zip>" so files sharing a
+// name across different artifacts (e.g. checksums.txt) stay distinct, and its
+// uri points at the specific file inside the archive. If the payload is not a
+// valid zip it falls back to hashing the raw blob as a single subject.
 func hashArtifactZip(zipPath, artifactName, artifactURL string, updated time.Time) ([]run.Artifact, error) {
 	zr, err := zip.OpenReader(zipPath)
 	if err != nil {
@@ -220,14 +222,29 @@ func hashArtifactZip(zipPath, artifactName, artifactURL string, updated time.Tim
 		if herr != nil {
 			return nil, fmt.Errorf("hashing %s: %w", zf.Name, herr)
 		}
+		// Drop the leading slash so a hostile entry name (eg "../../x") cannot
+		// escape the artifact-name prefix
+		entry := strings.TrimPrefix(path.Clean("/"+zf.Name), "/")
 		subjects = append(subjects, run.Artifact{
-			Path:     zf.Name,
-			URL:      artifactURL,
+			Path:     artifactName + "/" + entry,
+			URL:      zipEntryURI(artifactURL, entry),
 			Checksum: map[string]string{string(intoto.AlgorithmSHA256): shaVal},
 			Time:     updated,
 		})
 	}
 	return subjects, nil
+}
+
+// zipEntryURI points an artifact's download URL at a specific file inside the
+// zip using the URL fragment, eg .../artifacts/42/zip#bin/tejolote. The entry
+// path is encoded so names with special characters are still a valid URI
+func zipEntryURI(artifactURL, entry string) string {
+	u, err := url.Parse(artifactURL)
+	if err != nil {
+		return artifactURL + "#" + entry
+	}
+	u.Fragment = entry
+	return u.String()
 }
 
 // maxZipEntrySize caps how many bytes tejolote will read and hash from a single
