@@ -24,7 +24,7 @@ import (
 	"github.com/carabiner-dev/signer"
 )
 
-var EnvelopeFormats = []string{"bundle", "dsse"}
+var envelopeFormats = []string{"bundle", "dsse"}
 
 // Sign signs the attestation with sigstore and returns a serialized Sigstore
 // bundle: the in-toto statement wrapped in a DSSE envelope together with the
@@ -38,8 +38,8 @@ var EnvelopeFormats = []string{"bundle", "dsse"}
 // the certificate nor a transparency-log proof and was therefore not independently
 // verifiable.
 func (att *Attestation) Sign(envelopeFormat string) ([]byte, error) {
-	if !slices.Contains(EnvelopeFormats, envelopeFormat) {
-		return nil, fmt.Errorf("invalid envelope format, tejolote supports: %v", EnvelopeFormats)
+	if !slices.Contains(envelopeFormats, envelopeFormat) {
+		return nil, fmt.Errorf("invalid envelope format, tejolote supports: %v", envelopeFormats)
 	}
 
 	statement, err := att.ToJSON()
