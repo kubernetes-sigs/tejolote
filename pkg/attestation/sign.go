@@ -18,90 +18,61 @@ package attestation
 
 import (
 	"bytes"
-	"context"
 	"fmt"
-	"time"
+	"slices"
 
-	"github.com/sigstore/cosign/v2/cmd/cosign/cli/options"
-	"github.com/sigstore/cosign/v2/cmd/cosign/cli/sign"
-	"github.com/sigstore/sigstore/pkg/signature/dsse"
-	signatureoptions "github.com/sigstore/sigstore/pkg/signature/options"
-	"github.com/sigstore/sigstore/pkg/tuf"
+	"github.com/carabiner-dev/signer"
 )
 
-func (att *Attestation) Sign() ([]byte, error) {
-	var certPath, certChainPath string
+var envelopeFormats = []string{"bundle", "dsse"}
 
-	ctx := context.Background()
-	var timeout time.Duration // TODO: move to options
-	if timeout != 0 {
-		var cancelFn context.CancelFunc
-		ctx, cancelFn = context.WithTimeout(ctx, timeout)
-		defer cancelFn()
+// Sign signs the attestation with sigstore and returns a serialized Sigstore
+// bundle: the in-toto statement wrapped in a DSSE envelope together with the
+// Fulcio signing certificate and the Rekor transparency-log inclusion proof,
+// all in a single self-contained, verifiable file.
+//
+// Signing uses the keyless sigstore flow with ambient credentials (e.g. the
+// GitHub Actions or SPIFFE workload identity) when available. The signer library
+// handles requesting the Fulcio certificate and registering the entry in the Rekor
+// transparency log unlike the previous detached-DSSE output, which embedded neither
+// the certificate nor a transparency-log proof and was therefore not independently
+// verifiable.
+func (att *Attestation) Sign(envelopeFormat string) ([]byte, error) {
+	if !slices.Contains(envelopeFormats, envelopeFormat) {
+		return nil, fmt.Errorf("invalid envelope format, tejolote supports: %v", envelopeFormats)
 	}
 
-	// Initialize the TUF cache to ensure we have the
-	// latests root, otherwise proof of inclusion may fail.
-	if err := tuf.Initialize(ctx, tuf.DefaultRemoteRoot, nil); err != nil {
-		return nil, fmt.Errorf("initializing TUF client: %w", err)
-	}
-
-	ko := options.KeyOpts{
-		// KeyRef:     s.options.PrivateKeyPath,
-		// IDToken:    identityToken,
-		FulcioURL:    options.DefaultFulcioURL,
-		RekorURL:     options.DefaultRekorURL,
-		OIDCIssuer:   options.DefaultOIDCIssuerURL,
-		OIDCClientID: "sigstore",
-
-		InsecureSkipFulcioVerify: false,
-		SkipConfirmation:         true,
-		// FulcioAuthFlow:           "", //nolint: gocritic
-	}
-
-	sv, _, err := sign.SignerFromKeyOpts(ctx, certPath, certChainPath, ko)
-	if err != nil {
-		return nil, fmt.Errorf("getting signer: %w", err)
-	}
-	defer sv.Close()
-
-	// Wrap the attestation in the DSSE envelope
-	wrapped := dsse.WrapSigner(sv, "application/vnd.in-toto+json")
-
-	json, err := att.ToJSON()
+	statement, err := att.ToJSON()
 	if err != nil {
 		return nil, fmt.Errorf("serializing attestation to json: %w", err)
 	}
 
-	signedPayload, err := wrapped.SignMessage(
-		bytes.NewReader(json), signatureoptions.WithContext(ctx),
-	)
+	s := signer.NewSigner()
+	defer s.Close()
+
+	bndl, err := s.SignStatementBundle(statement)
 	if err != nil {
-		return nil, fmt.Errorf("signing attestation: %w", err)
+		return nil, fmt.Errorf("signing attestation as sigstore bundle: %w", err)
 	}
 
-	fmt.Println(string(signedPayload))
-	return signedPayload, nil
-
-	// TODO: review this
-	//nolint: gocritic
-	/*
-		opts := []static.Option{static.WithLayerMediaType(types.DssePayloadType)}
-		if sv.Cert != nil {
-			opts = append(opts, static.WithCertChain(sv.Cert, sv.Chain))
+	var buf bytes.Buffer
+	switch envelopeFormat {
+	case "bundle":
+		if err := s.WriteBundle(bndl, &buf); err != nil {
+			return nil, fmt.Errorf("marshaling sigstore bundle: %w", err)
 		}
-	*/
-	// Should we upload?
-	/*
-		// Check whether we should be uploading to the transparency log
-		if sign.ShouldUploadToTlog(ctx, digest, force, noTlogUpload, ko.RekorURL) {
-			bundle, err := uploadToTlog(ctx, sv, ko.RekorURL, func(r *client.Rekor, b []byte) (*models.LogEntryAnon, error) {
-				return cosign.TLogUploadInTotoAttestation(ctx, r, signedPayload, b)
-			})
-			if err != nil {
-				return err
-			}
-			opts = append(opts, static.WithBundle(bundle))
+	case "dsse":
+		// Not recommended: strip the signed material down to the bare DSSE
+		// envelope carried inside the bundle, dropping the Fulcio certificate
+		// and the Rekor inclusion proof. Only for consumers that cannot read
+		// sigstore bundles yet.
+		env := bndl.GetDsseEnvelope()
+		if env == nil {
+			return nil, fmt.Errorf("signed bundle contains no DSSE envelope")
 		}
-	*/
+		if err := s.WriteDSSEEnvelope(env, &buf); err != nil {
+			return nil, fmt.Errorf("marshaling dsse envelope: %w", err)
+		}
+	}
+	return buf.Bytes(), nil
 }
