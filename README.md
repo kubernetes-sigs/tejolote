@@ -84,14 +84,18 @@ If you pass one or more `--artifacts` sources, Tejolote collects only from those
 and skips the run's native artifacts — so you can point it at a directory of
 files you prepared yourself instead of the automatically-collected artifacts.
 
-`--artifacts-filter` limits what gets attested from **any** source: pass a glob
-(`path.Match` syntax) matched against each artifact's name (the last element of
-its path). For GitHub Actions the match is applied to the artifact name before
-download; for other sources it is applied to the collected artifact names:
+`--artifacts-filter` limits what gets attested from the artifacts source: pass
+one or more globs ([`path.Match` syntax](https://pkg.go.dev/path#Match)) matched
+against each artifact's base name (the last element of its path). Any artifacts
+matching any of the globs are attested (added to the statement's subject). Repeat
+the flag or pass a comma-separated list. For GitHub Actions, the match is applied
+to the artifact name before download, all other sources it is applied to the
+collected artifact names:
 
 ```bash
 tejolote attest github://my-org/my-repo/12345 \
-   --artifacts-filter='release-*'
+   --artifacts-filter='release-*' \
+   --artifacts-filter='*.sbom'
 ```
 
 ## Example
