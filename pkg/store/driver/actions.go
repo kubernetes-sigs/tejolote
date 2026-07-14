@@ -55,12 +55,31 @@ type Actions struct {
 	// as a single subject.
 	Expand bool
 
-	// Filter, when non-empty, is a glob (path.Match syntax) matched against
-	// artifact names; only matching artifacts are collected.
-	Filter string
+	// Filter, when non-empty, is a list of globs (path.Match syntax) matched
+	// against artifact names; only artifacts matching at least one glob are
+	// collected.
+	Filter []string
 }
 
 var ErrNoWorkflowToken = errors.New("token does not have workflow scope")
+
+// matchesFilter reports whether an artifact name matches at least one of the
+// configured filter globs. An empty filter matches everything.
+func (a *Actions) matchesFilter(name string) (bool, error) {
+	if len(a.Filter) == 0 {
+		return true, nil
+	}
+	for _, glob := range a.Filter {
+		match, err := path.Match(glob, name)
+		if err != nil {
+			return false, fmt.Errorf("invalid artifacts filter %q: %w", glob, err)
+		}
+		if match {
+			return true, nil
+		}
+	}
+	return false, nil
+}
 
 func NewActions(specURL string) (*Actions, error) {
 	u, err := url.Parse(specURL)
@@ -112,19 +131,17 @@ func (a *Actions) readArtifacts() ([]run.Artifact, error) {
 		return nil, fmt.Errorf("unmarshalling GitHub response: %w", err)
 	}
 
-	// Filter the artifacts by name (glob) if a filter is configured, so we only
+	// Filter the artifacts by name (globs) if a filter is configured, so we only
 	// download and attest the ones we care about.
 	selected := make([]github.Artifact, 0, len(artifacts.Artifacts))
 	for _, art := range artifacts.Artifacts {
-		if a.Filter != "" {
-			match, err := path.Match(a.Filter, art.Name)
-			if err != nil {
-				return nil, fmt.Errorf("invalid artifacts filter %q: %w", a.Filter, err)
-			}
-			if !match {
-				logrus.Debugf("artifact %q does not match filter %q, skipping", art.Name, a.Filter)
-				continue
-			}
+		match, err := a.matchesFilter(art.Name)
+		if err != nil {
+			return nil, err
+		}
+		if !match {
+			logrus.Debugf("artifact %q does not match filters %v, skipping", art.Name, a.Filter)
+			continue
 		}
 		selected = append(selected, art)
 	}
