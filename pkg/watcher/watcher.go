@@ -50,12 +50,13 @@ type Watcher struct {
 }
 
 type Options struct {
-	WaitForBuild    bool     // When true, the watcher will keep observing the run until it's done
-	SLSAVersion     string   // SLSA version for the attestation predicate
-	WatchJobs       []string // When set, watch these specific jobs instead of the whole run
-	ExcludeJob      string   // Job name to exclude from watching (typically the attester's own job)
-	ExpandArtifacts bool     // When true, unpack archive-wrapped artifacts (GitHub Actions) and hash contained files
-	ArtifactsFilter string   // When set, a glob matched against artifact names; only matching artifacts are collected
+	WaitForBuild    bool          // When true, the watcher will keep observing the run until it's done
+	SLSAVersion     string        // SLSA version for the attestation predicate
+	WatchJobs       []string      // When set, watch these specific jobs instead of the whole run
+	ExcludeJob      string        // Job name to exclude from watching (typically the attester's own job)
+	ExpandArtifacts bool          // When true, unpack archive-wrapped artifacts (GitHub Actions) and hash contained files
+	ArtifactsFilter string        // When set, a glob matched against artifact names; only matching artifacts are collected
+	WatchTimeout    time.Duration // Max time to wait for the run/jobs to complete (0 = no timeout)
 }
 
 func New(uri string) (w *Watcher, err error) {
@@ -101,19 +102,34 @@ func (w *Watcher) Watch(r *run.Run) error {
 		return nil
 	}
 
+	// Optional deadline so a stuck or mis-detected watch fails fast instead of
+	// polling forever (0 = wait indefinitely).
+	var deadline time.Time
+	if w.Options.WatchTimeout > 0 {
+		deadline = time.Now().Add(w.Options.WatchTimeout)
+	}
+
 	// If job-level watching is configured, watch the jobs instead of waiting
 	// for the runs.
 	if len(w.Options.WatchJobs) > 0 || w.Options.ExcludeJob != "" {
-		return w.watchJobs(r)
+		return w.watchJobs(r, deadline)
 	}
 
 	for {
+		if err := w.Builder.RefreshRun(r); err != nil {
+			return fmt.Errorf("refreshing run data: %w", err)
+		}
+
 		if !r.IsRunning {
 			return nil
 		}
 
-		if err := w.Builder.RefreshRun(r); err != nil {
-			return fmt.Errorf("refreshing run data: %w", err)
+		// Check the deadline only after a fresh refresh so a run that
+		// completed during the last poll interval is reported as done rather
+		// than as a timeout (mirrors watchJobs, which fetches fresh state
+		// before its own deadline check).
+		if !deadline.IsZero() && time.Now().After(deadline) {
+			return fmt.Errorf("timed out after %s waiting for run to complete", w.Options.WatchTimeout)
 		}
 
 		time.Sleep(3 * time.Second)
@@ -122,7 +138,7 @@ func (w *Watcher) Watch(r *run.Run) error {
 
 // watchJobs polls the build system for the completion of specific jobs
 // rather than waiting for the entire run to complete.
-func (w *Watcher) watchJobs(r *run.Run) error {
+func (w *Watcher) watchJobs(r *run.Run, deadline time.Time) error {
 	jw, ok := w.Builder.Driver().(driver.JobWatcher)
 	if !ok {
 		return fmt.Errorf("build system driver does not support job-level watching")
@@ -144,6 +160,10 @@ func (w *Watcher) watchJobs(r *run.Run) error {
 				return fmt.Errorf("final refresh of run data: %w", err)
 			}
 			return nil
+		}
+
+		if !deadline.IsZero() && time.Now().After(deadline) {
+			return fmt.Errorf("timed out after %s waiting for watched jobs to complete", w.Options.WatchTimeout)
 		}
 
 		time.Sleep(3 * time.Second)
