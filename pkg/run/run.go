@@ -49,7 +49,9 @@ type Step struct {
 
 // Artifact abstracts a file with the items we're interested in monitoring
 type Artifact struct {
-	Path     string
+	Path string
+	// URL, when set, locates the artifact and is recorded as the subject's uri.
+	URL      string
 	Checksum map[string]string
 	Time     time.Time
 }

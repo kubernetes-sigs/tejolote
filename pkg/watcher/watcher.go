@@ -25,6 +25,7 @@ import (
 	"log"
 	"maps"
 	"os"
+	pathpkg "path"
 	"strings"
 	"time"
 
@@ -36,6 +37,7 @@ import (
 	"sigs.k8s.io/tejolote/pkg/builder/driver"
 	"sigs.k8s.io/tejolote/pkg/run"
 	"sigs.k8s.io/tejolote/pkg/store"
+	storedriver "sigs.k8s.io/tejolote/pkg/store/driver"
 	"sigs.k8s.io/tejolote/pkg/store/snapshot"
 )
 
@@ -48,16 +50,19 @@ type Watcher struct {
 }
 
 type Options struct {
-	WaitForBuild bool     // When true, the watcher will keep observing the run until it's done
-	SLSAVersion  string   // SLSA version for the attestation predicate
-	WatchJobs    []string // When set, watch these specific jobs instead of the whole run
-	ExcludeJob   string   // Job name to exclude from watching (typically the attester's own job)
+	WaitForBuild    bool     // When true, the watcher will keep observing the run until it's done
+	SLSAVersion     string   // SLSA version for the attestation predicate
+	WatchJobs       []string // When set, watch these specific jobs instead of the whole run
+	ExcludeJob      string   // Job name to exclude from watching (typically the attester's own job)
+	ExpandArtifacts bool     // When true, unpack archive-wrapped artifacts (GitHub Actions) and hash contained files
+	ArtifactsFilter string   // When set, a glob matched against artifact names; only matching artifacts are collected
 }
 
 func New(uri string) (w *Watcher, err error) {
 	w = &Watcher{
 		Options: Options{
-			WaitForBuild: true, // By default we watch the build run
+			WaitForBuild:    true, // By default we watch the build run
+			ExpandArtifacts: true, // By default, unpack artifact archives and hash contained files
 		},
 	}
 
@@ -207,6 +212,7 @@ func (w *Watcher) AttestRun(r *run.Run) (att *attestation.Attestation, err error
 	for _, a := range r.Artifacts {
 		s := &intoto.ResourceDescriptor{
 			Name:   a.Path,
+			Uri:    a.URL,
 			Digest: map[string]string{},
 		}
 		maps.Copy(s.GetDigest(), a.Checksum)
@@ -232,22 +238,68 @@ func (w *Watcher) AddArtifactSource(specURL string) error {
 // collects any artifacts found after the build is done
 func (w *Watcher) CollectArtifacts(r *run.Run) error {
 	r.Artifacts = nil
+
+	// If explicit artifact sources were configured (via --artifacts), collect
+	// only from those. Otherwise fall back to the build system's native artifact
+	// store (e.g. the run's GitHub Actions artifacts).
 	artifactStores := w.ArtifactStores
-	// TODO: Support disabling the native driver
-	artifactStores = append(artifactStores, w.Builder.ArtifactStores()...)
+	if len(artifactStores) == 0 {
+		artifactStores = append(artifactStores, w.Builder.ArtifactStores()...)
+	}
+
 	for _, s := range artifactStores {
+		// The GitHub Actions store filters and expands internally, before
+		// downloading, matching the filter against the artifact name. Other
+		// sources have no such structure, so we filter their results here.
+		filterHere := w.Options.ArtifactsFilter != ""
+		if act, ok := s.Driver.(*storedriver.Actions); ok {
+			act.Expand = w.Options.ExpandArtifacts
+			act.Filter = w.Options.ArtifactsFilter
+			filterHere = false
+		}
+
 		logrus.Infof("Collecting artifacts from %s", s.SpecURL)
 		artifacts, err := s.ReadArtifacts()
 		if err != nil {
 			return fmt.Errorf("collecting artfiacts from %s: %w", s.SpecURL, err)
 		}
+
+		if filterHere {
+			artifacts, err = filterArtifactsByName(artifacts, w.Options.ArtifactsFilter)
+			if err != nil {
+				return fmt.Errorf("filtering artifacts from %s: %w", s.SpecURL, err)
+			}
+		}
+
 		r.Artifacts = append(r.Artifacts, artifacts...)
 	}
 	logrus.Infof(
 		"Run produced %d artifacts collected from %d sources",
-		len(r.Artifacts), len(w.ArtifactStores),
+		len(r.Artifacts), len(artifactStores),
 	)
 	return nil
+}
+
+// filterArtifactsByName keeps only the artifacts whose name — the last element
+// of their path — matches the given glob (path.Match syntax). An empty glob
+// keeps everything.
+func filterArtifactsByName(artifacts []run.Artifact, glob string) ([]run.Artifact, error) {
+	if glob == "" {
+		return artifacts, nil
+	}
+	out := make([]run.Artifact, 0, len(artifacts))
+	for _, a := range artifacts {
+		match, err := pathpkg.Match(glob, pathpkg.Base(a.Path))
+		if err != nil {
+			return nil, fmt.Errorf("invalid artifacts filter %q: %w", glob, err)
+		}
+		if !match {
+			logrus.Debugf("artifact %q does not match filter %q, skipping", a.Path, glob)
+			continue
+		}
+		out = append(out, a)
+	}
+	return out, nil
 }
 
 // Snap adds a new snapshot set to the watcher by querying
