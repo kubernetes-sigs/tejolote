@@ -25,19 +25,23 @@ import (
 )
 
 func TestDelta(t *testing.T) {
+	const (
+		testFileName = "test.txt"
+		sha256Key    = "sha256"
+	)
 	testFile := run.Artifact{
-		Path:     "test.txt",
-		Checksum: map[string]string{"sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"},
+		Path:     testFileName,
+		Checksum: map[string]string{sha256Key: "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"},
 		Time:     time.Now(),
 	}
 	modHashFile := run.Artifact{
-		Path:     "test.txt",
-		Checksum: map[string]string{"sha256": "25b89320221dda5abe3df4624d246d22d0c820ee3598e97553611d7c80abbd36"},
+		Path:     testFileName,
+		Checksum: map[string]string{sha256Key: "25b89320221dda5abe3df4624d246d22d0c820ee3598e97553611d7c80abbd36"},
 		Time:     testFile.Time,
 	}
 	modTimeFile := run.Artifact{
-		Path:     "test.txt",
-		Checksum: map[string]string{"sha256": "25b89320221dda5abe3df4624d246d22d0c820ee3598e97553611d7c80abbd36"},
+		Path:     testFileName,
+		Checksum: map[string]string{sha256Key: "25b89320221dda5abe3df4624d246d22d0c820ee3598e97553611d7c80abbd36"},
 		Time:     time.Date(1976, time.Month(2), 10, 23, 30, 30, 0, time.Local),
 	}
 	for _, tc := range []struct {

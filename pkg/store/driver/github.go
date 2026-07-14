@@ -27,6 +27,7 @@ import (
 	"sync"
 	"time"
 
+	intoto "github.com/in-toto/attestation/go/v1"
 	"sigs.k8s.io/release-sdk/github"
 	"sigs.k8s.io/release-utils/hash"
 	"sigs.k8s.io/tejolote/pkg/run"
@@ -115,7 +116,7 @@ func (ghr *GitHubRelease) Snap() (*snapshot.Snapshot, error) {
 		snap[filepath.Base(path)] = run.Artifact{
 			Path: filepath.Base(path),
 			Checksum: map[string]string{
-				"sha256": hashValue,
+				string(intoto.AlgorithmSHA256): hashValue,
 			},
 			Time: time.Now(), // TODO: This needs to be set properly for future
 		}
