@@ -309,7 +309,7 @@ func filterArtifactsByName(artifacts []run.Artifact, globs []string) ([]run.Arti
 	}
 	out := make([]run.Artifact, 0, len(artifacts))
 	for _, a := range artifacts {
-		match, err := matchesAnyGlob(globs, pathpkg.Base(a.Path))
+		match, err := storedriver.MatchesAnyGlob(globs, pathpkg.Base(a.Path))
 		if err != nil {
 			return nil, err
 		}
@@ -320,21 +320,6 @@ func filterArtifactsByName(artifacts []run.Artifact, globs []string) ([]run.Arti
 		out = append(out, a)
 	}
 	return out, nil
-}
-
-// matchesAnyGlob reports whether name matches at least one of the globs
-// (path.Match syntax).
-func matchesAnyGlob(globs []string, name string) (bool, error) {
-	for _, glob := range globs {
-		match, err := pathpkg.Match(glob, name)
-		if err != nil {
-			return false, fmt.Errorf("invalid artifacts filter %q: %w", glob, err)
-		}
-		if match {
-			return true, nil
-		}
-	}
-	return false, nil
 }
 
 // Snap adds a new snapshot set to the watcher by querying

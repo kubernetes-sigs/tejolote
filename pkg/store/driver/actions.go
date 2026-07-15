@@ -69,7 +69,13 @@ func (a *Actions) matchesFilter(name string) (bool, error) {
 	if len(a.Filter) == 0 {
 		return true, nil
 	}
-	for _, glob := range a.Filter {
+	return MatchesAnyGlob(a.Filter, name)
+}
+
+// MatchesAnyGlob reports whether name matches at least one of the globs
+// (path.Match syntax).
+func MatchesAnyGlob(globs []string, name string) (bool, error) {
+	for _, glob := range globs {
 		match, err := path.Match(glob, name)
 		if err != nil {
 			return false, fmt.Errorf("invalid artifacts filter %q: %w", glob, err)

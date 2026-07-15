@@ -89,7 +89,7 @@ one or more globs ([`path.Match` syntax](https://pkg.go.dev/path#Match)) matched
 against each artifact's base name (the last element of its path). Any artifacts
 matching any of the globs are attested (added to the statement's subject). Repeat
 the flag or pass a comma-separated list. For GitHub Actions, the match is applied
-to the artifact name before download, all other sources it is applied to the
+to the artifact name before download; for all other sources, it is applied to the
 collected artifact names:
 
 ```bash
