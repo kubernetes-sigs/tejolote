@@ -55,7 +55,7 @@ type Options struct {
 	WatchJobs       []string      // When set, watch these specific jobs instead of the whole run
 	ExcludeJob      string        // Job name to exclude from watching (typically the attester's own job)
 	ExpandArtifacts bool          // When true, unpack archive-wrapped artifacts (GitHub Actions) and hash contained files
-	ArtifactsFilter string        // When set, a glob matched against artifact names; only matching artifacts are collected
+	ArtifactsFilter []string      // When set, globs matched against artifact names; only artifacts matching at least one are collected
 	WatchTimeout    time.Duration // Max time to wait for the run/jobs to complete (0 = no timeout)
 }
 
@@ -269,9 +269,9 @@ func (w *Watcher) CollectArtifacts(r *run.Run) error {
 
 	for _, s := range artifactStores {
 		// The GitHub Actions store filters and expands internally, before
-		// downloading, matching the filter against the artifact name. Other
+		// downloading, matching the filters against the artifact name. Other
 		// sources have no such structure, so we filter their results here.
-		filterHere := w.Options.ArtifactsFilter != ""
+		filterHere := len(w.Options.ArtifactsFilter) > 0
 		if act, ok := s.Driver.(*storedriver.Actions); ok {
 			act.Expand = w.Options.ExpandArtifacts
 			act.Filter = w.Options.ArtifactsFilter
@@ -301,20 +301,20 @@ func (w *Watcher) CollectArtifacts(r *run.Run) error {
 }
 
 // filterArtifactsByName keeps only the artifacts whose name — the last element
-// of their path — matches the given glob (path.Match syntax). An empty glob
-// keeps everything.
-func filterArtifactsByName(artifacts []run.Artifact, glob string) ([]run.Artifact, error) {
-	if glob == "" {
+// of their path — matches at least one of the given globs (path.Match syntax).
+// An empty glob list keeps everything.
+func filterArtifactsByName(artifacts []run.Artifact, globs []string) ([]run.Artifact, error) {
+	if len(globs) == 0 {
 		return artifacts, nil
 	}
 	out := make([]run.Artifact, 0, len(artifacts))
 	for _, a := range artifacts {
-		match, err := pathpkg.Match(glob, pathpkg.Base(a.Path))
+		match, err := storedriver.MatchesAnyGlob(globs, pathpkg.Base(a.Path))
 		if err != nil {
-			return nil, fmt.Errorf("invalid artifacts filter %q: %w", glob, err)
+			return nil, err
 		}
 		if !match {
-			logrus.Debugf("artifact %q does not match filter %q, skipping", a.Path, glob)
+			logrus.Debugf("artifact %q does not match filters %v, skipping", a.Path, globs)
 			continue
 		}
 		out = append(out, a)

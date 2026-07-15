@@ -46,7 +46,7 @@ type attestOptions struct {
 	artifacts        []string
 	watchJobs        []string
 	expandArtifacts  bool
-	artifactsFilter  string
+	artifactsFilter  []string
 	envelope         string
 	watchTimeout     time.Duration
 }
@@ -74,11 +74,11 @@ func (o *attestOptions) Verify() error {
 		errs = append(errs, fmt.Errorf("invalid slsa versions must be one of %v", slsaVersions))
 	}
 
-	// Validate the artifacts filter glob up front so a bad pattern fails fast
+	// Validate the artifacts filter globs up front so a bad pattern fails fast
 	// instead of surfacing only once artifacts are processed, minutes into a run.
-	if o.artifactsFilter != "" {
-		if _, err := path.Match(o.artifactsFilter, ""); err != nil {
-			errs = append(errs, fmt.Errorf("invalid artifacts filter %q: %w", o.artifactsFilter, err))
+	for _, glob := range o.artifactsFilter {
+		if _, err := path.Match(glob, ""); err != nil {
+			errs = append(errs, fmt.Errorf("invalid artifacts filter %q: %w", glob, err))
 		}
 	}
 
@@ -129,9 +129,12 @@ and named by its path within the zip. Pass --expand-artifacts=false to instead
 attest each archive as a single subject.
 
 Use --artifacts-filter to attest only a subset of the run's artifacts. The flag
-takes a glob (path.Match syntax) matched against the artifact names, for example:
+takes one or more globs (path.Match syntax) matched against the artifact names;
+artifacts matching any of the globs are attested. Repeat the flag or pass a
+comma-separated list, for example:
 
-  tejolote attest github://org/repo/12345 --artifacts-filter='release-*'
+  tejolote attest github://org/repo/12345 \
+    --artifacts-filter='release-*' --artifacts-filter='*.sbom'
 
 🔸 Dependency Data
 ------------------
@@ -354,11 +357,11 @@ build data and generates the provenance attestation.
 		"unpack actions artifacts and attest each file, or attest archive when false",
 	)
 
-	attestCmd.PersistentFlags().StringVar(
+	attestCmd.PersistentFlags().StringSliceVar(
 		&attestOpts.artifactsFilter,
 		"artifacts-filter",
-		"",
-		"only attest artifacts whose name matches this glob",
+		[]string{},
+		"only attest artifacts whose name matches one of these globs (can be repeated)",
 	)
 	attestCmd.PersistentFlags().BoolVar(
 		&attestOpts.waitForBuild,
