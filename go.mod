@@ -4,7 +4,7 @@ go 1.26.2
 
 require (
 	cloud.google.com/go/pubsub/v2 v2.6.1
-	cloud.google.com/go/storage v1.63.1
+	cloud.google.com/go/storage v1.64.0
 	github.com/carabiner-dev/signer v0.5.2
 	github.com/carabiner-dev/vcslocator v0.4.4
 	github.com/go-git/go-git/v5 v5.19.1
