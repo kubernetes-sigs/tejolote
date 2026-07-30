@@ -6,8 +6,8 @@ require (
 	cloud.google.com/go/pubsub/v2 v2.6.1
 	cloud.google.com/go/storage v1.64.0
 	github.com/carabiner-dev/signer v0.5.2
-	github.com/carabiner-dev/vcslocator v0.4.6
-	github.com/go-git/go-git/v5 v5.19.1
+	github.com/carabiner-dev/vcslocator v0.4.7
+	github.com/go-git/go-git/v5 v5.19.2
 	github.com/google/go-containerregistry v0.21.7
 	github.com/google/go-github/v84 v84.0.0
 	github.com/in-toto/attestation v1.2.0
