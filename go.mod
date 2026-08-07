@@ -9,7 +9,7 @@ require (
 	github.com/carabiner-dev/vcslocator v0.4.7
 	github.com/go-git/go-git/v5 v5.19.2
 	github.com/google/go-containerregistry v0.21.8
-	github.com/google/go-github/v84 v84.0.0
+	github.com/google/go-github/v90 v90.0.0
 	github.com/in-toto/attestation v1.2.0
 	github.com/magefile/mage v1.17.2
 	github.com/protobom/protobom v0.5.8
@@ -20,7 +20,6 @@ require (
 	golang.org/x/sync v0.22.0
 	google.golang.org/api v0.291.0
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
-	sigs.k8s.io/release-sdk v0.12.7
 	sigs.k8s.io/release-utils v0.12.4
 	sigs.k8s.io/yaml v1.6.0
 )
@@ -99,7 +98,6 @@ require (
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/certificate-transparency-go v1.3.3 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/go-github/v88 v88.0.0 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/google/uuid v1.6.0 // indirect
@@ -150,6 +148,7 @@ require (
 	github.com/transparency-dev/formats v0.1.1 // indirect
 	github.com/transparency-dev/merkle v0.0.2 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
+	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	github.com/zalando/go-keyring v0.2.6 // indirect
 	go.opencensus.io v0.24.0 // indirect

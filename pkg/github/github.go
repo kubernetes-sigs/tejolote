@@ -27,7 +27,7 @@ import (
 	"strings"
 	"time"
 
-	gogithub "github.com/google/go-github/v84/github"
+	gogithub "github.com/google/go-github/v90/github"
 	"github.com/sirupsen/logrus"
 	khttp "sigs.k8s.io/release-utils/http"
 )
@@ -145,6 +145,18 @@ func GetCurrentJob(org, repo string, runID int64, runnerName string) (*gogithub.
 func Download(url string, f io.Writer) error {
 	agent := NewAgent()
 	return agent.GetToWriter(f, url)
+}
+
+// NewClient returns a GitHub API client authenticated with the token in the
+// environment. Without a token the client still works but GitHub throttles
+// unauthenticated requests much more aggressively.
+func NewClient() (*gogithub.Client, error) {
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		logrus.Warn("making unauthenticated requests to github")
+		return gogithub.NewClient()
+	}
+	return gogithub.NewClient(gogithub.WithAuthToken(token))
 }
 
 // NewAgent returns a new khttp.Agent configured with GitHub authentication.

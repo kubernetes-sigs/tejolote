@@ -17,6 +17,7 @@ limitations under the License.
 package driver
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -24,13 +25,13 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
-	gogithub "github.com/google/go-github/v88/github"
+	gogithub "github.com/google/go-github/v90/github"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
-	"sigs.k8s.io/release-sdk/github/githubfakes"
 	"sigs.k8s.io/tejolote/pkg/store/snapshot"
 )
 
@@ -49,11 +50,16 @@ func TestGitHubRelease(t *testing.T) {
 	)
 }
 
+const (
+	testOwner = "test"
+	testRepo  = "repo"
+)
+
 // testRelease returns a release carrying the given assets.
 func testRelease(tag string, draft bool, assets ...*gogithub.ReleaseAsset) *gogithub.RepositoryRelease {
 	return &gogithub.RepositoryRelease{
-		TagName: gogithub.Ptr(tag),
-		Draft:   gogithub.Ptr(draft),
+		TagName: tag,
+		Draft:   draft,
 		Assets:  assets,
 	}
 }
@@ -90,11 +96,73 @@ func sha256Of(data string) string {
 	return hex.EncodeToString(sum[:])
 }
 
+type listCall struct {
+	owner, repo string
+	page        int
+}
+
+type downloadCall struct {
+	owner, repo string
+	id          int64
+}
+
+// fakeReleaseClient serves canned API responses to the driver and records the
+// calls it receives.
+type fakeReleaseClient struct {
+	// release is what the by-tag endpoint answers with
+	release     *gogithub.RepositoryRelease
+	releaseResp *gogithub.Response
+	releaseErr  error
+
+	// pages are the release list pages, indexed from page 1
+	pages   [][]*gogithub.RepositoryRelease
+	listErr error
+
+	// assetData is the payload served for any asset download
+	assetData string
+
+	mtx       sync.Mutex
+	listCalls []listCall
+	downloads []downloadCall
+}
+
+func (f *fakeReleaseClient) GetReleaseByTag(
+	_ context.Context, _, _, _ string,
+) (*gogithub.RepositoryRelease, *gogithub.Response, error) {
+	return f.release, f.releaseResp, f.releaseErr
+}
+
+func (f *fakeReleaseClient) ListReleases(
+	_ context.Context, owner, repo string, opts *gogithub.ListOptions,
+) ([]*gogithub.RepositoryRelease, *gogithub.Response, error) {
+	f.mtx.Lock()
+	f.listCalls = append(f.listCalls, listCall{owner: owner, repo: repo, page: opts.Page})
+	f.mtx.Unlock()
+
+	if f.listErr != nil {
+		return nil, nil, f.listErr
+	}
+	if opts.Page < 1 || opts.Page > len(f.pages) {
+		return nil, nil, nil
+	}
+	return f.pages[opts.Page-1], nil, nil
+}
+
+func (f *fakeReleaseClient) DownloadReleaseAsset(
+	_ context.Context, owner, repo string, id int64, _ *http.Client,
+) (io.ReadCloser, string, error) {
+	f.mtx.Lock()
+	f.downloads = append(f.downloads, downloadCall{owner: owner, repo: repo, id: id})
+	f.mtx.Unlock()
+
+	return io.NopCloser(strings.NewReader(f.assetData)), "", nil
+}
+
 // testDriver returns a driver wired to the given fake client.
-func testDriver(fake *githubfakes.FakeClient) *GitHubRelease {
+func testDriver(fake *fakeReleaseClient) *GitHubRelease {
 	return &GitHubRelease{
-		Owner:      "test",
-		Repository: "repo",
+		Owner:      testOwner,
+		Repository: testRepo,
 		Tag:        "v1.0.0",
 		Options:    DefaultGitHubReleaseOptions,
 		client:     fake,
@@ -103,10 +171,9 @@ func testDriver(fake *githubfakes.FakeClient) *GitHubRelease {
 
 func TestSnapUsesDigestReportedByTheAPI(t *testing.T) {
 	digest := sha256Of("release artifact")
-	fake := &githubfakes.FakeClient{}
-	fake.GetReleaseByTagReturns(
-		testRelease("v1.0.0", false, testAsset(1, "artifact.zip", "sha256:"+digest)), nil, nil,
-	)
+	fake := &fakeReleaseClient{
+		release: testRelease("v1.0.0", false, testAsset(1, "artifact.zip", "sha256:"+digest)),
+	}
 
 	snap, err := testDriver(fake).Snap()
 	require.NoError(t, err)
@@ -119,24 +186,26 @@ func TestSnapUsesDigestReportedByTheAPI(t *testing.T) {
 	require.Equal(t, time.Unix(1700000000, 0), (*snap)["artifact.zip"].Time)
 
 	// The digest is enough, no asset data should have been transferred
-	require.Equal(t, 0, fake.DownloadReleaseAssetCallCount())
+	require.Empty(t, fake.downloads)
 }
 
 func TestSnapReadsDraftReleases(t *testing.T) {
 	digest := sha256Of("draft artifact")
-	fake := &githubfakes.FakeClient{}
 	resp, err := notFound()
-	fake.GetReleaseByTagReturns(nil, resp, err)
-	fake.ListReleasesReturns([]*gogithub.RepositoryRelease{
-		testRelease("v2.0.0", false, testAsset(9, "other.zip", "sha256:"+sha256Of("other"))),
-		testRelease("v1.0.0", true, testAsset(1, "artifact.zip", "sha256:"+digest)),
-	}, nil, nil)
+	fake := &fakeReleaseClient{
+		releaseResp: resp,
+		releaseErr:  err,
+		pages: [][]*gogithub.RepositoryRelease{{
+			testRelease("v2.0.0", false, testAsset(9, "other.zip", "sha256:"+sha256Of("other"))),
+			testRelease("v1.0.0", true, testAsset(1, "artifact.zip", "sha256:"+digest)),
+		}},
+	}
 
 	snap, err := testDriver(fake).Snap()
 	require.NoError(t, err)
 	require.Len(t, *snap, 1)
 	require.Equal(t, digest, (*snap)["artifact.zip"].Checksum["sha256"])
-	require.Equal(t, 1, fake.ListReleasesCallCount())
+	require.Len(t, fake.listCalls, 1)
 }
 
 func TestSnapPagesThroughReleases(t *testing.T) {
@@ -146,100 +215,94 @@ func TestSnapPagesThroughReleases(t *testing.T) {
 		firstPage[i] = testRelease(fmt.Sprintf("v0.0.%d", i), false)
 	}
 
-	fake := &githubfakes.FakeClient{}
 	resp, err := notFound()
-	fake.GetReleaseByTagReturns(nil, resp, err)
-	fake.ListReleasesReturnsOnCall(0, firstPage, nil, nil)
-	fake.ListReleasesReturnsOnCall(1, []*gogithub.RepositoryRelease{
-		testRelease("v1.0.0", true, testAsset(1, "artifact.zip", "sha256:"+digest)),
-	}, nil, nil)
+	fake := &fakeReleaseClient{
+		releaseResp: resp,
+		releaseErr:  err,
+		pages: [][]*gogithub.RepositoryRelease{
+			firstPage,
+			{testRelease("v1.0.0", true, testAsset(1, "artifact.zip", "sha256:"+digest))},
+		},
+	}
 
 	snap, err := testDriver(fake).Snap()
 	require.NoError(t, err)
 	require.Equal(t, digest, (*snap)["artifact.zip"].Checksum["sha256"])
-	require.Equal(t, 2, fake.ListReleasesCallCount())
-
-	_, owner, repo, opts := fake.ListReleasesArgsForCall(1)
-	require.Equal(t, "test", owner)
-	require.Equal(t, "repo", repo)
-	require.Equal(t, 2, opts.Page)
+	require.Len(t, fake.listCalls, 2)
+	require.Equal(t, listCall{owner: testOwner, repo: testRepo, page: 2}, fake.listCalls[1])
 }
 
 func TestSnapStopsPagingWhenTheReleaseIsMissing(t *testing.T) {
-	fake := &githubfakes.FakeClient{}
 	resp, err := notFound()
-	fake.GetReleaseByTagReturns(nil, resp, err)
-	fake.ListReleasesReturns([]*gogithub.RepositoryRelease{
-		testRelease("v2.0.0", false),
-	}, nil, nil)
+	fake := &fakeReleaseClient{
+		releaseResp: resp,
+		releaseErr:  err,
+		pages:       [][]*gogithub.RepositoryRelease{{testRelease("v2.0.0", false)}},
+	}
 
 	_, err = testDriver(fake).Snap()
 	require.ErrorIs(t, err, ErrReleaseNotFound)
 	// A short page means there is nothing else to read
-	require.Equal(t, 1, fake.ListReleasesCallCount())
+	require.Len(t, fake.listCalls, 1)
 }
 
 func TestSnapDoesNotFallBackOnOtherAPIErrors(t *testing.T) {
-	fake := &githubfakes.FakeClient{}
-	fake.GetReleaseByTagReturns(nil, &gogithub.Response{
-		Response: &http.Response{StatusCode: http.StatusInternalServerError},
-	}, errors.New("boom"))
+	fake := &fakeReleaseClient{
+		releaseResp: &gogithub.Response{
+			Response: &http.Response{StatusCode: http.StatusInternalServerError},
+		},
+		releaseErr: errors.New("boom"),
+	}
 
 	_, err := testDriver(fake).Snap()
 	require.Error(t, err)
-	require.Equal(t, 0, fake.ListReleasesCallCount())
+	require.Empty(t, fake.listCalls)
 }
 
 func TestSnapHashesAssetsWithoutDigest(t *testing.T) {
 	data := "artifact stored before github recorded digests"
-	fake := &githubfakes.FakeClient{}
-	fake.GetReleaseByTagReturns(
-		testRelease("v1.0.0", false, testAsset(1, "artifact.zip", "")), nil, nil,
-	)
-	fake.DownloadReleaseAssetReturns(io.NopCloser(strings.NewReader(data)), "", nil)
+	fake := &fakeReleaseClient{
+		release:   testRelease("v1.0.0", false, testAsset(1, "artifact.zip", "")),
+		assetData: data,
+	}
 
 	snap, err := testDriver(fake).Snap()
 	require.NoError(t, err)
 	require.Equal(t, sha256Of(data), (*snap)["artifact.zip"].Checksum["sha256"])
-	require.Equal(t, 1, fake.DownloadReleaseAssetCallCount())
-
-	_, owner, repo, assetID := fake.DownloadReleaseAssetArgsForCall(0)
-	require.Equal(t, "test", owner)
-	require.Equal(t, "repo", repo)
-	require.Equal(t, int64(1), assetID)
+	require.Equal(t, []downloadCall{{owner: testOwner, repo: testRepo, id: 1}}, fake.downloads)
 }
 
 func TestSnapHashesAssetsWithUnusableDigest(t *testing.T) {
 	data := "artifact digested with something else"
-	fake := &githubfakes.FakeClient{}
-	fake.GetReleaseByTagReturns(
-		testRelease("v1.0.0", false, testAsset(1, "artifact.zip", "sha512:abc")), nil, nil,
-	)
-	fake.DownloadReleaseAssetReturns(io.NopCloser(strings.NewReader(data)), "", nil)
+	fake := &fakeReleaseClient{
+		release:   testRelease("v1.0.0", false, testAsset(1, "artifact.zip", "sha512:abc")),
+		assetData: data,
+	}
 
 	snap, err := testDriver(fake).Snap()
 	require.NoError(t, err)
 	require.Equal(t, sha256Of(data), (*snap)["artifact.zip"].Checksum["sha256"])
-	require.Equal(t, 1, fake.DownloadReleaseAssetCallCount())
+	require.Len(t, fake.downloads, 1)
 }
 
 func TestSnapSkipsIgnoredAndIncompleteAssets(t *testing.T) {
 	uploading := testAsset(3, "uploading.zip", "sha256:"+sha256Of("uploading"))
 	uploading.State = gogithub.Ptr("starter")
 
-	fake := &githubfakes.FakeClient{}
-	fake.GetReleaseByTagReturns(testRelease(
-		"v1.0.0", false,
-		testAsset(1, "artifact.zip", "sha256:"+sha256Of("artifact")),
-		testAsset(2, "artifact.zip.sig", "sha256:"+sha256Of("signature")),
-		uploading,
-	), nil, nil)
+	fake := &fakeReleaseClient{
+		release: testRelease(
+			"v1.0.0", false,
+			testAsset(1, "artifact.zip", "sha256:"+sha256Of("artifact")),
+			testAsset(2, "artifact.zip.sig", "sha256:"+sha256Of("signature")),
+			uploading,
+		),
+	}
 
 	snap, err := testDriver(fake).Snap()
 	require.NoError(t, err)
 	require.Len(t, *snap, 1)
 	require.Contains(t, *snap, "artifact.zip")
-	require.Equal(t, 0, fake.DownloadReleaseAssetCallCount())
+	require.Empty(t, fake.downloads)
 }
 
 func TestSha256FromDigest(t *testing.T) {

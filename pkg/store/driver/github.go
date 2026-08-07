@@ -28,11 +28,11 @@ import (
 	"strings"
 	"sync"
 
-	gogithub "github.com/google/go-github/v88/github"
+	gogithub "github.com/google/go-github/v90/github"
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
-	"sigs.k8s.io/release-sdk/github"
+	"sigs.k8s.io/tejolote/pkg/github"
 	"sigs.k8s.io/tejolote/pkg/run"
 	"sigs.k8s.io/tejolote/pkg/store/snapshot"
 )
@@ -40,12 +40,26 @@ import (
 // ErrReleaseNotFound is returned when a repository has no release for the tag.
 var ErrReleaseNotFound = errors.New("release not found")
 
+// releaseClient is the slice of the GitHub API the driver needs. It is
+// implemented by the go-github repositories service.
+type releaseClient interface {
+	GetReleaseByTag(
+		ctx context.Context, owner, repo, tag string,
+	) (*gogithub.RepositoryRelease, *gogithub.Response, error)
+	ListReleases(
+		ctx context.Context, owner, repo string, opts *gogithub.ListOptions,
+	) ([]*gogithub.RepositoryRelease, *gogithub.Response, error)
+	DownloadReleaseAsset(
+		ctx context.Context, owner, repo string, id int64, followRedirects *http.Client,
+	) (io.ReadCloser, string, error)
+}
+
 type GitHubRelease struct {
 	Owner      string
 	Repository string
 	Tag        string
 	Options    GitHubReleaseOptions
-	client     github.Client
+	client     releaseClient
 }
 
 type GitHubReleaseOptions struct {
@@ -72,12 +86,17 @@ func NewGithub(specURL string) (*GitHubRelease, error) {
 		return nil, fmt.Errorf("unable to find repo/tag in %s", u.Path)
 	}
 
+	client, err := github.NewClient()
+	if err != nil {
+		return nil, fmt.Errorf("creating github client: %w", err)
+	}
+
 	ghr := &GitHubRelease{
 		Owner:      u.Hostname(),
 		Repository: parts[0],
 		Tag:        parts[1],
 		Options:    DefaultGitHubReleaseOptions,
-		client:     github.New().Client(),
+		client:     client.Repositories,
 	}
 
 	return ghr, nil
@@ -211,7 +230,10 @@ func (ghr *GitHubRelease) assetChecksum(ctx context.Context, asset *gogithub.Rel
 	}
 
 	logrus.Infof("asset %s has no digest in the API, downloading to hash", asset.GetName())
-	data, redirect, err := ghr.client.DownloadReleaseAsset(ctx, ghr.Owner, ghr.Repository, asset.GetID())
+	logrus.Infof("asset %s has no digest in the API, downloading it to hash", asset.GetName())
+	data, redirect, err := ghr.client.DownloadReleaseAsset(
+		ctx, ghr.Owner, ghr.Repository, asset.GetID(), http.DefaultClient,
+	)
 	if err != nil {
 		return "", fmt.Errorf("downloading asset: %w", err)
 	}

@@ -27,7 +27,7 @@ import (
 	"strings"
 	"time"
 
-	gogithub "github.com/google/go-github/v84/github"
+	gogithub "github.com/google/go-github/v90/github"
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/tejolote/pkg/attestation"
