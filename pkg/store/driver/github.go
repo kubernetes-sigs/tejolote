@@ -17,29 +17,35 @@ limitations under the License.
 package driver
 
 import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
-	"io/fs"
+	"io"
+	"net/http"
 	"net/url"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 
+	gogithub "github.com/google/go-github/v88/github"
 	intoto "github.com/in-toto/attestation/go/v1"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 	"sigs.k8s.io/release-sdk/github"
-	"sigs.k8s.io/release-utils/hash"
 	"sigs.k8s.io/tejolote/pkg/run"
 	"sigs.k8s.io/tejolote/pkg/store/snapshot"
 )
+
+// ErrReleaseNotFound is returned when a repository has no release for the tag.
+var ErrReleaseNotFound = errors.New("release not found")
 
 type GitHubRelease struct {
 	Owner      string
 	Repository string
 	Tag        string
 	Options    GitHubReleaseOptions
-	gh         *github.GitHub
+	client     github.Client
 }
 
 type GitHubReleaseOptions struct {
@@ -71,59 +77,182 @@ func NewGithub(specURL string) (*GitHubRelease, error) {
 		Repository: parts[0],
 		Tag:        parts[1],
 		Options:    DefaultGitHubReleaseOptions,
-		gh:         github.New(),
+		client:     github.New().Client(),
 	}
 
 	return ghr, nil
 }
 
+// Snap captures the assets published in the release as a snapshot. Each asset
+// becomes an entry keyed by its name, checksummed with the digest GitHub
+// reports for it. Assets with no digest are downloaded to be hashed locally.
 func (ghr *GitHubRelease) Snap() (*snapshot.Snapshot, error) {
-	// Download assets to temporary directory
-	tmp, err := os.MkdirTemp("", "github-assets-")
+	ctx := context.Background()
+
+	release, err := ghr.getRelease(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("creating temp dir: %w", err)
-	}
-	defer os.RemoveAll(tmp)
-
-	if err := ghr.gh.DownloadReleaseAssets(
-		ghr.Owner, ghr.Repository, []string{ghr.Tag}, tmp,
-	); err != nil {
-		return nil, fmt.Errorf("downloading release assets: %w", err)
+		return nil, err
 	}
 
-	// Hash EVERYTHING
 	snap := snapshot.Snapshot{}
 	var mtx sync.Mutex
-	if err := filepath.WalkDir(tmp, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			return nil
-		}
-		hashValue, err := hash.SHA256ForFile(path)
-		if err != nil {
-			return fmt.Errorf("hashing artifact: %w", err)
+	var wg errgroup.Group
+	wg.SetLimit(4)
+
+	for _, asset := range release.Assets {
+		name := asset.GetName()
+		switch {
+		case name == "":
+			logrus.Warnf("skipping unnamed asset %d in release %s", asset.GetID(), ghr.Tag)
+			continue
+		case ghr.ignoreAsset(name):
+			logrus.Debugf("skipping asset %s, its extension is ignored", name)
+			continue
+		case asset.GetState() != "" && asset.GetState() != "uploaded":
+			// Maybe we should wait here?
+			logrus.Warnf("skipping asset %s, its state is %q", name, asset.GetState())
+			continue
 		}
 
-		for _, ext := range ghr.Options.IgnoreExtensions {
-			if strings.HasSuffix(path, ext) {
-				return nil
+		wg.Go(func() error {
+			csum, err := ghr.assetChecksum(ctx, asset)
+			if err != nil {
+				return fmt.Errorf("checksumming asset %s: %w", name, err)
 			}
+
+			mtx.Lock()
+			defer mtx.Unlock()
+			snap[name] = run.Artifact{
+				Path: name,
+				URL:  asset.GetBrowserDownloadURL(),
+				Checksum: map[string]string{
+					string(intoto.AlgorithmSHA256): csum,
+				},
+				Time: asset.GetUpdatedAt().Time,
+			}
+			return nil
+		})
+	}
+
+	if err := wg.Wait(); err != nil {
+		return nil, fmt.Errorf("reading release assets: %w", err)
+	}
+
+	logrus.Infof(
+		"collected %d assets from release %s of %s/%s",
+		len(snap), ghr.Tag, ghr.Owner, ghr.Repository,
+	)
+	return &snap, nil
+}
+
+// getRelease returns the release data for the driver's tag.
+//
+// Draft releases are not published under their tag, the by-tag endpoint returns
+// a 404 for them. Since drafts are a normal stage of a release run (artifacts
+// are commonly attested while the release is still being assembled) we fall
+// back to looking for the tag in the repository release list, which does return
+// drafts to callers that can see them.
+func (ghr *GitHubRelease) getRelease(ctx context.Context) (*gogithub.RepositoryRelease, error) {
+	release, resp, err := ghr.client.GetReleaseByTag(ctx, ghr.Owner, ghr.Repository, ghr.Tag)
+	if err == nil {
+		return release, nil
+	}
+
+	if resp == nil || resp.StatusCode != http.StatusNotFound {
+		return nil, fmt.Errorf(
+			"getting release %s from %s/%s: %w", ghr.Tag, ghr.Owner, ghr.Repository, err,
+		)
+	}
+
+	logrus.Debugf(
+		"no published release tagged %s, looking for a draft in the release list", ghr.Tag,
+	)
+	return ghr.findReleaseInList(ctx)
+}
+
+// findReleaseInList looks for a release matching the specified tag by paging
+// through the repository releases (which actually lists drafts)
+func (ghr *GitHubRelease) findReleaseInList(ctx context.Context) (*gogithub.RepositoryRelease, error) {
+	opts := &gogithub.ListOptions{PerPage: 100}
+	for page := 1; page <= 10; page++ {
+		opts.Page = page
+		releases, _, err := ghr.client.ListReleases(ctx, ghr.Owner, ghr.Repository, opts)
+		if err != nil {
+			return nil, fmt.Errorf("listing releases of %s/%s: %w", ghr.Owner, ghr.Repository, err)
 		}
 
-		mtx.Lock()
-		snap[filepath.Base(path)] = run.Artifact{
-			Path: filepath.Base(path),
-			Checksum: map[string]string{
-				string(intoto.AlgorithmSHA256): hashValue,
-			},
-			Time: time.Now(), // TODO: This needs to be set properly for future
+		for _, release := range releases {
+			if release.GetTagName() != ghr.Tag {
+				continue
+			}
+			if release.GetDraft() {
+				logrus.Infof("release %s is still a draft, attesting its assets", ghr.Tag)
+			}
+			return release, nil
 		}
-		mtx.Unlock()
-		return nil
-	}); err != nil {
-		return nil, fmt.Errorf("walking path: %w", err)
+
+		if len(releases) < 100 {
+			break
+		}
 	}
-	return &snap, nil
+
+	return nil, fmt.Errorf(
+		"%w: no release tagged %s in %s/%s", ErrReleaseNotFound, ghr.Tag, ghr.Owner, ghr.Repository,
+	)
+}
+
+// assetChecksum returns the sha256 of a release asset. GitHub records the
+// digest of the assets it stores, so we don't need to download them to hash.
+// Only if they don't have hashes we download them as before.
+func (ghr *GitHubRelease) assetChecksum(ctx context.Context, asset *gogithub.ReleaseAsset) (string, error) {
+	if csum, ok := sha256FromDigest(asset.GetDigest()); ok {
+		logrus.Debugf("asset %s: using digest reported by the API", asset.GetName())
+		return csum, nil
+	}
+
+	logrus.Infof("asset %s has no digest in the API, downloading to hash", asset.GetName())
+	data, redirect, err := ghr.client.DownloadReleaseAsset(ctx, ghr.Owner, ghr.Repository, asset.GetID())
+	if err != nil {
+		return "", fmt.Errorf("downloading asset: %w", err)
+	}
+	if data == nil {
+		return "", fmt.Errorf("no data returned for asset (redirected to %q)", redirect)
+	}
+	defer data.Close()
+
+	shaVal := sha256.New()
+	if _, err := io.Copy(shaVal, data); err != nil {
+		return "", fmt.Errorf("hashing asset data: %w", err)
+	}
+	return hex.EncodeToString(shaVal.Sum(nil)), nil
+}
+
+// sha256FromDigest reads the digest GitHub reports for a release asset. It
+// returns the hex encoded hash and true when the value is a well formed sha256.
+func sha256FromDigest(digest string) (string, bool) {
+	algo, value, ok := strings.Cut(digest, ":")
+	if !ok || !strings.EqualFold(algo, string(intoto.AlgorithmSHA256)) {
+		return "", false
+	}
+
+	value = strings.ToLower(value)
+	if len(value) != 64 {
+		return "", false
+	}
+	// Check to see if its really an encoded sha256
+	if _, err := hex.DecodeString(value); err != nil {
+		return "", false
+	}
+	return value, true
+}
+
+// ignoreAsset returns true when an asset should be left out of the snapshot
+// because of its extension.
+func (ghr *GitHubRelease) ignoreAsset(name string) bool {
+	for _, ext := range ghr.Options.IgnoreExtensions {
+		if strings.HasSuffix(name, ext) {
+			return true
+		}
+	}
+	return false
 }
