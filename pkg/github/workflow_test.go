@@ -23,6 +23,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	gogithub "github.com/google/go-github/v90/github"
 	"github.com/stretchr/testify/require"
 )
 
@@ -80,24 +81,29 @@ on:
         type: string
 `
 	encoded := base64.StdEncoding.EncodeToString([]byte(workflowYAML))
-	resp := contentsResponse{Content: encoded, Encoding: "base64"}
-	respJSON, err := json.Marshal(resp)
+	respJSON, err := json.Marshal(gogithub.RepositoryContent{
+		Type:     gogithub.Ptr("file"),
+		Path:     gogithub.Ptr(".github/workflows/release.yml"),
+		Content:  gogithub.Ptr(encoded),
+		Encoding: gogithub.Ptr("base64"),
+	})
 	require.NoError(t, err)
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(respJSON)
 	}))
 	defer server.Close()
 
-	// Override the API URL by setting up the test server
-	origURL := ghContentsURL
-	ghContentsURL = server.URL + "/%s/%s/%s?ref=%s"
-	defer func() { ghContentsURL = origURL }()
+	// Point the package client at the test server, whose handler answers
+	// regardless of the path go-github builds
+	client, err := gogithub.NewClient(gogithub.WithEnterpriseURLs(server.URL, server.URL))
+	require.NoError(t, err)
 
-	// Set GITHUB_TOKEN to avoid auth warnings in tests
-	t.Setenv("GITHUB_TOKEN", "test-token")
+	origClient := defaultClient
+	defaultClient = func() (*gogithub.Client, error) { return client, nil }
+	defer func() { defaultClient = origClient }()
 
 	inputs, err := FetchWorkflowInputs("org", "repo", ".github/workflows/release.yml", "abc123")
 	require.NoError(t, err)

@@ -18,16 +18,6 @@ package github
 
 import "time"
 
-// Artifact is the artifact structure returned by the API
-type Artifact struct {
-	ID        int       `json:"id"`
-	Name      string    `json:"name"`
-	Size      int       `json:"size_in_bytes"`
-	URL       string    `json:"archive_download_url"`
-	Expired   bool      `json:"expired"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
 type Run struct {
 	ID              int64             `json:"id"`
 	Status          string            `json:"status"`

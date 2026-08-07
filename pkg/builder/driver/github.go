@@ -17,11 +17,8 @@ limitations under the License.
 package driver
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -35,8 +32,6 @@ import (
 	"sigs.k8s.io/tejolote/pkg/run"
 	"sigs.k8s.io/tejolote/pkg/store"
 )
-
-const ghRunURL string = "https://api.github.com/repos/%s/%s/actions/runs/%d"
 
 type GitHubWorkflow struct {
 	Organization string
@@ -95,26 +90,9 @@ func (ghw *GitHubWorkflow) RefreshRun(r *run.Run) error {
 	ghw.Repository = repo
 	ghw.RunID = int(id)
 
-	res, err := github.APIGetRequest(fmt.Sprintf(ghRunURL, ghw.Organization, ghw.Repository, ghw.RunID))
+	runData, err := github.GetRun(ghw.Organization, ghw.Repository, int64(ghw.RunID))
 	if err != nil {
 		return fmt.Errorf("querying github api: %w", err)
-	}
-
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("got https error %d from github API", res.StatusCode)
-	}
-
-	rawData, err := io.ReadAll(res.Body)
-	defer res.Body.Close()
-	if err != nil {
-		return fmt.Errorf("reading api response data: %w", err)
-	}
-
-	logrus.Debugf("Rawdata: %s", string(rawData))
-
-	runData := &github.Run{}
-	if err := json.Unmarshal(rawData, runData); err != nil {
-		return fmt.Errorf("unmarshalling GitHub response: %w", err)
 	}
 
 	if runData.Status == "completed" {

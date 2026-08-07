@@ -17,17 +17,12 @@ limitations under the License.
 package github
 
 import (
-	"encoding/base64"
-	"encoding/json"
+	"context"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 
+	gogithub "github.com/google/go-github/v90/github"
 	"sigs.k8s.io/yaml"
 )
-
-var ghContentsURL = "https://api.github.com/repos/%s/%s/contents/%s?ref=%s"
 
 // WorkflowInput represents a single input defined in a workflow YAML.
 type WorkflowInput struct {
@@ -86,47 +81,31 @@ func (wd *WorkflowData) JobKeys() []string {
 	return keys
 }
 
-// contentsResponse represents the GitHub contents API response.
-type contentsResponse struct {
-	Content  string `json:"content"`
-	Encoding string `json:"encoding"`
-}
-
 // FetchWorkflow fetches and parses a workflow YAML from the GitHub contents API.
 func FetchWorkflow(org, repo, path, ref string) (*WorkflowData, error) {
-	apiURL := fmt.Sprintf(ghContentsURL, org, repo, url.PathEscape(path), url.QueryEscape(ref))
+	client, err := defaultClient()
+	if err != nil {
+		return nil, fmt.Errorf("creating github client: %w", err)
+	}
 
-	res, err := APIGetRequest(apiURL)
+	fileContent, _, _, err := client.Repositories.GetContents(
+		context.Background(), org, repo, path,
+		&gogithub.RepositoryContentGetOptions{Ref: ref},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("fetching workflow file: %w", err)
 	}
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("got HTTP %d fetching workflow file", res.StatusCode)
+	if fileContent == nil {
+		return nil, fmt.Errorf("%s is not a file in %s/%s", path, org, repo)
 	}
 
-	rawData, err := io.ReadAll(res.Body)
+	yamlData, err := fileContent.GetContent()
 	if err != nil {
-		return nil, fmt.Errorf("reading workflow contents response: %w", err)
-	}
-
-	var cr contentsResponse
-	if err := json.Unmarshal(rawData, &cr); err != nil {
-		return nil, fmt.Errorf("unmarshalling contents response: %w", err)
-	}
-
-	if cr.Encoding != "base64" {
-		return nil, fmt.Errorf("unexpected content encoding %q", cr.Encoding)
-	}
-
-	yamlData, err := base64.StdEncoding.DecodeString(cr.Content)
-	if err != nil {
-		return nil, fmt.Errorf("decoding base64 content: %w", err)
+		return nil, fmt.Errorf("decoding workflow contents: %w", err)
 	}
 
 	var wf WorkflowData
-	if err := yaml.Unmarshal(yamlData, &wf); err != nil {
+	if err := yaml.Unmarshal([]byte(yamlData), &wf); err != nil {
 		return nil, fmt.Errorf("parsing workflow YAML: %w", err)
 	}
 
