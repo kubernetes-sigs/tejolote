@@ -20,7 +20,6 @@ import (
 	"archive/zip"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -32,6 +31,7 @@ import (
 	"strings"
 	"time"
 
+	gogithub "github.com/google/go-github/v90/github"
 	intoto "github.com/in-toto/attestation/go/v1"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/release-utils/hash"
@@ -40,9 +40,9 @@ import (
 	"sigs.k8s.io/tejolote/pkg/store/snapshot"
 )
 
+// actionsArtifactsURL names the run's artifact listing. It is only used to
+// build the subject paths, the listing itself goes through the API client.
 const actionsArtifactsURL = "https://api.github.com/repos/%s/%s/actions/runs/%d/artifacts"
-
-// const actionsArtifactsURL =    "https://api.github.com/repos/%s/%s/actions/artifacts/%d"
 
 type Actions struct {
 	Organization string
@@ -117,36 +117,21 @@ func (a *Actions) readArtifacts() ([]run.Artifact, error) {
 		a.Organization, a.Repository, a.RunID,
 	)
 
-	res, err := github.APIGetRequest(runURL)
+	artifacts, err := github.ListRunArtifacts(a.Organization, a.Repository, int64(a.RunID))
 	if err != nil {
 		return nil, fmt.Errorf("querying GitHub api for artifacts: %w", err)
-	}
-	rawData, err := io.ReadAll(res.Body)
-	defer res.Body.Close()
-	if err != nil {
-		return nil, fmt.Errorf("reading api response data: %w", err)
-	}
-
-	artifacts := struct {
-		Artifacts []github.Artifact `json:"artifacts"`
-	}{
-		Artifacts: []github.Artifact{},
-	}
-
-	if err := json.Unmarshal(rawData, &artifacts); err != nil {
-		return nil, fmt.Errorf("unmarshalling GitHub response: %w", err)
 	}
 
 	// Filter the artifacts by name (globs) if a filter is configured, so we only
 	// download and attest the ones we care about.
-	selected := make([]github.Artifact, 0, len(artifacts.Artifacts))
-	for _, art := range artifacts.Artifacts {
-		match, err := a.matchesFilter(art.Name)
+	selected := make([]*gogithub.Artifact, 0, len(artifacts))
+	for _, art := range artifacts {
+		match, err := a.matchesFilter(art.GetName())
 		if err != nil {
 			return nil, err
 		}
 		if !match {
-			logrus.Debugf("artifact %q does not match filters %v, skipping", art.Name, a.Filter)
+			logrus.Debugf("artifact %q does not match filters %v, skipping", art.GetName(), a.Filter)
 			continue
 		}
 		selected = append(selected, art)
@@ -163,12 +148,12 @@ func (a *Actions) readArtifacts() ([]run.Artifact, error) {
 	files := make([]*os.File, len(selected))
 	writers := make([]io.Writer, len(selected))
 	for i, art := range selected {
-		f, err := os.Create(filepath.Join(tmpdir, art.Name))
+		f, err := os.Create(filepath.Join(tmpdir, art.GetName()))
 		if err != nil {
 			return nil, fmt.Errorf("creating artifact file: %w", err)
 		}
 		defer f.Close()
-		urls[i] = art.URL
+		urls[i] = art.GetArchiveDownloadURL()
 		files[i] = f
 		writers[i] = f
 	}
@@ -189,9 +174,11 @@ func (a *Actions) readArtifacts() ([]run.Artifact, error) {
 	ret := make([]run.Artifact, 0, len(selected))
 	for i, art := range selected {
 		if a.Expand {
-			subjects, err := hashArtifactZip(files[i].Name(), art.Name, art.URL, art.UpdatedAt)
+			subjects, err := hashArtifactZip(
+				files[i].Name(), art.GetName(), art.GetArchiveDownloadURL(), art.GetUpdatedAt().Time,
+			)
 			if err != nil {
-				return nil, fmt.Errorf("hashing artifact %q: %w", art.Name, err)
+				return nil, fmt.Errorf("hashing artifact %q: %w", art.GetName(), err)
 			}
 			ret = append(ret, subjects...)
 			continue
@@ -199,13 +186,13 @@ func (a *Actions) readArtifacts() ([]run.Artifact, error) {
 
 		shaVal, err := hash.SHA256ForFile(files[i].Name())
 		if err != nil {
-			return nil, fmt.Errorf("hashing artifact %q: %w", art.Name, err)
+			return nil, fmt.Errorf("hashing artifact %q: %w", art.GetName(), err)
 		}
 		ret = append(ret, run.Artifact{
-			Path:     runURL + "/" + art.Name,
-			URL:      art.URL,
+			Path:     runURL + "/" + art.GetName(),
+			URL:      art.GetArchiveDownloadURL(),
 			Checksum: map[string]string{string(intoto.AlgorithmSHA256): shaVal},
-			Time:     art.UpdatedAt,
+			Time:     art.GetUpdatedAt().Time,
 		})
 	}
 	logrus.Infof("collected %d subjects from %d artifacts in run %d", len(ret), len(selected), a.RunID)

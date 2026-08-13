@@ -18,13 +18,13 @@ package github
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	gogithub "github.com/google/go-github/v90/github"
@@ -32,15 +32,32 @@ import (
 	khttp "sigs.k8s.io/release-utils/http"
 )
 
+// itemsPerPage is the page size used when reading paginated API listings.
+const itemsPerPage = 100
+
+// defaultClient returns the client shared by this package, built on first use.
+// Note that the GITHUB_TOKEN value is captured on first use and reused for the
+// lifetime of the process, later changes to the environment have no effect.
+var defaultClient = sync.OnceValues(NewClient)
+
 // TokenScopes returns the scopes of token in the eviroment
 func TokenScopes() ([]string, error) {
-	res, err := APIGetRequest("https://api.github.com/repos/github/docs")
+	client, err := defaultClient()
+	if err != nil {
+		return nil, fmt.Errorf("creating github client: %w", err)
+	}
+
+	// Any authenticated request echoes the token scopes back in a header
+	_, res, err := client.Repositories.Get(context.Background(), "github", "docs")
 	if err != nil {
 		return nil, fmt.Errorf("making request to API: %w", err)
 	}
-	defer res.Body.Close()
 
 	header := res.Header.Get("X-Oauth-Scopes")
+	if header == "" {
+		return []string{}, nil
+	}
+
 	scopes := strings.Split(header, ", ")
 	logrus.Debugf("GitHub Token scopes: %+v", scopes)
 	return scopes, nil
@@ -60,54 +77,87 @@ func TokenHas(scope string) (bool, error) {
 	return false, nil
 }
 
-func APIGetRequest(url string) (*http.Response, error) {
-	logrus.Debugf("GitHubAPI[GET]: %s", url)
-	client := &http.Client{}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
+// GetRun fetches the data of a workflow run.
+//
+// The response is read into tejolote's own run type instead of go-github's:
+// the provenance predicate is built from fields the API returns but the
+// go-github type does not model, such as the workflow_dispatch inputs.
+func GetRun(org, repo string, runID int64) (*Run, error) {
+	client, err := defaultClient()
 	if err != nil {
-		return nil, fmt.Errorf("creating http request: %w", err)
+		return nil, fmt.Errorf("creating github client: %w", err)
 	}
-	req.Header.Set("Accept", "application/vnd.github+json")
-	if os.Getenv("GITHUB_TOKEN") != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("token %s", os.Getenv("GITHUB_TOKEN")))
-	} else {
-		logrus.Warn("making unauthenticated request to github")
-	}
-	res, err := client.Do(req)
+
+	req, err := client.NewRequest(
+		context.Background(), http.MethodGet,
+		fmt.Sprintf("repos/%s/%s/actions/runs/%d", org, repo, runID), nil,
+	)
 	if err != nil {
-		return res, fmt.Errorf("executing http request to GitHub API: %w", err)
+		return nil, fmt.Errorf("building run request: %w", err)
 	}
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf(
-			"http error %d making request to GitHub API", res.StatusCode,
-		)
+
+	runData := &Run{}
+	if _, err := client.Do(req, runData); err != nil {
+		return nil, fmt.Errorf("querying run API: %w", err)
 	}
-	return res, nil
+	return runData, nil
 }
 
 // GetRunJobs fetches the jobs for a given workflow run from the GitHub API.
 func GetRunJobs(org, repo string, runID int64) ([]*gogithub.WorkflowJob, error) {
-	u := fmt.Sprintf(
-		"https://api.github.com/repos/%s/%s/actions/runs/%d/jobs",
-		org, repo, runID,
-	)
-	res, err := APIGetRequest(u)
+	client, err := defaultClient()
 	if err != nil {
-		return nil, fmt.Errorf("querying jobs API: %w", err)
+		return nil, fmt.Errorf("creating github client: %w", err)
 	}
-	defer res.Body.Close()
 
-	rawData, err := io.ReadAll(res.Body)
+	ctx := context.Background()
+	opts := &gogithub.ListWorkflowJobsOptions{
+		ListOptions: gogithub.ListOptions{PerPage: itemsPerPage},
+	}
+
+	jobs := []*gogithub.WorkflowJob{}
+	for {
+		page, res, err := client.Actions.ListWorkflowJobs(ctx, org, repo, runID, opts)
+		if err != nil {
+			return nil, fmt.Errorf("querying jobs API: %w", err)
+		}
+
+		jobs = append(jobs, page.Jobs...)
+		if res.NextPage == 0 {
+			break
+		}
+		opts.Page = res.NextPage
+	}
+
+	return jobs, nil
+}
+
+// ListRunArtifacts returns the artifacts a workflow run stored in the GitHub
+// Actions artifact store.
+func ListRunArtifacts(org, repo string, runID int64) ([]*gogithub.Artifact, error) {
+	client, err := defaultClient()
 	if err != nil {
-		return nil, fmt.Errorf("reading jobs response: %w", err)
+		return nil, fmt.Errorf("creating github client: %w", err)
 	}
 
-	var jobsResp gogithub.Jobs
-	if err := json.Unmarshal(rawData, &jobsResp); err != nil {
-		return nil, fmt.Errorf("unmarshalling jobs response: %w", err)
+	ctx := context.Background()
+	opts := &gogithub.ListOptions{PerPage: itemsPerPage}
+
+	artifacts := []*gogithub.Artifact{}
+	for {
+		page, res, err := client.Actions.ListWorkflowRunArtifacts(ctx, org, repo, runID, opts)
+		if err != nil {
+			return nil, fmt.Errorf("querying artifacts API: %w", err)
+		}
+
+		artifacts = append(artifacts, page.Artifacts...)
+		if res.NextPage == 0 {
+			break
+		}
+		opts.Page = res.NextPage
 	}
 
-	return jobsResp.Jobs, nil
+	return artifacts, nil
 }
 
 // GetCurrentJob returns the WorkflowJob for the job currently executing inside a
