@@ -19,7 +19,7 @@ require (
 	github.com/uwu-tools/magex v0.10.1
 	golang.org/x/sync v0.22.0
 	google.golang.org/api v0.292.0
-	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
+	google.golang.org/protobuf v1.36.12
 	sigs.k8s.io/release-utils v0.12.4
 	sigs.k8s.io/yaml v1.6.0
 )
