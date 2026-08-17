@@ -36,7 +36,7 @@ jobs:
           install-only: true
 
       - name: Install bom
-        uses: kubernetes-sigs/release-actions/setup-bom@c130b4494862d330a1aa4de320076c666d0708da # v0.4.4
+        uses: kubernetes-sigs/release-actions/setup-bom@b5b8280a60e6e20607f77068011269b982c60971 # v0.4.5
 
       - name: Run Mage
         uses: magefile/mage-action@a662bd8c29d8106879588cfff83b2faf6e6f59db # v4.0.0
