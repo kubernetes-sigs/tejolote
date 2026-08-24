@@ -3,8 +3,8 @@ module sigs.k8s.io/tejolote
 go 1.26.2
 
 require (
-	cloud.google.com/go/pubsub/v2 v2.6.1
-	cloud.google.com/go/storage v1.64.0
+	cloud.google.com/go/pubsub/v2 v2.6.2
+	cloud.google.com/go/storage v1.65.0
 	github.com/carabiner-dev/signer v0.5.4
 	github.com/carabiner-dev/vcslocator v0.4.7
 	github.com/go-git/go-git/v5 v5.19.2
@@ -13,7 +13,7 @@ require (
 	github.com/in-toto/attestation v1.2.0
 	github.com/magefile/mage v1.17.2
 	github.com/protobom/protobom v0.5.8
-	github.com/sirupsen/logrus v1.10.0
+	github.com/sirupsen/logrus v1.10.1
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
 	github.com/uwu-tools/magex v0.10.1
