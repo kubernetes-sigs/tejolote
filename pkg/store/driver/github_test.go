@@ -83,12 +83,14 @@ func testAsset(id int64, name, digest string) *gogithub.ReleaseAsset {
 // notFound returns the response and error the API returns for a release that
 // cannot be read through the by-tag endpoint, which is the case for drafts.
 func notFound() (*gogithub.Response, error) {
-	return &gogithub.Response{
-			Response: &http.Response{StatusCode: http.StatusNotFound},
-		}, &gogithub.ErrorResponse{
-			Response: &http.Response{StatusCode: http.StatusNotFound},
-			Message:  "Not Found",
-		}
+	resp := &gogithub.Response{
+		Response: &http.Response{StatusCode: http.StatusNotFound},
+	}
+	err := &gogithub.ErrorResponse{
+		Response: &http.Response{StatusCode: http.StatusNotFound},
+		Message:  "Not Found",
+	}
+	return resp, err
 }
 
 func sha256Of(data string) string {
