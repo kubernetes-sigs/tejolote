@@ -219,8 +219,8 @@ func NewAgent() *khttp.Agent {
 // githubAgentImpl injects the GitHub token into requests.
 type githubAgentImpl struct{}
 
-func (g *githubAgentImpl) SendGetRequest(client *http.Client, u string) (*http.Response, error) {
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, u, nil)
+func (g *githubAgentImpl) SendGetRequest(ctx context.Context, client *http.Client, u string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating http request: %w", err)
 	}
@@ -232,12 +232,12 @@ func (g *githubAgentImpl) SendGetRequest(client *http.Client, u string) (*http.R
 	return resp, nil
 }
 
-func (g *githubAgentImpl) SendPostRequest(client *http.Client, u string, postData []byte, contentType string) (*http.Response, error) {
+func (g *githubAgentImpl) SendPostRequest(_ context.Context, client *http.Client, u string, postData []byte, contentType string) (*http.Response, error) {
 	return nil, errors.New("POST not supported for GitHub agent")
 }
 
-func (g *githubAgentImpl) SendHeadRequest(client *http.Client, u string) (*http.Response, error) {
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodHead, u, nil)
+func (g *githubAgentImpl) SendHeadRequest(ctx context.Context, client *http.Client, u string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, u, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating http request: %w", err)
 	}
