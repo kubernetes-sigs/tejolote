@@ -27,9 +27,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/carabiner-dev/signer/options"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/release-utils/helpers"
+	"sigs.k8s.io/tejolote/pkg/attestation"
 	"sigs.k8s.io/tejolote/pkg/github"
 	"sigs.k8s.io/tejolote/pkg/watcher"
 )
@@ -49,6 +51,7 @@ type attestOptions struct {
 	artifactsFilter  []string
 	envelope         string
 	watchTimeout     time.Duration
+	signingKeys      *options.KeysSign
 }
 
 const (
@@ -85,11 +88,42 @@ func (o *attestOptions) Verify() error {
 	if o.sign && !slices.Contains(envelopeFormats, o.envelope) {
 		errs = append(errs, fmt.Errorf("invalid envelope format %q, must be one of %v", o.envelope, envelopeFormats))
 	}
+
+	if o.signingKeys != nil && len(o.signingKeys.PrivateKeyPaths) > 0 {
+		if !o.sign {
+			errs = append(errs, errors.New("--signing-key requires --sign"))
+		}
+		// A key signature has no certificate or transparency-log proof to put
+		// in a sigstore bundle, so the only output is a bare DSSE envelope.
+		if o.envelope != "dsse" {
+			errs = append(errs, errors.New("signing with --signing-key produces a DSSE envelope, set --envelope=dsse"))
+		}
+		if err := o.signingKeys.Validate(); err != nil {
+			errs = append(errs, err)
+		}
+	}
 	return errors.Join(errs...)
 }
 
+// serialize renders the attestation as configured: unsigned JSON, signed with
+// the keyless sigstore flow, or signed with the --signing-key keys.
+func (o *attestOptions) serialize(att *attestation.Attestation) ([]byte, error) {
+	switch {
+	case o.sign && len(o.signingKeys.PrivateKeyPaths) > 0:
+		keys, err := o.signingKeys.ParseSigningKeys()
+		if err != nil {
+			return nil, fmt.Errorf("loading signing keys: %w", err)
+		}
+		return att.SignWithKeys(keys...)
+	case o.sign:
+		return att.Sign(o.envelope)
+	default:
+		return att.ToJSON()
+	}
+}
+
 func addAttest(parentCmd *cobra.Command) {
-	attestOpts := attestOptions{}
+	attestOpts := attestOptions{signingKeys: options.DefaultKeysSign()}
 	var outputOpts *outputOptions
 
 	attestCmd := &cobra.Command{
@@ -296,14 +330,7 @@ build data and generates the provenance attestation.
 				return fmt.Errorf("generating run attestation: %w", err)
 			}
 
-			var json []byte
-
-			if attestOpts.sign {
-				json, err = attestation.Sign(attestOpts.envelope)
-			} else {
-				json, err = attestation.ToJSON()
-			}
-
+			json, err := attestOpts.serialize(attestation)
 			if err != nil {
 				return fmt.Errorf("serializing attestation: %w", err)
 			}
@@ -321,6 +348,10 @@ build data and generates the provenance attestation.
 	}
 
 	outputOpts = addOutputFlags(attestCmd)
+
+	// --signing-key: sign with a private key instead of the keyless sigstore
+	// flow, for environments with no workload identity (e.g. fork PRs).
+	attestOpts.signingKeys.AddFlags(attestCmd)
 
 	attestCmd.PersistentFlags().StringVar(
 		&attestOpts.continueExisting,
