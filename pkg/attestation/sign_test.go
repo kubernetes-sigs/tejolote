@@ -67,6 +67,9 @@ func TestSignWithKeys(t *testing.T) {
 	data, err := att.SignWithKeys(signingKey)
 	require.NoError(t, err)
 
+	// One document per line: .jsonl readers would not find an indented one.
+	require.NotContains(t, string(data), "\n")
+
 	env := &sdsse.Envelope{}
 	require.NoError(t, protojson.Unmarshal(data, env))
 	require.Equal(t, "https://in-toto.io/Statement/v1", env.GetPayloadType())

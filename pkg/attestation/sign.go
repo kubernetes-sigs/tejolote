@@ -24,9 +24,23 @@ import (
 	"github.com/carabiner-dev/signer"
 	"github.com/carabiner-dev/signer/key"
 	"github.com/carabiner-dev/signer/options"
+	sdsse "github.com/sigstore/protobuf-specs/gen/pb-go/dsse"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 var envelopeFormats = []string{"bundle", "dsse"}
+
+// marshalEnvelope serializes a DSSE envelope as a single line of JSON, like
+// the sigstore bundle output. The attestation is usually written to a .jsonl
+// file, and collectors that read those (e.g. ampel's fs collector) take one
+// document per line, so an indented envelope is not found at all.
+func marshalEnvelope(env *sdsse.Envelope) ([]byte, error) {
+	data, err := protojson.Marshal(env)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling dsse envelope: %w", err)
+	}
+	return data, nil
+}
 
 // SignWithKeys signs the attestation with the given private keys instead of
 // the keyless sigstore flow, and returns a bare DSSE envelope. A key signature
@@ -53,11 +67,7 @@ func (att *Attestation) SignWithKeys(keys ...key.PrivateKeyProvider) ([]byte, er
 		return nil, fmt.Errorf("signing attestation with key: %w", err)
 	}
 
-	var buf bytes.Buffer
-	if err := s.WriteDSSEEnvelope(env, &buf); err != nil {
-		return nil, fmt.Errorf("marshaling dsse envelope: %w", err)
-	}
-	return buf.Bytes(), nil
+	return marshalEnvelope(env)
 }
 
 // Sign signs the attestation with sigstore and returns a serialized Sigstore
@@ -104,9 +114,7 @@ func (att *Attestation) Sign(envelopeFormat string) ([]byte, error) {
 		if env == nil {
 			return nil, fmt.Errorf("signed bundle contains no DSSE envelope")
 		}
-		if err := s.WriteDSSEEnvelope(env, &buf); err != nil {
-			return nil, fmt.Errorf("marshaling dsse envelope: %w", err)
-		}
+		return marshalEnvelope(env)
 	}
 	return buf.Bytes(), nil
 }
