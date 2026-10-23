@@ -22,9 +22,43 @@ import (
 	"slices"
 
 	"github.com/carabiner-dev/signer"
+	"github.com/carabiner-dev/signer/key"
+	"github.com/carabiner-dev/signer/options"
 )
 
 var envelopeFormats = []string{"bundle", "dsse"}
+
+// SignWithKeys signs the attestation with the given private keys instead of
+// the keyless sigstore flow, and returns a bare DSSE envelope. A key signature
+// carries no certificate or transparency-log proof, so there is no sigstore
+// bundle to produce; the envelope is verified against the matching public key.
+//
+// It is meant for environments without an ambient workload identity, such as
+// pull requests from forks, where keyless signing cannot get an OIDC token.
+func (att *Attestation) SignWithKeys(keys ...key.PrivateKeyProvider) ([]byte, error) {
+	if len(keys) == 0 {
+		return nil, fmt.Errorf("no signing keys")
+	}
+
+	statement, err := att.ToJSON()
+	if err != nil {
+		return nil, fmt.Errorf("serializing attestation to json: %w", err)
+	}
+
+	s := signer.NewSigner()
+	defer s.Close()
+
+	env, err := s.SignStatementToDSSE(statement, options.WithKey(keys...))
+	if err != nil {
+		return nil, fmt.Errorf("signing attestation with key: %w", err)
+	}
+
+	var buf bytes.Buffer
+	if err := s.WriteDSSEEnvelope(env, &buf); err != nil {
+		return nil, fmt.Errorf("marshaling dsse envelope: %w", err)
+	}
+	return buf.Bytes(), nil
+}
 
 // Sign signs the attestation with sigstore and returns a serialized Sigstore
 // bundle: the in-toto statement wrapped in a DSSE envelope together with the
